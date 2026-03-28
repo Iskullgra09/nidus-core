@@ -1,2 +1,21 @@
-# nidus-core
-high-performance, multitenant SaaS engine architecture. Built with FastAPI, Next.js 15, and PostgreSQL with Row Level Security (RLS) for strict data isolation.
+# Nidus Core 
+**The foundation for modern, scalable, and secure SaaS applications.**
+
+Nidus is a professional-grade monorepo designed to serve as the backbone for multiple SaaS products. It focuses on high-level architectural patterns and the latest tech standards of 2026.
+
+## 🛠 Tech Stack
+- **Backend:** Python 3.12+ (FastAPI)
+- **Frontend:** Next.js 15+ (App Router, TypeScript)
+- **Database:** PostgreSQL 17 (Row Level Security for Multitenancy)
+- **Infra:** Docker & Docker Compose
+- **DevOps:** Clean Architecture & SOLID Principles
+
+## 🏗 Project Roadmap
+- [x] **Phase 0.1:** Environment Setup & Repo Initialization.
+- [ ] **Phase 0.2:** Docker Orchestration & Basic Health Checks.
+- [ ] **Phase 1:** Data Engine & RLS Implementation.
+- [ ] **Phase 2:** Core API & Tenant Middleware.
+- [ ] **Phase 3:** Frontend Dashboard Shell.
+
+---
+*Developed by Isaac Granados Quesada - Computer Engineer.*
