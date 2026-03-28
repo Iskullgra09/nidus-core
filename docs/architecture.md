@@ -57,3 +57,22 @@ Implemented a **Dual-Role Connection Strategy**:
 ### Consequences
 * **Positive:** Guaranteed Dev/Prod parity. Automated tests will fail if an RLS policy is misconfigured. Significant reduction in the risk of accidental "God Mode" data leaks in the application layer.
 * **Negative:** Slightly more complex `.env` configuration (two different connection strings).
+
+---
+
+## ADR 004: Model Inheritance via Shared Mixins
+
+**Date:** 2026-03-28
+**Status:** Accepted
+
+### Context
+As the system grows, multiple domain models (Users, Profiles, Memberships) will require common fields such as UUID primary keys and audit timestamps. Repeating this code violates DRY (Don't Repeat Yourself) and leads to inconsistent database schemas.
+
+### Decision
+Implemented a **Shared Mixin Strategy** in `app/shared/models.py`. 
+- `UUIDPrimaryKeyMixin`: Ensures a standard UUID v4 for all entities.
+- `TimestampMixin`: Implements `created_at` and `updated_at` with hybrid defaults (Python-side for session consistency and Server-side for raw SQL safety).
+
+### Consequences
+* **Positive:** Reduced boilerplate in infrastructure models. Centralized control over audit field logic. Improved type-safety for Pylance/IDE.
+* **Neutral:** Models now require multiple inheritance (e.g., `class Tenant(Base, Mixin1, Mixin2)`).
