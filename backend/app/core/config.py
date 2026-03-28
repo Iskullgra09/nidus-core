@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     # Strictly typed PostgreSQL URL
     DATABASE_URL: PostgresDsn
+    DATABASE_ADMIN_URL: PostgresDsn
 
     # Pydantic V2 config: reads from .env, ignores extra variables
     model_config = SettingsConfigDict(

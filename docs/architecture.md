@@ -38,3 +38,41 @@ Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL
 ### Consequences
 * **Positive:** Highly scalable. Connection pooling (`asyncpg`) remains extremely efficient. Alembic schema migrations only need to be executed once per deployment across the entire platform.
 * **Negative:** Requires rigorous engineering discipline. Every table must have RLS enabled and policies meticulously defined to prevent catastrophic cross-tenant data leaks.
+
+---
+
+## ADR 003: Dual-Role Database Access Strategy
+
+**Date:** 2026-03-28
+**Status:** Accepted
+
+### Context
+PostgreSQL Row-Level Security (RLS) is bypassed by default by the table owner or superusers. To ensure multi-tenant isolation is strictly enforced during development and runtime, we need a mechanism that mirrors production security constraints.
+
+### Decision
+Implemented a **Dual-Role Connection Strategy**:
+1. **`nidus_app_user` (Restricted):** Used by the FastAPI application and the Test Suite. This user has data CRUD permissions but is forced to obey RLS policies.
+2. **`nidus_admin` (Superuser):** Used exclusively by Alembic for schema migrations and by developers via pgAdmin for maintenance.
+
+### Consequences
+* **Positive:** Guaranteed Dev/Prod parity. Automated tests will fail if an RLS policy is misconfigured. Significant reduction in the risk of accidental "God Mode" data leaks in the application layer.
+* **Negative:** Slightly more complex `.env` configuration (two different connection strings).
+
+---
+
+## ADR 004: Model Inheritance via Shared Mixins
+
+**Date:** 2026-03-28
+**Status:** Accepted
+
+### Context
+As the system grows, multiple domain models (Users, Profiles, Memberships) will require common fields such as UUID primary keys and audit timestamps. Repeating this code violates DRY (Don't Repeat Yourself) and leads to inconsistent database schemas.
+
+### Decision
+Implemented a **Shared Mixin Strategy** in `app/shared/models.py`. 
+- `UUIDPrimaryKeyMixin`: Ensures a standard UUID v4 for all entities.
+- `TimestampMixin`: Implements `created_at` and `updated_at` with hybrid defaults (Python-side for session consistency and Server-side for raw SQL safety).
+
+### Consequences
+* **Positive:** Reduced boilerplate in infrastructure models. Centralized control over audit field logic. Improved type-safety for Pylance/IDE.
+* **Neutral:** Models now require multiple inheritance (e.g., `class Tenant(Base, Mixin1, Mixin2)`).
