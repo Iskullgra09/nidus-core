@@ -8,7 +8,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_core
+      DATABASE_URL: postgresql+asyncpg://nidus_app_user:nidus_app_secret@localhost:5444/nidus_core
       DATABASE_ADMIN_URL: postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_core
     services:
       postgres:
@@ -34,6 +34,13 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
         working-directory: ./backend
+      - name: Create restricted DB user
+        run: |
+          docker exec ${{ job.services.postgres.id }} psql -U nidus_admin -d nidus_core -c "CREATE USER nidus_app_user WITH PASSWORD 'nidus_app_secret';"
+          docker exec ${{ job.services.postgres.id }} psql -U nidus_admin -d nidus_core -c "GRANT ALL PRIVILEGES ON SCHEMA public TO nidus_app_user;"
+          docker exec ${{ job.services.postgres.id }} psql -U nidus_admin -d nidus_core -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO nidus_app_user;"
+          docker exec ${{ job.services.postgres.id }} psql -U nidus_admin -d nidus_core -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO nidus_app_user;"
+          docker exec ${{ job.services.postgres.id }} psql -U nidus_admin -d nidus_core -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO nidus_app_user;"
       - name: Run Migrations
         run: uv run alembic upgrade head
         working-directory: ./backend
