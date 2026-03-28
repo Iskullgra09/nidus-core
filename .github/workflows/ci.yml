@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_core
+      DATABASE_ADMIN_URL: postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_core
     services:
       postgres:
         image: postgres:17
@@ -39,5 +42,3 @@ jobs:
       - name: Run Tests
         run: uv run pytest -v
         working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_core
