@@ -38,3 +38,22 @@ Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL
 ### Consequences
 * **Positive:** Highly scalable. Connection pooling (`asyncpg`) remains extremely efficient. Alembic schema migrations only need to be executed once per deployment across the entire platform.
 * **Negative:** Requires rigorous engineering discipline. Every table must have RLS enabled and policies meticulously defined to prevent catastrophic cross-tenant data leaks.
+
+---
+
+## ADR 003: Dual-Role Database Access Strategy
+
+**Date:** 2026-03-28
+**Status:** Accepted
+
+### Context
+PostgreSQL Row-Level Security (RLS) is bypassed by default by the table owner or superusers. To ensure multi-tenant isolation is strictly enforced during development and runtime, we need a mechanism that mirrors production security constraints.
+
+### Decision
+Implemented a **Dual-Role Connection Strategy**:
+1. **`nidus_app_user` (Restricted):** Used by the FastAPI application and the Test Suite. This user has data CRUD permissions but is forced to obey RLS policies.
+2. **`nidus_admin` (Superuser):** Used exclusively by Alembic for schema migrations and by developers via pgAdmin for maintenance.
+
+### Consequences
+* **Positive:** Guaranteed Dev/Prod parity. Automated tests will fail if an RLS policy is misconfigured. Significant reduction in the risk of accidental "God Mode" data leaks in the application layer.
+* **Negative:** Slightly more complex `.env` configuration (two different connection strings).
