@@ -115,3 +115,60 @@ To ensure NIDUS Core remains scalable and allows multiple developers to collabor
 ### Consequences
 * **Positive:** Highly organized code, easier unit testing, and allows for modular growth of the Core.
 * **Negative:** Slightly increases the initial number of files and the complexity of relative imports.
+
+---
+
+## ADR 007: Security and Identity (Bcrypt & JWT)
+
+**Date:** 2026-03-29
+**Status:** Accepted
+
+### Context
+Initial security relied on `passlib`, which caused compatibility issues with modern `bcrypt` versions (AttributeError) and had a 72-byte limitation that wasn't explicitly handled in our service layer.
+
+### Decision
+1. **Direct Hashing:** Abandoned `passlib` in favor of the direct `bcrypt` library for better performance and 2026 compatibility.
+2. **Deterministic Truncation:** Implemented explicit `.encode('utf-8')[:72]` truncation in `hash_password` and `verify_password` to prevent Bcrypt overflow errors while maintaining maximum security.
+3. **JWT Context:** Adopted JWT (HS256) for authentication, embedding both `sub` (User UUID) and `org_id` (Organization UUID) to facilitate stateless multitenancy.
+
+### Consequences
+* **Positive:** Robust, error-free hashing. JWTs now carry the "Tenant DNA" required for RLS.
+* **Negative:** Manual byte management in Python, but it provides full control over the hashing process.
+
+---
+
+## ADR 008: Atomic Tenant Onboarding Service
+
+**Date:** 2026-03-29
+**Status:** Accepted
+
+### Context
+Creating an organization involves multiple related entities (Org, Admin User, Role, Membership). Doing this in separate API calls is prone to partial failures and data inconsistency.
+
+### Decision
+Implemented a **`TenantService.create_onboarding`** method that:
+1. Executes all inserts within a single database transaction.
+2. Uses a "Get or Create" pattern for system roles (e.g., "Admin").
+3. Automatically establishes the initial `Member` link between the first user and the new organization.
+
+### Consequences
+* **Positive:** Guaranteed consistent initial state for every new client. Simplified frontend integration (one form, one request).
+
+---
+
+## ADR 009: RLS Bypass for Authentication & Onboarding
+
+**Date:** 2026-03-29
+**Status:** Accepted
+
+### Context
+PostgreSQL RLS blocks all rows if `app.current_organization_id` is not set. This creates a "chicken and egg" problem during Login and Onboarding, where the system needs to read data to identify the tenant.
+
+### Decision
+1. **Conditional Policy:** Updated RLS policies to allow `SELECT` operations on identity tables (`user`, `organization`, `member`, `role`) if the session variable is empty: 
+   `USING (organization_id::text = current_setting('app.current_organization_id', TRUE) OR current_setting('app.current_organization_id', TRUE) = '')`.
+2. **Explicit Session Reset:** Forced `SET LOCAL app.current_organization_id = ''` at the start of the `AuthService.authenticate` method to ensure a clean, global context for credentials verification.
+
+### Consequences
+* **Positive:** Fully autonomous login flow without manual database intervention.
+* **Negative:** Requires strict discipline to ensure session variables are correctly set immediately after authentication.
