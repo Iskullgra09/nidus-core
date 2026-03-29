@@ -1,9 +1,20 @@
-from app.core.config import settings
-from app.shared.database import get_db_session
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.core.db import get_session
+
+
+class HealthResponse(BaseModel):
+    """Strict schema for system health monitoring."""
+
+    status: str
+    environment: str
+    database_connected: bool
+    version: str = "1.0.0"
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -12,21 +23,13 @@ app = FastAPI(
 )
 
 
-# 1. Define the strict response schema
-class HealthResponse(BaseModel):
-    status: str
-    environment: str
-    database_connected: bool
-
-
-# 2. Add the return type hint and the FastAPI response_model
 @app.get("/health", response_model=HealthResponse)
-async def health_check(db: AsyncSession = Depends(get_db_session)) -> HealthResponse:
+async def health_check(session: AsyncSession = Depends(get_session)) -> HealthResponse:
     """
-    Validates API routing and Database connectivity.
+    Validates system health and connectivity with PostgreSQL in Docker.
     """
     try:
-        result = await db.execute(text("SELECT 1"))
+        result = await session.execute(text("SELECT 1"))
         is_db_up = result.scalar() == 1
 
         return HealthResponse(
@@ -38,3 +41,13 @@ async def health_check(db: AsyncSession = Depends(get_db_session)) -> HealthResp
         raise HTTPException(
             status_code=503, detail=f"Database connection failed: {str(e)}"
         )
+
+
+@app.get("/")
+async def root():
+    """Base entry point to verify the API Gateway is functional."""
+    return {
+        "project": settings.PROJECT_NAME,
+        "message": "NIDUS Core is running",
+        "docs": "/docs",
+    }
