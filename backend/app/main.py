@@ -1,10 +1,11 @@
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.db import get_session
+from app.core.db import get_session, get_tenant_session
+from app.models import Organization
 
 
 class HealthResponse(BaseModel):
@@ -51,3 +52,23 @@ async def root():
         "message": "NIDUS Core is running",
         "docs": "/docs",
     }
+
+
+@app.get("/my-organization")
+async def get_current_organization(session: AsyncSession = Depends(get_tenant_session)):
+    """
+    This endpoint is PROTECTED by RLS.
+    It only returns the organization that matches the X-Organization-ID header.
+    """
+    # Note: We don't use 'where(Organization.id == ...)'
+    # The database will do it for us!
+    result = await session.execute(select(Organization))
+    organization = result.scalar_one_or_none()
+
+    if not organization:
+        raise HTTPException(
+            status_code=404,
+            detail="Organization not found or you don't have access to it.",
+        )
+
+    return organization
