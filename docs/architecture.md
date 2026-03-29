@@ -13,14 +13,14 @@ This document tracks the core architectural decisions made during the lifecycle 
 NIDUS requires a scalable, maintainable backend architecture capable of handling multitenancy via PostgreSQL RLS. The development environment must mirror production closely to ensure Developer Experience (DX) and reliability.
 
 ### Decision
-1. **Architecture:** Adopted a Modular Monolith approach utilizing Clean Architecture principles. Modules (e.g., `tenant`, `identity`) are strictly separated into `domain`, `application`, `infrastructure`, and `presentation` layers.
-2. **Infrastructure:** Utilized Docker Compose with PostgreSQL 17 (Alpine) and FastAPI 3.12+. Database connections are strictly asynchronous utilizing `asyncpg`.
-3. **Environment Management:** Selected `uv` (by Astral) as the Python package manager and virtual environment resolver to maximize CI/CD and local DX speed.
-4. **Configuration:** Adopted `pydantic-settings` for 12-Factor App compliant environment variable management, ensuring type safety and fail-fast validation on startup.
+1. **Architecture:** Adopted a Modular Monolith approach utilizing Clean Architecture principles.
+2. **Infrastructure:** Utilized Docker Compose with PostgreSQL 17 and FastAPI 0.110+. Database connections are strictly asynchronous utilizing `asyncpg`.
+3. **Environment Management:** Selected **`uv`** (by Astral) as the primary package manager. It handles dependency injection, environment isolation, and script execution (`uv run`) to maximize speed and parity.
+4. **Configuration:** Adopted `pydantic-settings` for 12-Factor App compliant environment variable management.
 
 ### Consequences
-* **Positive:** High cohesion and low coupling. Easy to extract microservices in the future. Strong type safety for configuration. Frictionless local development environment via `uv`.
-* **Negative:** Slight initial overhead in creating directories and mapping between layer boundaries (e.g., Domain Models vs. SQLAlchemy Models).
+* **Positive:** High cohesion and low coupling. Frictionless local development via `uv`.
+* **Negative:** Requires strict discipline in managing the `.venv` path in IDEs (Pylance).
 
 ---
 
@@ -30,14 +30,14 @@ NIDUS requires a scalable, maintainable backend architecture capable of handling
 **Status:** Accepted
 
 ### Context
-NIDUS is a multitenant SaaS. We must ensure absolute data privacy between tenants while maintaining high database performance and simplified operational overhead during schema migrations.
+NIDUS is a multitenant SaaS. We must ensure absolute data privacy between tenants while maintaining high database performance and simplified operational overhead.
 
 ### Decision
-Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL Row-Level Security (RLS)**. All tenant data will reside in the same tables, isolated strictly by a `tenant_id` column and enforced by database-level security policies.
+Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL Row-Level Security (RLS)**. Isolation is enforced at the database engine level via an `organization_id` column present in all tenant-scoped tables.
 
 ### Consequences
-* **Positive:** Highly scalable. Connection pooling (`asyncpg`) remains extremely efficient. Alembic schema migrations only need to be executed once per deployment across the entire platform.
-* **Negative:** Requires rigorous engineering discipline. Every table must have RLS enabled and policies meticulously defined to prevent catastrophic cross-tenant data leaks.
+* **Positive:** Highly scalable and efficient connection pooling. Simplified migrations via Alembic (one execution for all tenants).
+* **Negative:** Requires mandatory inheritance from `TenantMixin` for all scoped entities.
 
 ---
 
@@ -47,32 +47,49 @@ Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL
 **Status:** Accepted
 
 ### Context
-PostgreSQL Row-Level Security (RLS) is bypassed by default by the table owner or superusers. To ensure multi-tenant isolation is strictly enforced during development and runtime, we need a mechanism that mirrors production security constraints.
+RLS is bypassed by superusers or table owners. To ensure isolation is strictly enforced during development and runtime, we need separate access levels.
 
 ### Decision
 Implemented a **Dual-Role Connection Strategy**:
-1. **`nidus_app_user` (Restricted):** Used by the FastAPI application and the Test Suite. This user has data CRUD permissions but is forced to obey RLS policies.
-2. **`nidus_admin` (Superuser):** Used exclusively by Alembic for schema migrations and by developers via pgAdmin for maintenance.
+1. **`DATABASE_URL` (App User):** Restricted privileges. Forced to obey RLS policies. Used by FastAPI.
+2. **`DATABASE_ADMIN_URL` (Admin User):** High privileges. Bypasses RLS. Used exclusively for Alembic migrations and maintenance.
 
 ### Consequences
-* **Positive:** Guaranteed Dev/Prod parity. Automated tests will fail if an RLS policy is misconfigured. Significant reduction in the risk of accidental "God Mode" data leaks in the application layer.
-* **Negative:** Slightly more complex `.env` configuration (two different connection strings).
+* **Positive:** Guaranteed Dev/Prod parity. Accidental "God Mode" leaks in the application layer are physically impossible at the database level.
 
 ---
 
-## ADR 004: Model Inheritance via Shared Mixins
+## ADR 004: Unified Domain Modeling via SQLModel Mixins
+
+**Date:** 2026-03-28
+**Status:** Accepted (Supersedes previous Shared Mixin drafts)
+
+### Context
+Initial attempts with separate SQLAlchemy Mixins in a `shared/` folder led to "split-brain" architecture and column assignment conflicts in SQLModel.
+
+### Decision
+1. **Consolidation:** Eliminated the `app/shared/` directory. All base logic now resides in `app/models/base.py`.
+2. **Mixin Strategy:** Implemented `UUIDMixin`, `TimestampMixin`, and `TenantMixin` using **SQLModel** classes.
+3. **Lazy Initialization:** Used `sa_column_kwargs` for server-side defaults (e.g., `gen_random_uuid()`) to prevent SQLAlchemy from sharing column instances across different tables.
+
+### Consequences
+* **Positive:** Zero-boilerplate models. Full Pydantic/SQLAlchemy compatibility in a single class definition.
+* **Negative:** None; significantly simplified the codebase and resolved Pylance type issues.
+
+---
+
+## ADR 005: Naming Conventions and Domain Standardization
 
 **Date:** 2026-03-28
 **Status:** Accepted
 
 ### Context
-As the system grows, multiple domain models (Users, Profiles, Memberships) will require common fields such as UUID primary keys and audit timestamps. Repeating this code violates DRY (Don't Repeat Yourself) and leads to inconsistent database schemas.
+Database naming often oscillates between plural and singular. Inconsistent naming leads to mapping complexity in ORMs like SQLModel.
 
 ### Decision
-Implemented a **Shared Mixin Strategy** in `app/shared/models.py`. 
-- `UUIDPrimaryKeyMixin`: Ensures a standard UUID v4 for all entities.
-- `TimestampMixin`: Implements `created_at` and `updated_at` with hybrid defaults (Python-side for session consistency and Server-side for raw SQL safety).
+1. **Singular Naming:** All database tables follow the singular convention (`user`, `organization`, `member`, `role`) to maintain a 1:1 mapping with Python class names.
+2. **Business Terminology:** Standardized on the term **`organization`** instead of `tenant` to better align with the NIDUS SaaS business domain.
+3. **Directory Structure:** Organized models by domain context: `app/models/identity/` and `app/models/organization/`.
 
 ### Consequences
-* **Positive:** Reduced boilerplate in infrastructure models. Centralized control over audit field logic. Improved type-safety for Pylance/IDE.
-* **Neutral:** Models now require multiple inheritance (e.g., `class Tenant(Base, Mixin1, Mixin2)`).
+* **Positive:** Intuitive imports and predictable table names. Clearer business logic terminology.
