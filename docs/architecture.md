@@ -93,3 +93,25 @@ Database naming often oscillates between plural and singular. Inconsistent namin
 
 ### Consequences
 * **Positive:** Intuitive imports and predictable table names. Clearer business logic terminology.
+
+---
+
+## ADR 006: Modular Architecture and API v1 Layering
+
+**Date:** 2026-03-28
+**Status:** Accepted
+
+### Context
+To ensure NIDUS Core remains scalable and allows multiple developers to collaborate without merge conflicts, the `main.py` file must be kept clean of business logic and extensive route definitions.
+
+### Decision
+1. **Routing Pattern:** Implemented `APIRouter` with a centralized orchestrator in `app/api/v1/api.py`.
+2. **Directory Structure:** Adopted a clear separation of concerns:
+   - `endpoints/`: Route controllers (Entry points).
+   - `schemas/`: Pydantic models for request/response validation.
+   - `services/`: Pure business logic (to be implemented next).
+3. **API Versioning:** All current logic moved under the `/api/v1` prefix to allow future iterations without breaking existing contracts.
+
+### Consequences
+* **Positive:** Highly organized code, easier unit testing, and allows for modular growth of the Core.
+* **Negative:** Slightly increases the initial number of files and the complexity of relative imports.
