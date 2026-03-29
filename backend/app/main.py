@@ -60,8 +60,6 @@ async def get_current_organization(session: AsyncSession = Depends(get_tenant_se
     This endpoint is PROTECTED by RLS.
     It only returns the organization that matches the X-Organization-ID header.
     """
-    # Note: We don't use 'where(Organization.id == ...)'
-    # The database will do it for us!
     result = await session.execute(select(Organization))
     organization = result.scalar_one_or_none()
 
