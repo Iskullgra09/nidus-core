@@ -191,3 +191,41 @@ Returning raw SQLAlchemy models or unformatted dictionaries directly to the clie
 ### Consequences
 * **Positive:** Strict data hiding, predictable API contracts for frontend developers, and clear boundaries between Domain Models (SQLModel) and DTOs (Data Transfer Objects).
 * **Negative:** Requires slightly more boilerplate (creating two schemas for almost every entity).
+
+---
+
+## ADR 011: Automated Testing Strategy for RLS Isolation
+
+**Date:** 2026-03-30
+**Status:** Accepted
+
+### Context
+Testing a multitenant system with PostgreSQL RLS requires verifying that restricted users cannot access other tenants' data. Using a superuser for tests would bypass RLS, leading to "false positive" results.
+
+### Decision
+1. **Dual-Engine Setup:** Implemented two distinct engines in `conftest.py`:
+   - `admin_engine`: Uses `nidus_admin` credentials. Bypasses RLS for `TRUNCATE` and `SEED` operations.
+   - `app_engine`: Uses `nidus_app_user` credentials. Strictly follows RLS policies. Used for all API integration tests.
+2. **Context Bypass for Verification:** To verify DB state during tests without using the admin engine, we utilize the `SET LOCAL app.current_organization_id = ''` bypass within an explicit `session.begin()` block.
+
+### Consequences
+* **Positive:** Guaranteed validation of security policies. Tests fail if RLS is misconfigured.
+* **Negative:** Slightly more complex `conftest.py` setup.
+
+---
+
+## ADR 012: Connection Management and Windows Stability (NullPool)
+
+**Date:** 2026-03-30
+**Status:** Accepted
+
+### Context
+Using `asyncpg` on Windows with the default SQLAlchemy connection pool leads to `RuntimeError: Event loop is closed` and `AttributeError: 'NoneType' object has no attribute 'send'`. This happens because the pool tries to maintain "zombie" connections after the `pytest-asyncio` loop is destroyed.
+
+### Decision
+1. **NullPool Implementation:** Adopted `sqlalchemy.pool.NullPool` for all test engines. This forces each session to open and close a real physical connection, preventing persistent sockets from being tied to closed event loops.
+2. **Session-Scoped Loop:** Forced a single `event_loop` fixture with "session" scope to maintain a stable heart-beat for all asynchronous tests.
+
+### Consequences
+* **Positive:** 100% stability on Windows environments. Zero "zombie" connection errors.
+* **Negative:** Minor performance overhead due to lack of connection pooling (negligible for the current test suite size).

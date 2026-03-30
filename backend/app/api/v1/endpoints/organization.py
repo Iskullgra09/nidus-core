@@ -1,3 +1,8 @@
+from backend.app.services.organization_service import OrganizationService
+from fastapi import APIRouter, Depends, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.deps import get_current_tenant_session
 from app.core.db import get_session
 from app.models.organization.organization import Organization
@@ -5,11 +10,6 @@ from app.schemas.requests.tenant import TenantCreate
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.organization import OrganizationResponse
 from app.schemas.responses.tenant import TenantResponse
-from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.app.services.organization_service import OrganizationService
 
 router = APIRouter()
 
@@ -19,9 +19,7 @@ router = APIRouter()
     response_model=GenericResponse[TenantResponse],
     status_code=status.HTTP_201_CREATED,
 )
-async def onboard_tenant(
-    data: TenantCreate, session: AsyncSession = Depends(get_session)
-):
+async def onboard_tenant(data: TenantCreate, session: AsyncSession = Depends(get_session)):
     """
     Creates a new organization, its first admin user, and assigns the correct roles.
     """

@@ -1,3 +1,6 @@
+# ruff: noqa: E402, F401
+# pyright: reportMissingImports=false, reportUnusedImport=false
+
 import asyncio
 import os
 import sys
@@ -9,9 +12,18 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlmodel import SQLModel
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(current_dir, "../../"))
+backend_dir = os.path.join(root_dir, "backend")
 
-from app.core.config import settings
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+from app.core.config import settings  # type: ignore
+from app.models.identity.member import Member  # type: ignore
+from app.models.identity.role import Role  # type: ignore
+from app.models.identity.user import User  # type: ignore
+from app.models.organization.organization import Organization  # type: ignore
 
 config = context.config
 
@@ -20,7 +32,7 @@ if config.config_file_name is not None:
 
 target_metadata = SQLModel.metadata
 
-config.set_main_option("sqlalchemy.url", str(settings.DATABASE_ADMIN_URL))
+config.set_main_option("sqlalchemy.url", str(settings.DATABASE_ADMIN_URL))  # type: ignore
 
 
 def run_migrations_offline() -> None:

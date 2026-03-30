@@ -1,8 +1,9 @@
-from app.core.db import get_session
-from app.services.auth_service import AuthService
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db import get_session
+from app.services.auth_service import AuthService
 
 router = APIRouter()
 
@@ -16,7 +17,5 @@ async def login(
     Standard OAuth2 compatible token login.
     Returns the access token with organization context.
     """
-    token = await AuthService.authenticate(
-        session, email=form_data.username, password=form_data.password
-    )
+    token = await AuthService.authenticate(session, email=form_data.username, password=form_data.password)
     return {"access_token": token, "token_type": "bearer"}

@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 
-from app.core.db import get_session
-from app.schemas.responses.base import GenericResponse
-from app.schemas.responses.health import HealthResponse
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db import get_session
+from app.schemas.responses.base import GenericResponse
+from app.schemas.responses.health import HealthResponse
 
 router = APIRouter()
 
