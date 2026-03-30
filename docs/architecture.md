@@ -13,14 +13,14 @@ This document tracks the core architectural decisions made during the lifecycle 
 NIDUS requires a scalable, maintainable backend architecture capable of handling multitenancy via PostgreSQL RLS. The development environment must mirror production closely to ensure Developer Experience (DX) and reliability.
 
 ### Decision
-1. **Architecture:** Adopted a Modular Monolith approach utilizing Clean Architecture principles. Modules (e.g., `tenant`, `identity`) are strictly separated into `domain`, `application`, `infrastructure`, and `presentation` layers.
-2. **Infrastructure:** Utilized Docker Compose with PostgreSQL 17 (Alpine) and FastAPI 3.12+. Database connections are strictly asynchronous utilizing `asyncpg`.
-3. **Environment Management:** Selected `uv` (by Astral) as the Python package manager and virtual environment resolver to maximize CI/CD and local DX speed.
-4. **Configuration:** Adopted `pydantic-settings` for 12-Factor App compliant environment variable management, ensuring type safety and fail-fast validation on startup.
+1. **Architecture:** Adopted a Modular Monolith approach utilizing Clean Architecture principles.
+2. **Infrastructure:** Utilized Docker Compose with PostgreSQL 17 and FastAPI 0.110+. Database connections are strictly asynchronous utilizing `asyncpg`.
+3. **Environment Management:** Selected **`uv`** (by Astral) as the primary package manager. It handles dependency injection, environment isolation, and script execution (`uv run`) to maximize speed and parity.
+4. **Configuration:** Adopted `pydantic-settings` for 12-Factor App compliant environment variable management.
 
 ### Consequences
-* **Positive:** High cohesion and low coupling. Easy to extract microservices in the future. Strong type safety for configuration. Frictionless local development environment via `uv`.
-* **Negative:** Slight initial overhead in creating directories and mapping between layer boundaries (e.g., Domain Models vs. SQLAlchemy Models).
+* **Positive:** High cohesion and low coupling. Frictionless local development via `uv`.
+* **Negative:** Requires strict discipline in managing the `.venv` path in IDEs (Pylance).
 
 ---
 
@@ -30,14 +30,14 @@ NIDUS requires a scalable, maintainable backend architecture capable of handling
 **Status:** Accepted
 
 ### Context
-NIDUS is a multitenant SaaS. We must ensure absolute data privacy between tenants while maintaining high database performance and simplified operational overhead during schema migrations.
+NIDUS is a multitenant SaaS. We must ensure absolute data privacy between tenants while maintaining high database performance and simplified operational overhead.
 
 ### Decision
-Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL Row-Level Security (RLS)**. All tenant data will reside in the same tables, isolated strictly by a `tenant_id` column and enforced by database-level security policies.
+Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL Row-Level Security (RLS)**. Isolation is enforced at the database engine level via an `organization_id` column present in all tenant-scoped tables.
 
 ### Consequences
-* **Positive:** Highly scalable. Connection pooling (`asyncpg`) remains extremely efficient. Alembic schema migrations only need to be executed once per deployment across the entire platform.
-* **Negative:** Requires rigorous engineering discipline. Every table must have RLS enabled and policies meticulously defined to prevent catastrophic cross-tenant data leaks.
+* **Positive:** Highly scalable and efficient connection pooling. Simplified migrations via Alembic (one execution for all tenants).
+* **Negative:** Requires mandatory inheritance from `TenantMixin` for all scoped entities.
 
 ---
 
@@ -47,32 +47,185 @@ Adopted a **Shared Database, Shared Schema** architecture utilizing **PostgreSQL
 **Status:** Accepted
 
 ### Context
-PostgreSQL Row-Level Security (RLS) is bypassed by default by the table owner or superusers. To ensure multi-tenant isolation is strictly enforced during development and runtime, we need a mechanism that mirrors production security constraints.
+RLS is bypassed by superusers or table owners. To ensure isolation is strictly enforced during development and runtime, we need separate access levels.
 
 ### Decision
 Implemented a **Dual-Role Connection Strategy**:
-1. **`nidus_app_user` (Restricted):** Used by the FastAPI application and the Test Suite. This user has data CRUD permissions but is forced to obey RLS policies.
-2. **`nidus_admin` (Superuser):** Used exclusively by Alembic for schema migrations and by developers via pgAdmin for maintenance.
+1. **`DATABASE_URL` (App User):** Restricted privileges. Forced to obey RLS policies. Used by FastAPI.
+2. **`DATABASE_ADMIN_URL` (Admin User):** High privileges. Bypasses RLS. Used exclusively for Alembic migrations and maintenance.
 
 ### Consequences
-* **Positive:** Guaranteed Dev/Prod parity. Automated tests will fail if an RLS policy is misconfigured. Significant reduction in the risk of accidental "God Mode" data leaks in the application layer.
-* **Negative:** Slightly more complex `.env` configuration (two different connection strings).
+* **Positive:** Guaranteed Dev/Prod parity. Accidental "God Mode" leaks in the application layer are physically impossible at the database level.
 
 ---
 
-## ADR 004: Model Inheritance via Shared Mixins
+## ADR 004: Unified Domain Modeling via SQLModel Mixins
+
+**Date:** 2026-03-28
+**Status:** Accepted (Supersedes previous Shared Mixin drafts)
+
+### Context
+Initial attempts with separate SQLAlchemy Mixins in a `shared/` folder led to "split-brain" architecture and column assignment conflicts in SQLModel.
+
+### Decision
+1. **Consolidation:** Eliminated the `app/shared/` directory. All base logic now resides in `app/models/base.py`.
+2. **Mixin Strategy:** Implemented `UUIDMixin`, `TimestampMixin`, and `TenantMixin` using **SQLModel** classes.
+3. **Lazy Initialization:** Used `sa_column_kwargs` for server-side defaults (e.g., `gen_random_uuid()`) to prevent SQLAlchemy from sharing column instances across different tables.
+
+### Consequences
+* **Positive:** Zero-boilerplate models. Full Pydantic/SQLAlchemy compatibility in a single class definition.
+* **Negative:** None; significantly simplified the codebase and resolved Pylance type issues.
+
+---
+
+## ADR 005: Naming Conventions and Domain Standardization
 
 **Date:** 2026-03-28
 **Status:** Accepted
 
 ### Context
-As the system grows, multiple domain models (Users, Profiles, Memberships) will require common fields such as UUID primary keys and audit timestamps. Repeating this code violates DRY (Don't Repeat Yourself) and leads to inconsistent database schemas.
+Database naming often oscillates between plural and singular. Inconsistent naming leads to mapping complexity in ORMs like SQLModel.
 
 ### Decision
-Implemented a **Shared Mixin Strategy** in `app/shared/models.py`. 
-- `UUIDPrimaryKeyMixin`: Ensures a standard UUID v4 for all entities.
-- `TimestampMixin`: Implements `created_at` and `updated_at` with hybrid defaults (Python-side for session consistency and Server-side for raw SQL safety).
+1. **Singular Naming:** All database tables follow the singular convention (`user`, `organization`, `member`, `role`) to maintain a 1:1 mapping with Python class names.
+2. **Business Terminology:** Standardized on the term **`organization`** instead of `tenant` to better align with the NIDUS SaaS business domain.
+3. **Directory Structure:** Organized models by domain context: `app/models/identity/` and `app/models/organization/`.
 
 ### Consequences
-* **Positive:** Reduced boilerplate in infrastructure models. Centralized control over audit field logic. Improved type-safety for Pylance/IDE.
-* **Neutral:** Models now require multiple inheritance (e.g., `class Tenant(Base, Mixin1, Mixin2)`).
+* **Positive:** Intuitive imports and predictable table names. Clearer business logic terminology.
+
+---
+
+## ADR 006: Modular Architecture and API v1 Layering
+
+**Date:** 2026-03-28
+**Status:** Accepted
+
+### Context
+To ensure NIDUS Core remains scalable and allows multiple developers to collaborate without merge conflicts, the `main.py` file must be kept clean of business logic and extensive route definitions.
+
+### Decision
+1. **Routing Pattern:** Implemented `APIRouter` with a centralized orchestrator in `app/api/v1/api.py`.
+2. **Directory Structure:** Adopted a clear separation of concerns:
+   - `endpoints/`: Route controllers (Entry points).
+   - `schemas/`: Pydantic models for request/response validation.
+   - `services/`: Pure business logic (to be implemented next).
+3. **API Versioning:** All current logic moved under the `/api/v1` prefix to allow future iterations without breaking existing contracts.
+
+### Consequences
+* **Positive:** Highly organized code, easier unit testing, and allows for modular growth of the Core.
+* **Negative:** Slightly increases the initial number of files and the complexity of relative imports.
+
+---
+
+## ADR 007: Security and Identity (Bcrypt & JWT)
+
+**Date:** 2026-03-29
+**Status:** Accepted
+
+### Context
+Initial security relied on `passlib`, which caused compatibility issues with modern `bcrypt` versions (AttributeError) and had a 72-byte limitation that wasn't explicitly handled in our service layer.
+
+### Decision
+1. **Direct Hashing:** Abandoned `passlib` in favor of the direct `bcrypt` library for better performance and 2026 compatibility.
+2. **Deterministic Truncation:** Implemented explicit `.encode('utf-8')[:72]` truncation in `hash_password` and `verify_password` to prevent Bcrypt overflow errors while maintaining maximum security.
+3. **JWT Context:** Adopted JWT (HS256) for authentication, embedding both `sub` (User UUID) and `org_id` (Organization UUID) to facilitate stateless multitenancy.
+
+### Consequences
+* **Positive:** Robust, error-free hashing. JWTs now carry the "Tenant DNA" required for RLS.
+* **Negative:** Manual byte management in Python, but it provides full control over the hashing process.
+
+---
+
+## ADR 008: Atomic Tenant Onboarding Service
+
+**Date:** 2026-03-29
+**Status:** Accepted
+
+### Context
+Creating an organization involves multiple related entities (Org, Admin User, Role, Membership). Doing this in separate API calls is prone to partial failures and data inconsistency.
+
+### Decision
+Implemented a **`TenantService.create_onboarding`** method that:
+1. Executes all inserts within a single database transaction.
+2. Uses a "Get or Create" pattern for system roles (e.g., "Admin").
+3. Automatically establishes the initial `Member` link between the first user and the new organization.
+
+### Consequences
+* **Positive:** Guaranteed consistent initial state for every new client. Simplified frontend integration (one form, one request).
+
+---
+
+## ADR 009: RLS Bypass for Authentication & Onboarding
+
+**Date:** 2026-03-29
+**Status:** Accepted
+
+### Context
+PostgreSQL RLS blocks all rows if `app.current_organization_id` is not set. This creates a "chicken and egg" problem during Login and Onboarding, where the system needs to read data to identify the tenant.
+
+### Decision
+1. **Conditional Policy:** Updated RLS policies to allow `SELECT` operations on identity tables (`user`, `organization`, `member`, `role`) if the session variable is empty: 
+   `USING (organization_id::text = current_setting('app.current_organization_id', TRUE) OR current_setting('app.current_organization_id', TRUE) = '')`.
+2. **Explicit Session Reset:** Forced `SET LOCAL app.current_organization_id = ''` at the start of the `AuthService.authenticate` method to ensure a clean, global context for credentials verification.
+
+### Consequences
+* **Positive:** Fully autonomous login flow without manual database intervention.
+* **Negative:** Requires strict discipline to ensure session variables are correctly set immediately after authentication.
+
+---
+
+## ADR 010: API Boundary Standardization (Schemas & Generic Responses)
+
+**Date:** 2026-03-30
+**Status:** Accepted
+
+### Context
+Returning raw SQLAlchemy models or unformatted dictionaries directly to the client exposes internal database structures (like password hashes) and creates an inconsistent contract for frontend consumers.
+
+### Decision
+1. **Horizontal Slicing for Schemas:** Organized Pydantic models into `app/schemas/requests/` (strict validation for incoming data) and `app/schemas/responses/` (safe representation of outgoing data) rather than grouping them vertically by domain.
+2. **Generic Wrapper:** Implemented a `GenericResponse[T]` model to ensure all API endpoints return a predictable shape: `{ "status": "success", "message": null, "data": { ... } }`.
+3. **Explicit Schema Init:** Decided to keep all `__init__.py` files inside the schema directories explicitly empty to prevent circular imports and optimize memory loading.
+
+### Consequences
+* **Positive:** Strict data hiding, predictable API contracts for frontend developers, and clear boundaries between Domain Models (SQLModel) and DTOs (Data Transfer Objects).
+* **Negative:** Requires slightly more boilerplate (creating two schemas for almost every entity).
+
+---
+
+## ADR 011: Automated Testing Strategy for RLS Isolation
+
+**Date:** 2026-03-30
+**Status:** Accepted
+
+### Context
+Testing a multitenant system with PostgreSQL RLS requires verifying that restricted users cannot access other tenants' data. Using a superuser for tests would bypass RLS, leading to "false positive" results.
+
+### Decision
+1. **Dual-Engine Setup:** Implemented two distinct engines in `conftest.py`:
+   - `admin_engine`: Uses `nidus_admin` credentials. Bypasses RLS for `TRUNCATE` and `SEED` operations.
+   - `app_engine`: Uses `nidus_app_user` credentials. Strictly follows RLS policies. Used for all API integration tests.
+2. **Context Bypass for Verification:** To verify DB state during tests without using the admin engine, we utilize the `SET LOCAL app.current_organization_id = ''` bypass within an explicit `session.begin()` block.
+
+### Consequences
+* **Positive:** Guaranteed validation of security policies. Tests fail if RLS is misconfigured.
+* **Negative:** Slightly more complex `conftest.py` setup.
+
+---
+
+## ADR 012: Connection Management and Windows Stability (NullPool)
+
+**Date:** 2026-03-30
+**Status:** Accepted
+
+### Context
+Using `asyncpg` on Windows with the default SQLAlchemy connection pool leads to `RuntimeError: Event loop is closed` and `AttributeError: 'NoneType' object has no attribute 'send'`. This happens because the pool tries to maintain "zombie" connections after the `pytest-asyncio` loop is destroyed.
+
+### Decision
+1. **NullPool Implementation:** Adopted `sqlalchemy.pool.NullPool` for all test engines. This forces each session to open and close a real physical connection, preventing persistent sockets from being tied to closed event loops.
+2. **Session-Scoped Loop:** Forced a single `event_loop` fixture with "session" scope to maintain a stable heart-beat for all asynchronous tests.
+
+### Consequences
+* **Positive:** 100% stability on Windows environments. Zero "zombie" connection errors.
+* **Negative:** Minor performance overhead due to lack of connection pooling (negligible for the current test suite size).

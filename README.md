@@ -15,9 +15,9 @@ Nidus is an enterprise-ready monorepo designed to serve as the backbone for scal
 | Feature | Implementation |
 | :--- | :--- |
 | **Multitenancy** | Shared Schema with PostgreSQL RLS (Row-Level Security) |
-| **Database** | Async SQLAlchemy 2.0 + Alembic Migrations |
+| **Database** | Async SQLAlchemy 2.0 + NullPool for Windows Stability |
 | **Security** | Dual-Role Access (Restricted App User vs. God-Mode Admin) |
-| **Dependency Mgmt** | `uv` by Astral (Lightning-fast resolver) |
+| **Identity** | JWT-based stateless auth with injected Tenant DNA |
 | **Testing** | `pytest` + `pytest-asyncio` with 100% RLS verification |
 
 ---
@@ -29,23 +29,23 @@ Nidus is an enterprise-ready monorepo designed to serve as the backbone for scal
 | :--- | :--- | :--- |
 | **0** | **Infrastructure** | Monorepo setup, `uv` config, Docker Compose orchestration. |
 | **1** | **Data Engine** | `Tenant` model, RLS Policy implementation, Restricted user setup. |
+| **2** | **Identity & Multitenancy** | Atomic Onboarding, Bcrypt hashing, JWT integration, and `/me` validation. |
 
 ### Upcoming Phases
-- [ ] **Phase 2: Identity & Access Management**
-  - [ ] `User` and `TenantMember` domain models.
-  - [ ] Password hashing & JWT integration.
-  - [ ] RBAC (Role-Based Access Control) logic.
-- [ ] **Phase 3: Tenant Middleware**
-  - [ ] Automatic `tenant_id` injection from JWT to Postgres Session.
+- [ ] **Phase 3: RBAC & Permission Scopes**
+  - [ ] Granular Permissions system (Scopes).
+  - [ ] Dynamic Role assignment per Organization.
+  - [ ] Invitation system for new Members.
 - [ ] **Phase 4: Dashboard Shell**
   - [ ] Next.js 15 App Router foundation & UI Components.
+  - [ ] Shared Component Library (Tailwind + Shadcn).
 
 ---
 
 ## 🛠️ Quick Start
 
 1. **Environment Setup:**
-   ```bash
+    ```bash
     # 1. Sync dependencies and environment
     uv sync
 
@@ -56,7 +56,7 @@ Nidus is an enterprise-ready monorepo designed to serve as the backbone for scal
     alembic upgrade head
 
     # 4. Verify RLS and Security via test suite
-    pytest -v
+    uv run pytest
     ```
 
 ---

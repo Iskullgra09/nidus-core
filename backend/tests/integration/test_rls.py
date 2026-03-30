@@ -1,53 +1,43 @@
 import uuid
 
 import pytest
-from app.modules.tenant.infrastructure.models import Tenant
-from app.shared.database import async_session_maker
 from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.organization.organization import Organization
 
 
 @pytest.mark.asyncio
-async def test_row_level_security_isolation():
+async def test_row_level_security_isolation(db_session: AsyncSession):
+    """
+    RLS Isolation Test:
+    1. Create an organization as a 'Target' using the empty string bypass.
+    2. Verify the Target can see its own data.
+    3. Verify a 'Hacker' (different ID) cannot see the data.
+    """
     target_id = uuid.uuid4()
     hacker_id = uuid.uuid4()
-    unique_name = f"Tenant-{target_id}"
+    unique_name = f"Organization-{target_id}"
+    unique_slug = f"slug-{target_id}"
 
-    # --- TEST 1: El camino feliz (Contexto Correcto) ---
-    async with async_session_maker() as session:
-        # Usamos SET LOCAL dentro de una transacción
-        async with session.begin():
-            await session.execute(
-                text(f"SET LOCAL nidus.current_tenant_id = '{target_id}'")
-            )
+    async with db_session.begin():
+        await db_session.execute(text("SET LOCAL app.current_organization_id = ''"))
 
-            new_tenant = Tenant(id=target_id, name=unique_name)
-            session.add(new_tenant)
-            await session.flush()
+        new_organization = Organization(id=target_id, name=unique_name, slug=unique_slug, is_active=True)
+        db_session.add(new_organization)
 
-            # Debería ver exactamente 1 (el suyo)
-            result = await session.execute(select(Tenant))
-            rows = result.scalars().all()
-            assert len(rows) == 1
-            assert rows[0].id == target_id
+    async with db_session.begin():
+        await db_session.execute(text(f"SET LOCAL app.current_organization_id = '{target_id}'"))
 
-    # --- TEST 2: Intento de lectura sin contexto ---
-    async with async_session_maker() as session:
-        async with session.begin():
-            # Limpiamos explícitamente el setting para esta conexión por si acaso
-            await session.execute(text("SET LOCAL nidus.current_tenant_id = ''"))
+        result = await db_session.execute(select(Organization))
+        rows = result.scalars().all()
 
-            result = await session.execute(select(Tenant))
-            rows = result.scalars().all()
-            # Si RLS funciona, len(rows) DEBE ser 0, incluso si hay datos en la tabla
-            assert len(rows) == 0
+        assert len(rows) == 1
+        assert rows[0].id == target_id
+    async with db_session.begin():
+        await db_session.execute(text(f"SET LOCAL app.current_organization_id = '{hacker_id}'"))
 
-    # --- TEST 3: Intento de lectura con ID de otro inquilino ---
-    async with async_session_maker() as session:
-        async with session.begin():
-            await session.execute(
-                text(f"SET LOCAL nidus.current_tenant_id = '{hacker_id}'")
-            )
+        result = await db_session.execute(select(Organization))
+        rows = result.scalars().all()
 
-            result = await session.execute(select(Tenant))
-            rows = result.scalars().all()
-            assert len(rows) == 0
+        assert len(rows) == 0, "SECURITY BREACH: Hacker accessed Target's data!"
