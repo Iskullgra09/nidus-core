@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import NullPool
 from sqlmodel import col, select
 
-# 1. DB CONFIG
 ADMIN_DB_URL = "postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_test"
 APP_DB_URL = "postgresql+asyncpg://nidus_app_user:nidus_app_secret@localhost:5444/nidus_test"
 os.environ["DATABASE_URL"] = APP_DB_URL
@@ -18,9 +17,6 @@ os.environ["DATABASE_URL"] = APP_DB_URL
 from app.main import app
 from app.models.identity.role import Role
 
-# 2. ENGINES CON NULLPOOL
-# Esto obliga a cada consulta a abrir y CERRAR su propia conexión.
-# Adiós a los errores de "Event loop is closed".
 app_engine = create_async_engine(APP_DB_URL, poolclass=NullPool)
 app_session_maker = async_sessionmaker(app_engine, class_=AsyncSession, expire_on_commit=False)
 

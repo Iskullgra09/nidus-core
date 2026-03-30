@@ -1,4 +1,3 @@
-from backend.app.services.organization_service import OrganizationService
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +9,7 @@ from app.schemas.requests.tenant import TenantCreate
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.organization import OrganizationResponse
 from app.schemas.responses.tenant import TenantResponse
+from app.services.organization_service import OrganizationService
 
 router = APIRouter()
 
