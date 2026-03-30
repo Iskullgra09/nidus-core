@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import NullPool
 from sqlmodel import col, select
 
-ADMIN_DB_URL = "postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_test"
-APP_DB_URL = "postgresql+asyncpg://nidus_app_user:nidus_app_secret@localhost:5444/nidus_test"
+ADMIN_DB_URL = os.getenv("DATABASE_ADMIN_URL", "postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_test")
+APP_DB_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://nidus_app_user:nidus_app_secret@localhost:5444/nidus_test")
 os.environ["DATABASE_URL"] = APP_DB_URL
 
 from app.main import app
