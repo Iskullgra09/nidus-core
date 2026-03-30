@@ -172,3 +172,22 @@ PostgreSQL RLS blocks all rows if `app.current_organization_id` is not set. This
 ### Consequences
 * **Positive:** Fully autonomous login flow without manual database intervention.
 * **Negative:** Requires strict discipline to ensure session variables are correctly set immediately after authentication.
+
+---
+
+## ADR 010: API Boundary Standardization (Schemas & Generic Responses)
+
+**Date:** 2026-03-30
+**Status:** Accepted
+
+### Context
+Returning raw SQLAlchemy models or unformatted dictionaries directly to the client exposes internal database structures (like password hashes) and creates an inconsistent contract for frontend consumers.
+
+### Decision
+1. **Horizontal Slicing for Schemas:** Organized Pydantic models into `app/schemas/requests/` (strict validation for incoming data) and `app/schemas/responses/` (safe representation of outgoing data) rather than grouping them vertically by domain.
+2. **Generic Wrapper:** Implemented a `GenericResponse[T]` model to ensure all API endpoints return a predictable shape: `{ "status": "success", "message": null, "data": { ... } }`.
+3. **Explicit Schema Init:** Decided to keep all `__init__.py` files inside the schema directories explicitly empty to prevent circular imports and optimize memory loading.
+
+### Consequences
+* **Positive:** Strict data hiding, predictable API contracts for frontend developers, and clear boundaries between Domain Models (SQLModel) and DTOs (Data Transfer Objects).
+* **Negative:** Requires slightly more boilerplate (creating two schemas for almost every entity).

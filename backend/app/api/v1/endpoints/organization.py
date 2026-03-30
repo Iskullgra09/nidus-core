@@ -1,32 +1,51 @@
-from app.core.db import get_session, get_tenant_session
-from app.models import Organization
-from app.schemas.tenant import TenantCreate, TenantResponse
-from app.services.tenant_service import TenantService
-from fastapi import APIRouter, Depends, HTTPException, status
+from app.api.deps import get_current_tenant_session
+from app.core.db import get_session
+from app.models.organization.organization import Organization
+from app.schemas.requests.tenant import TenantCreate
+from app.schemas.responses.base import GenericResponse
+from app.schemas.responses.organization import OrganizationResponse
+from app.schemas.responses.tenant import TenantResponse
+from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.app.services.organization_service import OrganizationService
 
 router = APIRouter()
 
 
-@router.get("/my-organization")
-async def get_current_organization(session: AsyncSession = Depends(get_tenant_session)):
-    """Returns the organization matching the X-Organization-ID header."""
-    result = await session.execute(select(Organization))
-    organization = result.scalar_one_or_none()
-
-    if not organization:
-        raise HTTPException(status_code=404, detail="Organization not found")
-
-    return organization
-
-
 @router.post(
-    "/onboarding", response_model=TenantResponse, status_code=status.HTTP_201_CREATED
+    "/onboarding",
+    response_model=GenericResponse[TenantResponse],
+    status_code=status.HTTP_201_CREATED,
 )
 async def onboard_tenant(
-    data: TenantCreate,
-    session: AsyncSession = Depends(get_session),
+    data: TenantCreate, session: AsyncSession = Depends(get_session)
 ):
+    """
+    Creates a new organization, its first admin user, and assigns the correct roles.
+    """
+    org_id, user_id = await OrganizationService.create_onboarding(session, data)
 
-    return await TenantService.create_onboarding(session, data)
+    response_data = TenantResponse(
+        organization_id=org_id,
+        user_id=user_id,
+        message="Onboarding completed successfully",
+    )
+    return GenericResponse(data=response_data, message="Welcome to NIDUS!")
+
+
+@router.get("/me", response_model=GenericResponse[OrganizationResponse])
+async def get_my_organization(
+    session: AsyncSession = Depends(get_current_tenant_session),
+):
+    """
+    Returns the organization details for the currently authenticated user.
+    No need to pass IDs, the database RLS handles the isolation automatically.
+    """
+    stmt = select(Organization)
+    result = await session.execute(stmt)
+
+    org = result.scalar_one()
+
+    return GenericResponse(data=org)

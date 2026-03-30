@@ -1,5 +1,4 @@
 import re
-from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -21,11 +20,3 @@ class TenantCreate(BaseModel):
                 "Slug must contain only lowercase letters, numbers, and hyphens"
             )
         return v
-
-
-class TenantResponse(BaseModel):
-    """Schema for the successful onboarding response."""
-
-    organization_id: UUID
-    user_id: UUID
-    message: str = "Onboarding completed successfully"

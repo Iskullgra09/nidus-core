@@ -1,4 +1,3 @@
-# app/api/v1/endpoints/auth.py
 from app.core.db import get_session
 from app.services.auth_service import AuthService
 from fastapi import APIRouter, Depends

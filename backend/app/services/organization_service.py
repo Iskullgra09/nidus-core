@@ -1,25 +1,24 @@
-from typing import Any, cast  # Add 'cast' here
+from typing import cast
+from uuid import UUID
 
 from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.role import Role
-from app.schemas.tenant import TenantCreate
+from app.schemas.requests.tenant import TenantCreate
 from fastapi import HTTPException, status
 from sqlalchemy import ColumnElement, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class TenantService:
+class OrganizationService:
     @staticmethod
     async def create_onboarding(
         session: AsyncSession, data: TenantCreate
-    ) -> dict[str, Any]:
+    ) -> tuple[UUID, UUID]:
         """
         Orchestrates the Atomic Onboarding process.
         """
 
-        # 1. Check for slug availability
-        # Casting to ColumnElement tells Pylance: "Relax, this is for SQL"
         existing_org_stmt = select(Organization).where(
             cast(ColumnElement[bool], Organization.slug == data.organization_slug)
         )
@@ -32,7 +31,6 @@ class TenantService:
             )
 
         try:
-            # 2. Handle User Identity
             user_stmt = select(User).where(
                 cast(ColumnElement[bool], User.email == data.admin_email)
             )
@@ -48,14 +46,12 @@ class TenantService:
                 session.add(user)
                 await session.flush()
 
-            # 3. Create the Organization
             new_org = Organization(
                 name=data.organization_name, slug=data.organization_slug, is_active=True
             )
             session.add(new_org)
             await session.flush()
 
-            # 4. Create or Get the 'Admin' Role
             role_stmt = select(Role).where(
                 cast(ColumnElement[bool], Role.name == "Admin")
             )
@@ -69,7 +65,6 @@ class TenantService:
                 session.add(admin_role)
                 await session.flush()
 
-            # 5. Create the Membership (The Final Bridge)
             new_member = Member(
                 user_id=user.id,
                 organization_id=new_org.id,
@@ -79,11 +74,7 @@ class TenantService:
 
             await session.commit()
 
-            return {
-                "organization_id": new_org.id,
-                "user_id": user.id,
-                "message": "Onboarding completed successfully",
-            }
+            return new_org.id, user.id
 
         except Exception as e:
             await session.rollback()

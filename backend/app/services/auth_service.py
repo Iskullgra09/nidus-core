@@ -1,4 +1,3 @@
-# app/services/auth_service.py
 from typing import cast
 
 from app.core.security import create_access_token, verify_password
@@ -18,19 +17,16 @@ class AuthService:
         await session.execute(text("SET LOCAL app.current_organization_id = ''"))
         await session.execute(text("SET LOCAL app.current_user_id = ''"))
 
-        # 1. Buscar al usuario
         stmt = select(User).where(cast(ColumnElement[bool], User.email == email))
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
 
-        # LOG DE CONSOLA (Para que veas en tu terminal qué está pasando)
         if not user:
             print(f"DEBUG: Usuario con email {email} NO ENCONTRADO en la DB")
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         print(f"DEBUG: Usuario encontrado: {user.email}. Hasheando para comparar...")
 
-        # 2. Verificar contraseña
         if not verify_password(password, user.hashed_password):
             print("DEBUG: La contraseña NO coincide con el hash en la DB")
             raise HTTPException(status_code=401, detail="Invalid email or password")
