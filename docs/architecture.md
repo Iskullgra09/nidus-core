@@ -232,19 +232,40 @@ Using `asyncpg` on Windows with the default SQLAlchemy connection pool leads to 
 
 ---
 
-## ADR 013: Soft Delete and Temporal Auditing
+## ADR 013: Soft Delete and Partial Unique Constraints (Refined)
 
-**Date:** 2026-03-30
-**Status:** Proposed
+**Date:** 2026-03-31
+**Status:** Accepted 
 
 ### Context
-Permanent data deletion (Hard Delete) carries high risk in a multitenant SaaS. Business requirements often necessitate data recovery or historical auditing of member activities.
+Standard unique constraints in PostgreSQL prevent the re-use of identifiers (emails, slugs) even after a record is logically deleted. In a SaaS, a tenant should be able to re-register a deleted slug without data conflicts.
 
 ### Decision
-1. **Mechanism:** Implement `SoftDeleteMixin` providing a `deleted_at: datetime` column.
-2. **Filtering:** Adopt an **Explicit Filtering** strategy within the Service layer (`where(Model.deleted_at == None)`).
-3. **Uniqueness:** Use PostgreSQL **Partial Indexes** to ensure unique constraints (like email) only apply to non-deleted records.
+1. **Mechanism:** Implemented `SoftDeleteMixin` using `sa_type` to ensure SQLModel correctly clones the column instance across multiple tables.
+2. **Uniqueness:** Replaced Python-level `unique=True` with **PostgreSQL Partial Unique Indexes**.
+   - Example: `CREATE UNIQUE INDEX ... WHERE (deleted_at IS NULL)`.
+3. **Efficiency:** Adopted the `select_active` helper pattern to standardize `is_(None)` filtering across all business services.
 
 ### Consequences
-* **Positive:** Accidental data loss prevention. High-fidelity audit trails.
-* **Negative:** Slightly increased database size over time. Requires index maintenance.
+* **Positive:** Enables account re-registration. Optimized index performance as deleted rows are excluded from the unique constraint.
+* **Negative:** Requires manual index definitions in Alembic migrations as autogenerate does not natively detect `postgresql_where`.
+
+---
+
+## ADR 014: Hierarchical Scopes and JSONB Authorization
+
+**Date:** 2026-03-31
+**Status:** Accepted
+
+### Context
+Static roles (Admin/User) are insufficient for complex SaaS requirements. We need a granular permission system that supports hierarchical scoping and high-performance checks without expensive table joins.
+
+### Decision
+1. **Scope Format:** Adopted a hierarchical string pattern: `module:resource:action` (e.g., `identity:user:write`).
+2. **Storage:** Scopes are stored as a **JSONB array** directly in the `role` table.
+3. **Indexing:** Implemented a **GIN Index** with `jsonb_path_ops` on the `scopes` column to enable sub-millisecond containment queries (`@>`).
+4. **Inheritance:** "Write" implies "Read" logic is handled at the Application Layer (FastAPI Dependencies) to maintain a simple and predictable database schema.
+
+### Consequences
+* **Positive:** Lightning-fast authorization checks (zero joins). Extremely flexible custom roles per tenant.
+* **Negative:** Requires strict adherence to the `NidusScope` Enum to prevent string drift in the database.
