@@ -229,3 +229,22 @@ Using `asyncpg` on Windows with the default SQLAlchemy connection pool leads to 
 ### Consequences
 * **Positive:** 100% stability on Windows environments. Zero "zombie" connection errors.
 * **Negative:** Minor performance overhead due to lack of connection pooling (negligible for the current test suite size).
+
+---
+
+## ADR 013: Soft Delete and Temporal Auditing
+
+**Date:** 2026-03-30
+**Status:** Proposed
+
+### Context
+Permanent data deletion (Hard Delete) carries high risk in a multitenant SaaS. Business requirements often necessitate data recovery or historical auditing of member activities.
+
+### Decision
+1. **Mechanism:** Implement `SoftDeleteMixin` providing a `deleted_at: datetime` column.
+2. **Filtering:** Adopt an **Explicit Filtering** strategy within the Service layer (`where(Model.deleted_at == None)`).
+3. **Uniqueness:** Use PostgreSQL **Partial Indexes** to ensure unique constraints (like email) only apply to non-deleted records.
+
+### Consequences
+* **Positive:** Accidental data loss prevention. High-fidelity audit trails.
+* **Negative:** Slightly increased database size over time. Requires index maintenance.
