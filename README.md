@@ -15,35 +15,33 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | Feature | Implementation |
 | :--- | :--- |
 | **Multitenancy** | Shared Schema + PostgreSQL RLS (Row-Level Security) |
-| **Persistence** | Async SQLModel + PostgreSQL 18 AIO Ready |
-| **Isolation** | Dual-Role Security (Restricted Session User vs. Migration Admin) |
-| **Optimization** | Partial Unique Indexes + GIN Indexed JSONB Scopes |
-| **Auditing** | Global Soft-Delete Infrastructure & Temporal Mixins |
+| **Identity & IAM** | Hierarchical Scopes + GIN Indexed JSONB Authorization |
+| **Persistence** | Async SQLModel + UUIDv7 Sequential Indexing |
+| **Security** | Dual-Role Database Strategy (Migration Admin vs. App User) |
+| **Reliability** | Global Soft-Delete & Timezone-Aware Temporal Mixins |
 
 ---
 
-## Project Roadmap (Updated 2026)
+## Project Roadmap (Updated Q2 2026)
 
-### Completed Milestones
+### ✅ Completed Milestones
 | Phase | Goal | Achievements |
 | :--- | :--- | :--- |
-| **0** | **Infrastructure** | `uv` orchestration, Dockerized PostgreSQL 17, Monorepo logic. |
-| **1** | **Data Engine** | RLS Policies, Consolidated Baseline Migration, Security Setup. |
-| **2** | **Identity** | JWT stateless auth, BCrypt hashing, Atomic Tenant Onboarding. |
-| **3.1**| **Infrastructure Evolution** | Soft-Delete Mixins, Partial Indexes, SQLModel Refactor. |
+| **1** | **Data Engine** | RLS Policies, Baseline Migration, Security Setup. |
+| **2** | **Identity Base** | JWT stateless auth, BCrypt, Atomic Tenant Onboarding. |
+| **3** | **RBAC & Governance** | Hierarchical Scopes, GIN-indexed Role Scopes, UUIDv7. |
+| **3.1**| **Identity Flow A** | Secure Invitation System (Part A: Creation & RLS). |
 
-### Upcoming Phases
-#### **Phase 3: RBAC & Governance** (Current)
-- [x] **Hierarchical Scopes:** Implementation of `module:resource:action` namespacing.
-- [x] **JSONB Scopes:** High-performance GIN-indexed permissions in `Role` table.
-- [ ] **Permission Guard:** FastAPI Dependency-based scope verification.
-- [ ] **Member Invitations:** Secure join-token flow for new tenant users.
+### 🛠️ In Progress / Upcoming
+#### **Phase 3.5: Reliability & Globalization** (Current)
+- [ ] **Global Error Handling:** Unified Exception Handlers for consistent API contracts.
+- [ ] **i18n Engine:** Multi-language support (Accept-Language) for business errors.
+- [ ] **Invitation Flow B:** Public token validation & secure account activation.
 
 #### **Phase 4: Frontend & Scaling** (Next.js 15)
-- [ ] **Edge Resolution:** Tenant detection via Next.js Middleware & Edge Config.
-- [ ] **PPR Dashboards:** Partial Prerendering for ultra-fast tenant shells.
-- [ ] **Connection Pooling:** PgBouncer integration for 100k+ tenant scaling.
-- [ ] **UUIDv7 Migration:** Transition to sequential UUIDs for index locality.
+- [ ] **Edge Resolution:** Tenant detection via Next.js Middleware.
+- [ ] **PPR Dashboards:** Partial Prerendering for tenant shells.
+- [ ] **Connection Pooling:** PgBouncer integration for 100k+ scaling.
 
 ---
 
