@@ -1,69 +1,51 @@
-# === Python Standard ===
+# === Nidus Core Master GitIgnore (2026) ===
+
+# --- Security & Secrets (CRITICAL) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.cer
+
+# --- Python / Backend ---
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Environments
-.env
-.venv
-env/
+.venv/
 venv/
-ENV/
-
-# Pytest / Coverage
-.cache
+env/
 .pytest_cache/
 .coverage
 htmlcov/
-
-# mypy / ruff
 .mypy_cache/
 .ruff_cache/
+.python-version
+*.db
+*.sqlite3
 
-# === Node.js / Next.js (Frontend) ===
+# --- Node.js / Frontend (Next.js) ---
 node_modules/
 .next/
 out/
 build/
-.next-boost/
-.next-disk-cache/
+.eslintcache
+.turbo/
+.vercel/
+npm-debug.log*
+yarn-error.log*
 
-# Next.js local env files (IMPORTANT)
-.env*.local
-.env.development
-.env.production
-.env.test
-
-# === Docker & Infrastructure ===
+# --- Docker & Infrastructure ---
 .docker-data/
 *.log
 docker-compose.override.yml
 
-# === OS Files (General) ===
+# --- OS & Editors ---
 .DS_Store
 Thumbs.db
-*.swp
-
-# === Editors ===
 .vscode/
 .idea/
 .cursorignore
+*.swp

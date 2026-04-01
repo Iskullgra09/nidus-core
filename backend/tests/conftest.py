@@ -9,8 +9,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-ADMIN_DB_URL = os.getenv("DATABASE_ADMIN_URL", "postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_test")
-APP_DB_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://nidus_app_user:nidus_app_secret@localhost:5444/nidus_test")
+from app.core.config import settings
+
+ADMIN_DB_URL = settings.TEST_DATABASE_URL
+APP_DB_URL = settings.DATABASE_URL
 os.environ["DATABASE_URL"] = APP_DB_URL
 
 from app.main import app
