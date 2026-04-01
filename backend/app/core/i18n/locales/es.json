@@ -1,0 +1,38 @@
+{
+    "common": {
+        "internal_error": "Ocurrió un error inesperado. Inténtelo de nuevo más tarde.",
+        "validation_error": "La validación de los datos falló.",
+        "unauthorized": "No estás autorizado para realizar esta acción.",
+        "forbidden": "Acceso denegado."
+    },
+    "onboarding": {
+        "success": "La organización y la cuenta de administrador se crearon correctamente.",
+        "org_already_exists": "Ya existe una organización con este identificador.",
+        "admin_already_exists": "Ya existe un usuario registrado con este correo electrónico."
+    },
+    "auth": {
+        "login_success": "Inicio de sesión exitoso.",
+        "invalid_credentials": "Correo electrónico o contraseña incorrectos.",
+        "token_expired": "La sesión ha expirado. Inicie sesión de nuevo."
+    },
+    "identity": {
+        "user_not_found": "No se encontró el perfil del usuario.",
+        "update_success": "Perfil actualizado correctamente.",
+        "password_mismatch": "La contraseña actual proporcionada es incorrecta."
+    },
+    "invitation": {
+        "sent": "Invitación enviada correctamente a {email}.",
+        "not_found": "El token de invitación no es válido o no existe.",
+        "expired": "Esta invitación ha expirado.",
+        "already_accepted": "Esta invitación ya ha sido utilizada.",
+        "revoked": "La invitación ha sido revocada por el administrador."
+    },
+    "success": {
+        "onboarding_complete": "Onboarding completado exitosamente.",
+        "system_operational": "El sistema está operativo.",
+        "invitation_sent": "Invitación enviada exitosamente."
+    },
+    "validation": {
+        "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."
+    }
+}

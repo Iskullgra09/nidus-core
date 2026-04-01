@@ -8,4 +8,3 @@ class TenantResponse(BaseModel):
 
     organization_id: UUID
     user_id: UUID
-    message: str = "Onboarding completed successfully"

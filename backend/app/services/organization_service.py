@@ -1,10 +1,10 @@
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions.base import ConflictError
 from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.role import Role
@@ -32,51 +32,40 @@ class OrganizationService:
         existing_org_result = await session.execute(existing_org_stmt)
 
         if existing_org_result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Organization slug already registered and active.",
+            raise ConflictError(message_key="onboarding.org_already_exists", slug=data.organization_slug)
+
+        user_stmt = select(User).where(UserModel.email == data.admin_email, UserModel.deleted_at.is_(None))
+        user_result = await session.execute(user_stmt)
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            user = User(
+                email=data.admin_email,
+                hashed_password=hash_password(data.password),
+                is_active=True,
             )
-
-        try:
-            user_stmt = select(User).where(UserModel.email == data.admin_email, UserModel.deleted_at.is_(None))
-            user_result = await session.execute(user_stmt)
-            user = user_result.scalar_one_or_none()
-
-            if not user:
-                user = User(
-                    email=data.admin_email,
-                    hashed_password=hash_password(data.password),
-                    is_active=True,
-                )
-                session.add(user)
-                await session.flush()
-
-            new_org = Organization(name=data.organization_name, slug=data.organization_slug, is_active=True)
-            session.add(new_org)
+            session.add(user)
             await session.flush()
 
-            admin_role = Role(
-                name="Admin",
-                description="Full access to the organization",
-                organization_id=new_org.id,
-                scopes=["*"],
-            )
-            session.add(admin_role)
-            await session.flush()
+        new_org = Organization(name=data.organization_name, slug=data.organization_slug, is_active=True)
+        session.add(new_org)
+        await session.flush()
 
-            new_member = Member(
-                user_id=user.id,
-                organization_id=new_org.id,
-                role_id=admin_role.id,
-            )
-            session.add(new_member)
+        admin_role = Role(
+            name="Admin",
+            description="Full access to the organization",
+            organization_id=new_org.id,
+            scopes=["*"],
+        )
+        session.add(admin_role)
+        await session.flush()
 
-            await session.commit()
-            return new_org.id, user.id
+        new_member = Member(
+            user_id=user.id,
+            organization_id=new_org.id,
+            role_id=admin_role.id,
+        )
+        session.add(new_member)
 
-        except Exception as e:
-            await session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Onboarding failed: {str(e)}",
-            )
+        await session.commit()
+        return new_org.id, user.id

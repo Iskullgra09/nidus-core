@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ScopeGuard, get_current_tenant_session
+from app.api.deps import ScopeGuard, get_current_tenant_session, get_language
 from app.core.db import get_session
+from app.core.i18n.service import i18n
 from app.models.identity.scopes import NidusScope
 from app.models.organization.organization import Organization
 from app.schemas.requests.tenant import TenantCreate
@@ -20,7 +21,7 @@ router = APIRouter()
     response_model=GenericResponse[TenantResponse],
     status_code=status.HTTP_201_CREATED,
 )
-async def onboard_tenant(data: TenantCreate, session: AsyncSession = Depends(get_session)):
+async def onboard_tenant(data: TenantCreate, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
     """
     Creates a new organization, its first admin user, and assigns the correct roles.
     """
@@ -29,9 +30,11 @@ async def onboard_tenant(data: TenantCreate, session: AsyncSession = Depends(get
     response_data = TenantResponse(
         organization_id=org_id,
         user_id=user_id,
-        message="Onboarding completed successfully",
     )
-    return GenericResponse(data=response_data, message="Welcome to NIDUS!")
+
+    success_msg = i18n.t("success.onboarding_complete", lang=lang)
+
+    return GenericResponse(data=response_data, message=success_msg)
 
 
 @router.get("/me", response_model=GenericResponse[OrganizationResponse], dependencies=[Depends(ScopeGuard(NidusScope.ORG_READ))])

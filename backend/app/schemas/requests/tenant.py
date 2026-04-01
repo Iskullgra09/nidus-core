@@ -16,7 +16,5 @@ class TenantCreate(BaseModel):
     @classmethod
     def slug_format(cls, v: str) -> str:
         if not re.match(r"^[a-z0-9-]+$", v):
-            raise ValueError(
-                "Slug must contain only lowercase letters, numbers, and hyphens"
-            )
+            raise ValueError("validation.invalid_slug_format")
         return v

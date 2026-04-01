@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_language
 from app.core.db import get_session
+from app.core.i18n.service import i18n
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.health import HealthResponse
 
@@ -12,7 +14,10 @@ router = APIRouter()
 
 
 @router.get("/", response_model=GenericResponse[HealthResponse])
-async def health_check(session: AsyncSession = Depends(get_session)):
+async def health_check(
+    session: AsyncSession = Depends(get_session),
+    lang: str = Depends(get_language),
+):
     """
     Sanity check for the API and Database connection.
     """
@@ -31,4 +36,5 @@ async def health_check(session: AsyncSession = Depends(get_session)):
         database_status=db_status,
     )
 
-    return GenericResponse(data=health_data, message="System is operational")
+    success_msg = i18n.t("success.system_operational", lang=lang)
+    return GenericResponse(data=health_data, message=success_msg)

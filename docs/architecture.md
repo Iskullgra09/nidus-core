@@ -348,3 +348,22 @@ Raw API errors (tracebacks or unformatted JSON) degrade user experience and expo
 ### Consequences
 * **Positive:** Clean business logic (services only throw exceptions, they don't format responses). Native support for English and Spanish from Day 1.
 * **Negative:** None; significantly increases the professional feel and reliability of the API.
+
+---
+
+## ADR 019: Comprehensive Localization (i18n) and Full-Spectrum Error Handling
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Building upon ADR 018, we needed to ensure that *every* interaction with the API, including Pydantic validation errors (HTTP 422) and unexpected runtime crashes (HTTP 500), adheres strictly to the localized `GenericResponse` format. Furthermore, Pydantic schemas must remain static and isolated from language context.
+
+### Decision
+1. **Dynamic Success Messages:** Introduced a `get_language` dependency to dynamically inject translated success messages into routers without polluting the static Pydantic schema definitions.
+2. **Validation Interceptor:** Registered a global handler for `RequestValidationError` to parse Pydantic's internal error tree, extract the failed fields, and translate the error messages using the `I18nService`.
+3. **The "Catch-All" Shield:** Implemented `global_500_exception_handler` to intercept raw Python `Exception` instances. This acts as the final safety net, guaranteeing that unexpected crashes result in a localized JSON response rather than exposing stack traces.
+
+### Consequences
+* **Positive:** 100% guarantee of API contract stability. The frontend will never receive a raw string or unformatted HTML error. Schema definitions remain clean and strictly typed.
+* **Negative:** Requires disciplined maintenance of the `locales/` JSON files, as Pydantic validation overrides must map exactly to dictionary keys.

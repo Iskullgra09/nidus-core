@@ -1,0 +1,38 @@
+{
+    "common": {
+        "internal_error": "An unexpected error occurred. Please try again later.",
+        "validation_error": "Input validation failed.",
+        "unauthorized": "You are not authorized to perform this action.",
+        "forbidden": "Access denied."
+    },
+    "onboarding": {
+        "success": "Organization and administrator account created successfully.",
+        "org_already_exists": "An organization with this slug already exists.",
+        "admin_already_exists": "A user with this email is already registered."
+    },
+    "auth": {
+        "login_success": "Login successful.",
+        "invalid_credentials": "Invalid email or password.",
+        "token_expired": "Session expired. Please log in again."
+    },
+    "identity": {
+        "user_not_found": "User profile not found.",
+        "update_success": "Profile updated successfully.",
+        "password_mismatch": "The current password provided is incorrect."
+    },
+    "invitation": {
+        "sent": "Invitation sent successfully to {email}.",
+        "not_found": "Invitation token is invalid or does not exist.",
+        "expired": "This invitation has expired.",
+        "already_accepted": "This invitation has already been used.",
+        "revoked": "Invitation has been revoked by the administrator."
+    },
+    "success": {
+        "onboarding_complete": "Onboarding completed successfully.",
+        "system_operational": "System is operational.",
+        "invitation_sent": "Invitation sent successfully."
+    },
+    "validation": {
+        "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."
+    }
+}

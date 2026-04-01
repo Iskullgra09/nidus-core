@@ -1,10 +1,10 @@
 from typing import Any, List, cast
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions.base import ConflictError
 from app.models.identity.invitation import Invitation
 from app.models.identity.member import Member
 
@@ -25,7 +25,7 @@ class IdentityService:
         )
         result = await session.execute(stmt)
         if result.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="An invitation is already pending for this email.")
+            raise ConflictError(message_key="invitation.already_pending", email=email)
 
         new_invite = Invitation(email=email, role_id=role_id, organization_id=org_id)
         session.add(new_invite)

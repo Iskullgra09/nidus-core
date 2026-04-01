@@ -1,9 +1,9 @@
 from typing import Any, cast
 
-from fastapi import HTTPException, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions.base import AuthenticationError, NidusException
 from app.core.security import create_access_token, verify_password
 from app.models import Member, User
 
@@ -29,7 +29,7 @@ class AuthService:
         user = result.scalar_one_or_none()
 
         if not user or not verify_password(password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+            raise AuthenticationError(message_key="auth.invalid_credentials")
 
         member_stmt = select(Member).where(
             MemberModel.user_id == user.id,
@@ -39,11 +39,7 @@ class AuthService:
         membership = member_result.scalar_one_or_none()
 
         if not membership:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="User has no active assigned organization",
-            )
+            raise NidusException(code="NO_ACTIVE_ORG", message_key="common.forbidden", status_code=403)
 
         token_data = {"sub": str(user.id), "org_id": str(membership.organization_id)}
-
         return create_access_token(token_data)
