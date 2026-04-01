@@ -2,7 +2,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import ColumnElement, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
@@ -16,10 +16,14 @@ class OrganizationService:
     async def create_onboarding(session: AsyncSession, data: TenantCreate) -> tuple[UUID, UUID]:
         """
         Orchestrates the Atomic Onboarding process with Soft Delete awareness.
+        Uses Dynamic Model Aliases for clean Pylance-strict SQLAlchemy queries.
         """
+        OrgModel = cast(Any, Organization)
+        UserModel = cast(Any, User)
+
         existing_org_stmt = select(Organization).where(
-            cast(ColumnElement[bool], Organization.slug == data.organization_slug),
-            cast(ColumnElement[bool], cast(Any, Organization.deleted_at).is_(None)),
+            OrgModel.slug == data.organization_slug,
+            OrgModel.deleted_at.is_(None),
         )
         existing_org_result = await session.execute(existing_org_stmt)
 
@@ -30,9 +34,7 @@ class OrganizationService:
             )
 
         try:
-            user_stmt = select(User).where(
-                cast(ColumnElement[bool], User.email == data.admin_email), cast(ColumnElement[bool], cast(Any, User.deleted_at).is_(None))
-            )
+            user_stmt = select(User).where(UserModel.email == data.admin_email, UserModel.deleted_at.is_(None))
             user_result = await session.execute(user_stmt)
             user = user_result.scalar_one_or_none()
 
@@ -49,16 +51,14 @@ class OrganizationService:
             session.add(new_org)
             await session.flush()
 
-            role_stmt = select(Role).where(
-                cast(ColumnElement[bool], Role.name == "Admin"), cast(ColumnElement[bool], cast(Any, Role.deleted_at).is_(None))
+            admin_role = Role(
+                name="Admin",
+                description="Full access to the organization",
+                organization_id=new_org.id,
+                scopes=["*"],
             )
-            role_result = await session.execute(role_stmt)
-            admin_role = role_result.scalar_one_or_none()
-
-            if not admin_role:
-                admin_role = Role(name="Admin", description="Full access to the organization")
-                session.add(admin_role)
-                await session.flush()
+            session.add(admin_role)
+            await session.flush()
 
             new_member = Member(
                 user_id=user.id,
