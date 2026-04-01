@@ -288,3 +288,23 @@ Using standard completely random UUIDs (UUIDv4) as primary keys in a rapidly gro
 ### Consequences
 * **Positive:** UUIDv7 includes a 48-bit timestamp prefix, making the IDs naturally sortable by creation time. This guarantees sequential inserts, keeping PostgreSQL B-Tree indexes perfectly compact, cache-friendly, and lightning-fast at any scale.
 * **Negative:** Requires an external library (`uuid6`) as Python 3.12 does not support UUIDv7 natively in its standard library.
+
+---
+
+## ADR 016: Secure Invitation Workflow
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Adding users directly to an organization requires sensitive data (passwords) and bypasses consent. We need a way to invite external users while maintaining RLS isolation and preventing "ghost" users from polluting the database.
+
+### Decision
+1. **Model:** Created an `Invitation` table to store pending invites with a unique, high-entropy token (`uuid4().hex`).
+2. **Security:** The table is protected by PostgreSQL RLS using the `organization_id` context.
+3. **Validity:** Implemented a 7-day expiration policy and a state-check (`is_accepted`) to prevent token reuse.
+4. **Endpoint Protection:** Used `ScopeGuard(NidusScope.MEMBER_WRITE)` to ensure only authorized actors can issue invites.
+
+### Consequences
+* **Positive:** Decouples user creation from organization linkage. Ensures auditability of who invited whom.
+* **Negative:** Adds a step to the onboarding flow (Invite -> Accept -> Register).

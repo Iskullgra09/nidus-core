@@ -2,7 +2,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
@@ -18,6 +18,10 @@ class OrganizationService:
         Orchestrates the Atomic Onboarding process with Soft Delete awareness.
         Uses Dynamic Model Aliases for clean Pylance-strict SQLAlchemy queries.
         """
+
+        await session.execute(text("SET LOCAL app.current_organization_id = ''"))
+        await session.execute(text("SET LOCAL app.current_user_id = ''"))
+
         OrgModel = cast(Any, Organization)
         UserModel = cast(Any, User)
 

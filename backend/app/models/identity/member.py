@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from app.models.organization.organization import Organization
 
 
-class Member(UUIDMixin, TimestampMixin, TenantMixin, SoftDeleteMixin, table=True):
+class Member(UUIDMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, table=True):
     user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
     role_id: uuid.UUID = Field(foreign_key="role.id", index=True)
 
