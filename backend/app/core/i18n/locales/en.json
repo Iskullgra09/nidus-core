@@ -38,5 +38,9 @@
         "revoked": "Invitation has been revoked by the administrator.",
         "existing_user_wrong_password": "An account with this email already exists. Please enter your correct existing password to accept the invitation.",
         "user_already_in_org": "This user is already a member of the organization."
+    },
+    "email": {
+        "invitation_subject": "You've been invited to join a Nidus workspace",
+        "invitation_body": "Hello! You have been invited to join an organization. Please click the following secure link to accept your invitation and set up your account:\n\n{link}\n\nThis link will expire in 7 days."
     }
 }

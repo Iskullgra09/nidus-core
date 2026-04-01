@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from pydantic import (
+    AnyHttpUrl,
     computed_field,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,6 +31,8 @@ class Settings(BaseSettings):
 
     ADMIN_USER: str
     ADMIN_PASSWORD: str
+
+    FRONTEND_URL: AnyHttpUrl
 
     @computed_field
     @property

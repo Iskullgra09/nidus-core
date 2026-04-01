@@ -38,5 +38,9 @@
         "revoked": "La invitación ha sido revocada por el administrador.",
         "existing_user_wrong_password": "Ya existe una cuenta con este correo. Por favor, ingresa tu contraseña actual correcta para aceptar la invitación.",
         "user_already_in_org": "Este usuario ya es miembro de la organización."
+    },
+    "email": {
+        "invitation_subject": "Has sido invitado a un espacio de Nidus",
+        "invitation_body": "¡Hola! Has sido invitado a unirte a una organización. Haz clic en el siguiente enlace seguro para aceptar tu invitación y configurar tu cuenta:\n\n{link}\n\nEste enlace expirará en 7 días."
     }
 }
