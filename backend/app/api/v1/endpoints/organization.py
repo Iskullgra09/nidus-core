@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_tenant_session
+from app.api.deps import ScopeGuard, get_current_tenant_session
 from app.core.db import get_session
+from app.models.identity.scopes import NidusScope
 from app.models.organization.organization import Organization
 from app.schemas.requests.tenant import TenantCreate
 from app.schemas.responses.base import GenericResponse
@@ -33,7 +34,7 @@ async def onboard_tenant(data: TenantCreate, session: AsyncSession = Depends(get
     return GenericResponse(data=response_data, message="Welcome to NIDUS!")
 
 
-@router.get("/me", response_model=GenericResponse[OrganizationResponse])
+@router.get("/me", response_model=GenericResponse[OrganizationResponse], dependencies=[Depends(ScopeGuard(NidusScope.ORG_READ))])
 async def get_my_organization(
     session: AsyncSession = Depends(get_current_tenant_session),
 ):

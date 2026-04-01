@@ -1,10 +1,20 @@
 import uuid
+from typing import TYPE_CHECKING, Optional
 
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
-from app.models.base import TenantMixin, TimestampMixin, UUIDMixin
+from app.models.base import SoftDeleteMixin, TenantMixin, TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.models.identity.role import Role
+    from app.models.identity.user import User
+    from app.models.organization.organization import Organization
 
 
-class Member(UUIDMixin, TimestampMixin, TenantMixin, table=True):
-    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
-    role_id: uuid.UUID = Field(foreign_key="role.id")
+class Member(UUIDMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, table=True):
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    role_id: uuid.UUID = Field(foreign_key="role.id", index=True)
+
+    user: Optional["User"] = Relationship(back_populates="memberships")
+    role: Optional["Role"] = Relationship(back_populates="members")
+    organization: Optional["Organization"] = Relationship(back_populates="members")

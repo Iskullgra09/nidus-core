@@ -229,3 +229,82 @@ Using `asyncpg` on Windows with the default SQLAlchemy connection pool leads to 
 ### Consequences
 * **Positive:** 100% stability on Windows environments. Zero "zombie" connection errors.
 * **Negative:** Minor performance overhead due to lack of connection pooling (negligible for the current test suite size).
+
+---
+
+## ADR 013: Soft Delete and Partial Unique Constraints (Refined)
+
+**Date:** 2026-03-31
+**Status:** Accepted 
+
+### Context
+Standard unique constraints in PostgreSQL prevent the re-use of identifiers (emails, slugs) even after a record is logically deleted. In a SaaS, a tenant should be able to re-register a deleted slug without data conflicts.
+
+### Decision
+1. **Mechanism:** Implemented `SoftDeleteMixin` using `sa_type` to ensure SQLModel correctly clones the column instance across multiple tables.
+2. **Uniqueness:** Replaced Python-level `unique=True` with **PostgreSQL Partial Unique Indexes**.
+   - Example: `CREATE UNIQUE INDEX ... WHERE (deleted_at IS NULL)`.
+3. **Efficiency:** Adopted the `select_active` helper pattern to standardize `is_(None)` filtering across all business services.
+
+### Consequences
+* **Positive:** Enables account re-registration. Optimized index performance as deleted rows are excluded from the unique constraint.
+* **Negative:** Requires manual index definitions in Alembic migrations as autogenerate does not natively detect `postgresql_where`.
+
+---
+
+## ADR 014: Hierarchical Scopes and JSONB Authorization
+
+**Date:** 2026-03-31
+**Status:** Accepted
+
+### Context
+Static roles (Admin/User) are insufficient for complex SaaS requirements. We need a granular permission system that supports hierarchical scoping and high-performance checks without expensive table joins.
+
+### Decision
+1. **Scope Format:** Adopted a hierarchical string pattern: `module:resource:action` (e.g., `identity:user:write`).
+2. **Storage:** Scopes are stored as a **JSONB array** directly in the `role` table.
+3. **Indexing:** Implemented a **GIN Index** with `jsonb_path_ops` on the `scopes` column to enable sub-millisecond containment queries (`@>`).
+4. **Inheritance:** "Write" implies "Read" logic is handled at the Application Layer (FastAPI Dependencies) to maintain a simple and predictable database schema.
+
+### Consequences
+* **Positive:** Lightning-fast authorization checks (zero joins). Extremely flexible custom roles per tenant.
+* **Negative:** Requires strict adherence to the `NidusScope` Enum to prevent string drift in the database.
+
+---
+
+## ADR 015: Sequential UUID Generation (UUIDv7)
+
+**Date:** 2026-03-31
+**Status:** Accepted
+
+### Context
+Using standard completely random UUIDs (UUIDv4) as primary keys in a rapidly growing multitenant database causes severe performance degradation over time. Because the IDs are not sequential, every new insert forces PostgreSQL to write to random locations within its B-Tree indexes, leading to massive page fragmentation, high disk I/O, and bloated memory usage.
+
+### Decision
+1. **Standard Adoption:** Adopted **UUIDv7** (RFC 9562) as the standard primary key format for all new database records.
+2. **Implementation:** Integrated the `uuid6` Python library to generate UUIDv7.
+3. **Architecture:** Wrapped the generation in a strictly typed adapter function (`generate_uuid7()`) injected into the `default_factory` of the `UUIDMixin`.
+
+### Consequences
+* **Positive:** UUIDv7 includes a 48-bit timestamp prefix, making the IDs naturally sortable by creation time. This guarantees sequential inserts, keeping PostgreSQL B-Tree indexes perfectly compact, cache-friendly, and lightning-fast at any scale.
+* **Negative:** Requires an external library (`uuid6`) as Python 3.12 does not support UUIDv7 natively in its standard library.
+
+---
+
+## ADR 016: Secure Invitation Workflow
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Adding users directly to an organization requires sensitive data (passwords) and bypasses consent. We need a way to invite external users while maintaining RLS isolation and preventing "ghost" users from polluting the database.
+
+### Decision
+1. **Model:** Created an `Invitation` table to store pending invites with a unique, high-entropy token (`uuid4().hex`).
+2. **Security:** The table is protected by PostgreSQL RLS using the `organization_id` context.
+3. **Validity:** Implemented a 7-day expiration policy and a state-check (`is_accepted`) to prevent token reuse.
+4. **Endpoint Protection:** Used `ScopeGuard(NidusScope.MEMBER_WRITE)` to ensure only authorized actors can issue invites.
+
+### Consequences
+* **Positive:** Decouples user creation from organization linkage. Ensures auditability of who invited whom.
+* **Negative:** Adds a step to the onboarding flow (Invite -> Accept -> Register).

@@ -1,39 +1,44 @@
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
+
+from fastapi import HTTPException, status
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.role import Role
 from app.schemas.requests.tenant import TenantCreate
-from fastapi import HTTPException, status
-from sqlalchemy import ColumnElement, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class OrganizationService:
     @staticmethod
-    async def create_onboarding(
-        session: AsyncSession, data: TenantCreate
-    ) -> tuple[UUID, UUID]:
+    async def create_onboarding(session: AsyncSession, data: TenantCreate) -> tuple[UUID, UUID]:
         """
-        Orchestrates the Atomic Onboarding process.
+        Orchestrates the Atomic Onboarding process with Soft Delete awareness.
+        Uses Dynamic Model Aliases for clean Pylance-strict SQLAlchemy queries.
         """
 
+        await session.execute(text("SET LOCAL app.current_organization_id = ''"))
+        await session.execute(text("SET LOCAL app.current_user_id = ''"))
+
+        OrgModel = cast(Any, Organization)
+        UserModel = cast(Any, User)
+
         existing_org_stmt = select(Organization).where(
-            cast(ColumnElement[bool], Organization.slug == data.organization_slug)
+            OrgModel.slug == data.organization_slug,
+            OrgModel.deleted_at.is_(None),
         )
         existing_org_result = await session.execute(existing_org_stmt)
 
         if existing_org_result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Organization slug already registered.",
+                detail="Organization slug already registered and active.",
             )
 
         try:
-            user_stmt = select(User).where(
-                cast(ColumnElement[bool], User.email == data.admin_email)
-            )
+            user_stmt = select(User).where(UserModel.email == data.admin_email, UserModel.deleted_at.is_(None))
             user_result = await session.execute(user_stmt)
             user = user_result.scalar_one_or_none()
 
@@ -46,24 +51,18 @@ class OrganizationService:
                 session.add(user)
                 await session.flush()
 
-            new_org = Organization(
-                name=data.organization_name, slug=data.organization_slug, is_active=True
-            )
+            new_org = Organization(name=data.organization_name, slug=data.organization_slug, is_active=True)
             session.add(new_org)
             await session.flush()
 
-            role_stmt = select(Role).where(
-                cast(ColumnElement[bool], Role.name == "Admin")
+            admin_role = Role(
+                name="Admin",
+                description="Full access to the organization",
+                organization_id=new_org.id,
+                scopes=["*"],
             )
-            role_result = await session.execute(role_stmt)
-            admin_role = role_result.scalar_one_or_none()
-
-            if not admin_role:
-                admin_role = Role(
-                    name="Admin", description="Full access to the organization"
-                )
-                session.add(admin_role)
-                await session.flush()
+            session.add(admin_role)
+            await session.flush()
 
             new_member = Member(
                 user_id=user.id,
@@ -73,7 +72,6 @@ class OrganizationService:
             session.add(new_member)
 
             await session.commit()
-
             return new_org.id, user.id
 
         except Exception as e:

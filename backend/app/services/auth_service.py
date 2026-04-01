@@ -1,38 +1,39 @@
-from typing import cast
+from typing import Any, cast
+
+from fastapi import HTTPException, status
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, verify_password
 from app.models import Member, User
-from fastapi import HTTPException, status
-from sqlalchemy import ColumnElement, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class AuthService:
     @staticmethod
     async def authenticate(session: AsyncSession, email: str, password: str) -> str:
         """
-        Validates credentials and returns a JWT with organization context.
+        Validates credentials against active users and returns a JWT.
+        Standardized with Dynamic Model Aliases for clean SQLAlchemy syntax.
         """
-
         await session.execute(text("SET LOCAL app.current_organization_id = ''"))
         await session.execute(text("SET LOCAL app.current_user_id = ''"))
 
-        stmt = select(User).where(cast(ColumnElement[bool], User.email == email))
+        UserModel = cast(Any, User)
+        MemberModel = cast(Any, Member)
+
+        stmt = select(User).where(
+            UserModel.email == email,
+            UserModel.deleted_at.is_(None),
+        )
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
 
-        if not user:
-            print(f"DEBUG: Usuario con email {email} NO ENCONTRADO en la DB")
-            raise HTTPException(status_code=401, detail="Invalid email or password")
-
-        print(f"DEBUG: Usuario encontrado: {user.email}. Hasheando para comparar...")
-
-        if not verify_password(password, user.hashed_password):
-            print("DEBUG: La contraseña NO coincide con el hash en la DB")
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+        if not user or not verify_password(password, user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
         member_stmt = select(Member).where(
-            cast(ColumnElement[bool], Member.user_id == user.id)
+            MemberModel.user_id == user.id,
+            MemberModel.deleted_at.is_(None),
         )
         member_result = await session.execute(member_stmt)
         membership = member_result.scalar_one_or_none()
@@ -40,7 +41,7 @@ class AuthService:
         if not membership:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="User has no assigned organization",
+                detail="User has no active assigned organization",
             )
 
         token_data = {"sub": str(user.id), "org_id": str(membership.organization_id)}

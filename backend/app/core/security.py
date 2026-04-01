@@ -1,28 +1,10 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Any
-from uuid import UUID
+from typing import Any
 
 import bcrypt
 import jwt
-from fastapi import Header
-from passlib.context import CryptContext
 
 from app.core.config import settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-async def get_organization_id(
-    x_organization_id: Annotated[
-        UUID, Header(description="The unique ID of the organization")
-    ],
-) -> UUID:
-    """
-    Dependency that extracts the organization_id from the 'X-Organization-ID' header.
-    If the header is missing or is not a valid UUID, FastAPI will return a 422 error.
-    """
-
-    return x_organization_id
 
 
 def hash_password(password: str) -> str:
@@ -46,13 +28,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict[str, Any]) -> str:
     """Creates a signed JWT token with organization context."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
