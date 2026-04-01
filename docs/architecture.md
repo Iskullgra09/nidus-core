@@ -204,7 +204,7 @@ Testing a multitenant system with PostgreSQL RLS requires verifying that restric
 
 ### Decision
 1. **Dual-Engine Setup:** Implemented two distinct engines in `conftest.py`:
-   - `admin_engine`: Uses `nidus_admin` credentials. Bypasses RLS for `TRUNCATE` and `SEED` operations.
+   - `admin_engine`: Uses `nidus_admin` credentials pointing to the **`nidus_core_test`** database. Bypasses RLS for `TRUNCATE` and `SEED` operations.
    - `app_engine`: Uses `nidus_app_user` credentials. Strictly follows RLS policies. Used for all API integration tests.
 2. **Context Bypass for Verification:** To verify DB state during tests without using the admin engine, we utilize the `SET LOCAL app.current_organization_id = ''` bypass within an explicit `session.begin()` block.
 
@@ -308,3 +308,43 @@ Adding users directly to an organization requires sensitive data (passwords) and
 ### Consequences
 * **Positive:** Decouples user creation from organization linkage. Ensures auditability of who invited whom.
 * **Negative:** Adds a step to the onboarding flow (Invite -> Accept -> Register).
+
+---
+
+## ADR 017: Centralized Monorepo Environment & Secret Management
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+In a monorepo structure, managing secrets across multiple services (Backend, Database, and future Frontend) often leads to "secret drift" and accidental hardcoding. Our initial setup had `.env` files duplicated or misplaced, making Docker synchronization and Pydantic validation brittle.
+
+### Decision
+1. **Single Source of Truth:** Moved the primary `.env` file to the **Project Root** (`nidus-core/`).
+2. **Dynamic Path Resolution:** Implemented a robust `BASE_DIR` calculation in `app/core/config.py` using `Path(__file__).resolve()` to ensure the backend can locate the root `.env` regardless of where the process is started.
+3. **Pydantic Validation:** Standardized on `pydantic-settings` to enforce that all critical infrastructure variables (Passwords, Secret Keys, DB Names) are present and correctly typed at startup. The application will now fail-fast if a secret is missing.
+4. **Naming Convention:** Standardized the test database name as **`nidus_core_test`** to maintain consistency with the production/dev `nidus_core` naming scheme.
+
+### Consequences
+* **Positive:** Absolute protection against hardcoded secrets. Simplified Docker Compose orchestration as it now reads from the same file as the Python application.
+* **Negative:** Requires developers to maintain the `.env` at the root, which is slightly counter-intuitive for pure backend tasks but essential for the monorepo's health.
+
+---
+
+## ADR 018: Reliability Layer (Global Exceptions & i18n)
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Raw API errors (tracebacks or unformatted JSON) degrade user experience and expose internal system logic. Furthermore, as a global SaaS, Nidus must support multiple languages without hardcoding strings in the business logic layer.
+
+### Decision
+1. **Generic Exception Hierarchy:** Implemented a base `NidusException` class that carries a machine-readable `code` and a translation `message_key`.
+2. **Singleton I18n Service:** Developed a lightweight `I18nService` that loads JSON dictionaries from `app/core/i18n/locales/` into memory at startup.
+3. **Middleware-driven Localization:** Adopted the `Accept-Language` HTTP header as the primary driver for selecting the response language.
+4. **Global Handler:** Registered a centralized FastAPI exception handler to intercept `NidusException` and return a standardized `GenericResponse` shape.
+
+### Consequences
+* **Positive:** Clean business logic (services only throw exceptions, they don't format responses). Native support for English and Spanish from Day 1.
+* **Negative:** None; significantly increases the professional feel and reliability of the API.
