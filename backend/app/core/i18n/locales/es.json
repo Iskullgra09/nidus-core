@@ -10,7 +10,8 @@
         "onboarding_complete": "Onboarding completado exitosamente.",
         "system_operational": "El sistema está operativo.",
         "invitation_sent": "Invitación enviada exitosamente.",
-        "invitation_accepted": "Invitación aceptada exitosamente. Bienvenido a la organización."
+        "invitation_accepted": "Invitación aceptada exitosamente. Bienvenido a la organización.",
+        "members_retrieved": "Miembros de la organización obtenidos exitosamente."
     },
     "validation": {
         "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."

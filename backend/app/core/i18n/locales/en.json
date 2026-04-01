@@ -10,7 +10,8 @@
         "onboarding_complete": "Onboarding completed successfully.",
         "system_operational": "System is operational.",
         "invitation_sent": "Invitation sent successfully.",
-        "invitation_accepted": "Invitation accepted successfully. Welcome to the organization."
+        "invitation_accepted": "Invitation accepted successfully. Welcome to the organization.",
+        "members_retrieved": "Organization members retrieved successfully."
     },
     "validation": {
         "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."

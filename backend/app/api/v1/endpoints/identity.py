@@ -5,13 +5,15 @@ from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
+from app.api.pagination import CursorParams
 from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError
 from app.core.i18n.service import i18n
 from app.models.identity.scopes import NidusScope
 from app.schemas.requests.identity import InvitationAccept, InvitationCreate
 from app.schemas.responses.base import GenericResponse
-from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse
+from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse, MemberResponse
+from app.schemas.responses.pagination import CursorPage
 from app.services.email_service import EmailService
 from app.services.identity_service import IdentityService
 
@@ -64,3 +66,24 @@ async def accept_invitation(
     response_data = InvitationAcceptedResponse(user_id=user_id, organization_id=org_id, role_id=role_id)
 
     return GenericResponse(data=response_data, message=success_msg)
+
+
+@router.get(
+    "/members",
+    response_model=GenericResponse[CursorPage[MemberResponse]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ORG_READ))],
+)
+async def list_members(
+    pagination: CursorParams = Depends(),
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    """
+    Retrieves a paginated list of organization members.
+    """
+    page_data = await IdentityService.get_organization_members(session, pagination)
+
+    success_msg = i18n.t("success.members_retrieved", lang=lang)
+
+    return GenericResponse(data=page_data, message=success_msg)

@@ -1,14 +1,18 @@
 from datetime import datetime, timezone
-from typing import Any, List, cast
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from app.api.pagination import CursorParams
 from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError
+from app.core.pagination import paginate_with_cursor
 from app.core.security import hash_password, verify_password
 from app.models import Member, User
 from app.models.identity.invitation import Invitation
+from app.schemas.responses.pagination import CursorPage, PageInfo
 
 
 class IdentityService:
@@ -36,14 +40,22 @@ class IdentityService:
         return new_invite
 
     @staticmethod
-    async def get_organization_members(session: AsyncSession) -> List[Member]:
+    async def get_organization_members(session: AsyncSession, pagination: CursorParams) -> CursorPage[Member]:
         """
-        Lists all members of the current organization.
+        Lists all members of the current organization using cursor pagination.
         Thanks to selectinload/Relationship, we get the email and role name easily.
         """
-        stmt = select(Member).where(cast(Any, Member).deleted_at.is_(None))
-        result = await session.execute(stmt)
-        return list(result.scalars().all())
+        MemberModel = cast(Any, Member)
+
+        stmt = (
+            select(Member).where(MemberModel.deleted_at.is_(None)).options(selectinload(MemberModel.user), selectinload(MemberModel.role))
+        )
+
+        items, end_cursor, has_next = await paginate_with_cursor(
+            session=session, stmt=stmt, model_class=MemberModel, limit=pagination.limit, cursor=pagination.cursor
+        )
+
+        return CursorPage(items=list(items), page_info=PageInfo(has_next_page=has_next, end_cursor=end_cursor))
 
     @staticmethod
     async def accept_invitation(session: AsyncSession, token: str, password: str) -> tuple[UUID, UUID, UUID]:
