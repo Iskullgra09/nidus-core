@@ -3,16 +3,21 @@ from datetime import datetime, timezone
 from typing import Any, Optional, cast
 
 import sqlalchemy as sa
-from sqlalchemy import func, text
+from sqlalchemy import func
 from sqlmodel import Field, SQLModel
+from uuid6 import uuid7
+
+
+def generate_uuid7() -> uuid.UUID:
+    return uuid7()
 
 
 class UUIDMixin(SQLModel):
     id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
+        default_factory=generate_uuid7,
         primary_key=True,
         index=True,
-        sa_column_kwargs={"server_default": text("gen_random_uuid()")},
+        nullable=False,
     )
 
 

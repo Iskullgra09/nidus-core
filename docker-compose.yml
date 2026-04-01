@@ -13,6 +13,7 @@ services:
       - "5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/db-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-nidus_admin} -d ${DB_NAME:-nidus_core}" ]
       interval: 5s
@@ -26,11 +27,11 @@ services:
     container_name: nidus-fastapi
     command: fastapi dev app/main.py --host 0.0.0.0 --port 8000
     volumes:
-      - ./app:/workspace/app # Mount local code for hot-reload
+      - ./app:/workspace/app
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-nidus_admin}:${DB_PASSWORD:-nidus_local_secret}@db:5432/${DB_NAME:-nidus_core}
+      - DATABASE_URL=postgresql+asyncpg://nidus_app_user:nidus_app_secret@db:5432/nidus_core
       - ENVIRONMENT=development
     depends_on:
       db:

@@ -269,3 +269,22 @@ Static roles (Admin/User) are insufficient for complex SaaS requirements. We nee
 ### Consequences
 * **Positive:** Lightning-fast authorization checks (zero joins). Extremely flexible custom roles per tenant.
 * **Negative:** Requires strict adherence to the `NidusScope` Enum to prevent string drift in the database.
+
+---
+
+## ADR 015: Sequential UUID Generation (UUIDv7)
+
+**Date:** 2026-03-31
+**Status:** Accepted
+
+### Context
+Using standard completely random UUIDs (UUIDv4) as primary keys in a rapidly growing multitenant database causes severe performance degradation over time. Because the IDs are not sequential, every new insert forces PostgreSQL to write to random locations within its B-Tree indexes, leading to massive page fragmentation, high disk I/O, and bloated memory usage.
+
+### Decision
+1. **Standard Adoption:** Adopted **UUIDv7** (RFC 9562) as the standard primary key format for all new database records.
+2. **Implementation:** Integrated the `uuid6` Python library to generate UUIDv7.
+3. **Architecture:** Wrapped the generation in a strictly typed adapter function (`generate_uuid7()`) injected into the `default_factory` of the `UUIDMixin`.
+
+### Consequences
+* **Positive:** UUIDv7 includes a 48-bit timestamp prefix, making the IDs naturally sortable by creation time. This guarantees sequential inserts, keeping PostgreSQL B-Tree indexes perfectly compact, cache-friendly, and lightning-fast at any scale.
+* **Negative:** Requires an external library (`uuid6`) as Python 3.12 does not support UUIDv7 natively in its standard library.
