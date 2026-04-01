@@ -3,10 +3,19 @@
         "internal_error": "An unexpected error occurred. Please try again later.",
         "validation_error": "Input validation failed.",
         "unauthorized": "You are not authorized to perform this action.",
-        "forbidden": "Access denied."
+        "forbidden": "Access denied.",
+        "not_found": "The requested resource was not found."
+    },
+    "success": {
+        "onboarding_complete": "Onboarding completed successfully.",
+        "system_operational": "System is operational.",
+        "invitation_sent": "Invitation sent successfully.",
+        "invitation_accepted": "Invitation accepted successfully. Welcome to the organization."
+    },
+    "validation": {
+        "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."
     },
     "onboarding": {
-        "success": "Organization and administrator account created successfully.",
         "org_already_exists": "An organization with this slug already exists.",
         "admin_already_exists": "A user with this email is already registered."
     },
@@ -25,14 +34,9 @@
         "not_found": "Invitation token is invalid or does not exist.",
         "expired": "This invitation has expired.",
         "already_accepted": "This invitation has already been used.",
-        "revoked": "Invitation has been revoked by the administrator."
-    },
-    "success": {
-        "onboarding_complete": "Onboarding completed successfully.",
-        "system_operational": "System is operational.",
-        "invitation_sent": "Invitation sent successfully."
-    },
-    "validation": {
-        "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."
+        "already_pending": "An invitation is already pending for this email.",
+        "revoked": "Invitation has been revoked by the administrator.",
+        "existing_user_wrong_password": "An account with this email already exists. Please enter your correct existing password to accept the invitation.",
+        "user_already_in_org": "This user is already a member of the organization."
     }
 }

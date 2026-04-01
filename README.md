@@ -24,19 +24,23 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 
 ## Project Roadmap (Updated Q2 2026)
 
-### ✅ Completed Milestones
+### Completed Milestones
 | Phase | Goal | Achievements |
 | :--- | :--- | :--- |
 | **1** | **Data Engine** | RLS Policies, Baseline Migration, Security Setup. |
 | **2** | **Identity Base** | JWT stateless auth, BCrypt, Atomic Tenant Onboarding. |
 | **3** | **RBAC & Governance** | Hierarchical Scopes, GIN-indexed Role Scopes, UUIDv7. |
 | **3.1**| **Identity Flow A** | Secure Invitation System (Part A: Creation & RLS). |
+| **3.5**| **Reliability Layer**| Global Exception Handlers, 100% i18n support, Pydantic 422 Translation, Centralized Secrets. |
 
-### 🛠️ In Progress / Upcoming
-#### **Phase 3.5: Reliability & Globalization** (Current)
-- [ ] **Global Error Handling:** Unified Exception Handlers for consistent API contracts.
-- [ ] **i18n Engine:** Multi-language support (Accept-Language) for business errors.
-- [ ] **Invitation Flow B:** Public token validation & secure account activation.
+### In Progress / Upcoming
+#### **Phase 3.6: Lifecycle & Communication** (Current)
+- [ ] **Invitation Flow B:** Public token validation, password assignment, and secure account activation.
+- [ ] **Background Tasks:** Non-blocking email dispatch mock for invitations.
+
+#### **Phase 3.7: The Data Standard**
+- [ ] **Cursor/Offset Pagination:** Standardized `PageResponse[T]` for all collections.
+- [ ] **Dynamic Filtering:** Reusable SQLAlchemy filters for list endpoints.
 
 #### **Phase 4: Frontend & Scaling** (Next.js 15)
 - [ ] **Edge Resolution:** Tenant detection via Next.js Middleware.

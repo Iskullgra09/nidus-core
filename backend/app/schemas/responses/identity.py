@@ -18,3 +18,11 @@ class MemberResponse(BaseModel):
     email: EmailStr
     role_name: str
     joined_at: datetime
+
+
+class InvitationAcceptedResponse(BaseModel):
+    """Returned when a user successfully consumes an invitation token."""
+
+    user_id: UUID
+    organization_id: UUID
+    role_id: UUID
