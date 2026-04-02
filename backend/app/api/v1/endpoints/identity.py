@@ -10,6 +10,7 @@ from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError
 from app.core.i18n.service import i18n
 from app.models.identity.scopes import NidusScope
+from app.schemas.filters.identity import MemberFilter
 from app.schemas.requests.identity import InvitationAccept, InvitationCreate
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse, MemberResponse
@@ -33,9 +34,7 @@ async def invite_member(
     payload: dict[str, Any] = Depends(get_jwt_payload),
     lang: str = Depends(get_language),
 ):
-    """
-    Invites a new member to the organization.
-    """
+    """Invites a new member to the organization."""
     raw_org_id = payload.get("org_id")
     if not raw_org_id:
         raise AuthenticationError(message_key="common.forbidden")
@@ -62,7 +61,6 @@ async def accept_invitation(
     user_id, org_id, role_id = await IdentityService.accept_invitation(session=session, token=data.token, password=data.password)
 
     success_msg = i18n.t("success.invitation_accepted", lang=lang)
-
     response_data = InvitationAcceptedResponse(user_id=user_id, organization_id=org_id, role_id=role_id)
 
     return GenericResponse(data=response_data, message=success_msg)
@@ -76,14 +74,14 @@ async def accept_invitation(
 )
 async def list_members(
     pagination: CursorParams = Depends(),
+    filters: MemberFilter = Depends(),
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
     """
-    Retrieves a paginated list of organization members.
+    Retrieves a paginated and filtered list of organization members.
     """
-    page_data = await IdentityService.get_organization_members(session, pagination)
+    page_data = await IdentityService.get_organization_members(session, pagination, filters)
 
     success_msg = i18n.t("success.members_retrieved", lang=lang)
-
     return GenericResponse(data=page_data, message=success_msg)

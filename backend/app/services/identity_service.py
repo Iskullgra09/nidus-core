@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any, cast
+from typing import Any, Tuple, cast
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import Select, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -12,6 +12,8 @@ from app.core.pagination import paginate_with_cursor
 from app.core.security import hash_password, verify_password
 from app.models import Member, User
 from app.models.identity.invitation import Invitation
+from app.models.identity.role import Role
+from app.schemas.filters.identity import MemberFilter
 from app.schemas.responses.pagination import CursorPage, PageInfo
 
 
@@ -40,16 +42,24 @@ class IdentityService:
         return new_invite
 
     @staticmethod
-    async def get_organization_members(session: AsyncSession, pagination: CursorParams) -> CursorPage[Member]:
-        """
-        Lists all members of the current organization using cursor pagination.
-        Thanks to selectinload/Relationship, we get the email and role name easily.
-        """
+    async def get_organization_members(
+        session: AsyncSession,
+        pagination: CursorParams,
+        filters: MemberFilter,
+    ) -> CursorPage[Member]:
         MemberModel = cast(Any, Member)
+        RoleModel = cast(Any, Role)
+        UserModel = cast(Any, User)
 
-        stmt = (
-            select(Member).where(MemberModel.deleted_at.is_(None)).options(selectinload(MemberModel.user), selectinload(MemberModel.role))
-        )
+        stmt: Select[Tuple[Member]] = select(Member).join(MemberModel.user).join(MemberModel.role).where(MemberModel.deleted_at.is_(None))
+
+        if filters.email__contains:
+            stmt = stmt.where(UserModel.email.ilike(f"%{filters.email__contains}%"))
+
+        if filters.role_name:
+            stmt = stmt.where(RoleModel.name == filters.role_name)
+
+        stmt = stmt.options(selectinload(MemberModel.user), selectinload(MemberModel.role))
 
         items, end_cursor, has_next = await paginate_with_cursor(
             session=session, stmt=stmt, model_class=MemberModel, limit=pagination.limit, cursor=pagination.cursor
@@ -68,6 +78,7 @@ class IdentityService:
 
         InvitationModel = cast(Any, Invitation)
         UserModel = cast(Any, User)
+        MemberModel = cast(Any, Member)
 
         stmt = select(Invitation).where(InvitationModel.token == token, InvitationModel.deleted_at.is_(None))
         result = await session.execute(stmt)
@@ -95,9 +106,9 @@ class IdentityService:
                 raise AuthenticationError(message_key="invitation.existing_user_wrong_password")
 
             member_stmt = select(Member).where(
-                cast(Any, Member).user_id == user.id,
-                cast(Any, Member).organization_id == invitation.organization_id,
-                cast(Any, Member).deleted_at.is_(None),
+                MemberModel.user_id == user.id,
+                MemberModel.organization_id == invitation.organization_id,
+                MemberModel.deleted_at.is_(None),
             )
             existing_member = (await session.execute(member_stmt)).scalar_one_or_none()
 

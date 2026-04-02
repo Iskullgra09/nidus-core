@@ -422,3 +422,22 @@ API responses often need data from related tables (e.g., showing a Member's emai
 ### Consequences
 * **Positive:** Maximum performance (Pydantic's core extracts data in Rust). Cleaner schemas that only define "what" to return, not "how" to find it.
 * **Negative:** Slightly increases the size of the Model classes.
+
+---
+
+## ADR 023: Dynamic Filtering Engine via Pydantic Schemas
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Hardcoding filters for every API endpoint (e.g., `if email: query = query.where(...)`) creates massive code duplication and maintenance debt. We need a standardized way to translate URL query parameters into secure SQLAlchemy expressions.
+
+### Decision
+1. **Abstraction:** Implemented a generic `FilterEngine[T]` that introspects Pydantic schemas to build SQL queries.
+2. **Naming Convention:** Adopted the `field__operator` pattern (e.g., `email__contains`) to allow complex lookups like partial matches, case-insensitive searches, and range comparisons.
+3. **Strict Validation:** Only fields explicitly defined in a `FilterSchema` (Pydantic) are permitted as query parameters, preventing unauthorized data exposure or malicious SQL injection through introspection.
+
+### Consequences
+* **Positive:** High code reuse. Adding a new filter to any endpoint now takes seconds. Frontend developers gain powerful querying capabilities without backend changes.
+* **Negative:** Complex multi-table filters (Joins) still require manual implementation in the Service layer to maintain optimal performance and type safety.
