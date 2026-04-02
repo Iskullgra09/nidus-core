@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class InvitationResponse(BaseModel):
@@ -18,6 +18,8 @@ class MemberResponse(BaseModel):
     email: EmailStr
     role_name: str
     joined_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InvitationAcceptedResponse(BaseModel):

@@ -53,6 +53,12 @@ def upgrade() -> None:
             "is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False
         ),
         sa.Column(
+            "is_superuser",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+        ),
+        sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("now()"),
@@ -206,9 +212,18 @@ def upgrade() -> None:
         CREATE POLICY organization_isolation_policy ON organization AS PERMISSIVE FOR ALL TO nidus_app_user
         USING (id::text = current_setting('app.current_organization_id', TRUE) OR current_setting('app.current_organization_id', TRUE) = '');
     """)
+
     op.execute("""
         CREATE POLICY user_isolation_policy ON "user" AS PERMISSIVE FOR ALL TO nidus_app_user
-        USING (id::text = current_setting('app.current_user_id', TRUE) OR current_setting('app.current_organization_id', TRUE) = '');
+        USING (
+            id::text = current_setting('app.current_user_id', TRUE) 
+            OR current_setting('app.current_organization_id', TRUE) = ''
+            OR EXISTS (
+                SELECT 1 FROM member 
+                WHERE member.user_id = "user".id 
+                AND member.organization_id::text = current_setting('app.current_organization_id', TRUE)
+            )
+        );
     """)
 
     for t_table in ["member", "role", "invitation"]:
@@ -219,6 +234,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("DROP POLICY IF EXISTS organization_isolation_policy ON organization;")
+    op.execute('DROP POLICY IF EXISTS user_isolation_policy ON "user";')
+    for t_table in ["member", "role", "invitation"]:
+        op.execute(f"DROP POLICY IF EXISTS {t_table}_isolation_policy ON {t_table};")
+    op.execute("DROP INDEX IF EXISTS ix_role_scopes_gin;")
     op.drop_table("invitation")
     op.drop_table("member")
     op.drop_table("role")

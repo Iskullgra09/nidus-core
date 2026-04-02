@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, Dict, cast
 from uuid import UUID
 
 from sqlalchemy import select, text
@@ -8,6 +8,7 @@ from app.core.exceptions.base import ConflictError
 from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.role import Role
+from app.models.identity.scopes import DEFAULT_ROLES_CONFIG, DefaultRole
 from app.schemas.requests.tenant import TenantCreate
 
 
@@ -15,8 +16,9 @@ class OrganizationService:
     @staticmethod
     async def create_onboarding(session: AsyncSession, data: TenantCreate) -> tuple[UUID, UUID]:
         """
-        Orchestrates the Atomic Onboarding process with Soft Delete awareness.
-        Uses Dynamic Model Aliases for clean Pylance-strict SQLAlchemy queries.
+        Orchestrates the Atomic Onboarding process.
+        Creates the organization and bootstraps the default role starter pack.
+        Returns a tuple containing (organization_id, user_id).
         """
 
         await session.execute(text("SET LOCAL app.current_organization_id = ''"))
@@ -43,6 +45,7 @@ class OrganizationService:
                 email=data.admin_email,
                 hashed_password=hash_password(data.password),
                 is_active=True,
+                is_superuser=False,
             )
             session.add(user)
             await session.flush()
@@ -51,21 +54,27 @@ class OrganizationService:
         session.add(new_org)
         await session.flush()
 
-        admin_role = Role(
-            name="Admin",
-            description="Full access to the organization",
-            organization_id=new_org.id,
-            scopes=["*"],
-        )
-        session.add(admin_role)
+        created_roles: Dict[str, Role] = {}
+
+        for role_name, config in DEFAULT_ROLES_CONFIG.items():
+            new_role = Role(
+                name=role_name,
+                description=config["description"],
+                organization_id=new_org.id,
+                scopes=config["scopes"],
+            )
+            session.add(new_role)
+            created_roles[role_name] = new_role
+
         await session.flush()
 
         new_member = Member(
             user_id=user.id,
             organization_id=new_org.id,
-            role_id=admin_role.id,
+            role_id=created_roles[DefaultRole.OWNER].id,
         )
         session.add(new_member)
 
         await session.commit()
+
         return new_org.id, user.id

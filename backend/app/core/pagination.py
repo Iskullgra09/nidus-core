@@ -28,6 +28,5 @@ async def paginate_with_cursor(
 
     items_to_return = items[:limit]
 
-    end_cursor = items_to_return[-1].id if items_to_return else None
-
+    end_cursor = items_to_return[-1].id if has_next_page and items_to_return else None
     return items_to_return, end_cursor, has_next_page

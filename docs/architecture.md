@@ -367,3 +367,58 @@ Building upon ADR 018, we needed to ensure that *every* interaction with the API
 ### Consequences
 * **Positive:** 100% guarantee of API contract stability. The frontend will never receive a raw string or unformatted HTML error. Schema definitions remain clean and strictly typed.
 * **Negative:** Requires disciplined maintenance of the `locales/` JSON files, as Pydantic validation overrides must map exactly to dictionary keys.
+
+---
+
+## ADR 020: Efficient Keyset Pagination via UUIDv7
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Standard Offset pagination (`LIMIT X OFFSET Y`) degrades performance as the dataset grows because the database must scan and discard `Y` rows. This is especially problematic for a high-scale SaaS.
+
+### Decision
+1. **Mechanism:** Implemented **Cursor-based (Keyset) Pagination** leveraging the naturally sortable property of UUIDv7.
+2. **Implementation:** Created a generic `paginate_with_cursor` utility that filters by the last seen ID (`where(id < cursor)`) and sorts descending.
+3. **Contract:** Standardized the response using a `CursorPage[T]` wrapper containing `items` and `page_info` (with `has_next_page` and `end_cursor`).
+
+### Consequences
+* **Positive:** Constant O(1) performance regardless of table size. Eliminates "missing item" bugs when new records are inserted during scrolling.
+* **Negative:** Users cannot "jump" to a specific page number (e.g., Page 50), which is acceptable for modern Infinite Scroll or "Load More" UIs.
+
+---
+
+## ADR 021: Automated Role Bootstrapping (Starter Pack)
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+New organizations require a standard set of permissions. Manually creating roles for every new tenant is error-prone and hurts User Experience.
+
+### Decision
+1. **Registry:** Defined a `DefaultRole` Enum and a `DEFAULT_ROLES_CONFIG` registry containing Owner, Admin, Member, and Viewer roles.
+2. **Automation:** Modified the `OrganizationService.create_onboarding` to atomically create all four base roles upon organization creation.
+3. **English Defaults:** All system-generated descriptions and role names are stored in canonical English to ensure database consistency.
+
+### Consequences
+* **Positive:** Immediate "Out-of-the-box" value for new users. Simplified security logic as common roles are guaranteed to exist.
+
+---
+
+## ADR 022: Property DTO Pattern for Relation Flattening
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+API responses often need data from related tables (e.g., showing a Member's email, which resides in the User table). Using Pydantic `@model_validator` in Python is slow and adds complexity to schemas.
+
+### Decision
+1. **Pattern:** Adopted the **Property DTO** pattern. Intelligence is placed in the SQLModel class using `@property` getters (e.g., `member.email` returns `self.user.email`).
+2. **Serialization:** Leveraged Pydantic's `from_attributes=True` to automatically extract these properties during serialization.
+
+### Consequences
+* **Positive:** Maximum performance (Pydantic's core extracts data in Rust). Cleaner schemas that only define "what" to return, not "how" to find it.
+* **Negative:** Slightly increases the size of the Model classes.

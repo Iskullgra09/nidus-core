@@ -13,6 +13,7 @@ class User(UUIDMixin, TimestampMixin, SoftDeleteMixin, table=True):
     email: str = Field()
     hashed_password: str = Field()
     is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
 
     memberships: List["Member"] = Relationship(back_populates="user")
 
