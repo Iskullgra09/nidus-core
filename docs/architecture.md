@@ -441,3 +441,59 @@ Hardcoding filters for every API endpoint (e.g., `if email: query = query.where(
 ### Consequences
 * **Positive:** High code reuse. Adding a new filter to any endpoint now takes seconds. Frontend developers gain powerful querying capabilities without backend changes.
 * **Negative:** Complex multi-table filters (Joins) still require manual implementation in the Service layer to maintain optimal performance and type safety.
+
+---
+
+## ADR 024: Stateless Password Recovery via Short-Lived JWTs
+
+**Date:** 2026-04-02
+**Status:** Accepted
+
+### Context
+Implementing password recovery typically requires a temporary database table to store reset tokens, tracking their expiration and consumption status. This adds unnecessary schema bloat and database I/O overhead.
+
+### Decision
+1. **Mechanism:** Adopted a purely stateless approach using short-lived (15 minutes) JSON Web Tokens (JWT).
+2. **Security:** The token payload explicitly includes a `"type": "reset_password"` claim to prevent these tokens from being hijacked and used as standard access tokens.
+3. **Endpoint Protection:** The `forgot-password` endpoint always returns a generic success message, regardless of whether the email exists in the database, actively preventing email enumeration attacks.
+
+### Consequences
+* **Positive:** Zero database footprint for token management. Highly scalable and secure.
+* **Negative:** If a token is intercepted before it expires, it cannot be actively revoked without implementing a Redis blocklist (which is currently deemed overkill for this stage).
+
+---
+
+## ADR 025: High-Performance Cascading Soft Deletes
+
+**Date:** 2026-04-02
+**Status:** Accepted
+
+### Context
+Standard PostgreSQL `ON DELETE CASCADE` constraints operate exclusively on physical row deletions. In a SaaS utilizing Soft Deletes (`deleted_at`), deleting a parent entity (Organization) leaves child entities (Members, Roles, Invitations) orphaned but logically active.
+
+### Decision
+1. **Bulk Updates:** Implemented explicit cascading soft deletes within the `OrganizationService` using SQLAlchemy's bulk `update()` expressions rather than iterating over instances (which causes severe N+1 performance degradation).
+2. **Atomic Timestamps:** A single `datetime.now(timezone.utc)` instance is generated at the start of the transaction and applied to all dependent tables to guarantee forensic consistency.
+
+### Consequences
+* **Positive:** O(1) performance for cascading deletes regardless of the organization's size. Zero orphaned data.
+* **Negative:** Requires developers to manually maintain cascading logic in the Service layer whenever new tenant-scoped tables are added.
+
+---
+
+## ADR 026: Asynchronous Non-Blocking Email Infrastructure
+
+**Date:** 2026-04-02
+**Status:** Accepted
+
+### Context
+Sending emails synchronously (e.g., using standard `smtplib`) blocks the FastAPI event loop, severely degrading API throughput under load. Additionally, forcing local environments to connect to real SMTP servers hinders Developer Experience (DX).
+
+### Decision
+1. **Library Selection:** Integrated `aiosmtplib` to handle all SMTP communications asynchronously.
+2. **Graceful Fallback (Mocking):** Implemented an automatic interceptor in `EmailService._send_email`. If SMTP credentials are not present in the `.env` file, the service safely intercepts the payload and prints the fully formatted email and URLs to the terminal.
+3. **Standardization:** Adopted Python's native `email.message.EmailMessage` to construct multi-part (Text + HTML) payloads securely.
+
+### Consequences
+* **Positive:** Zero blocking of the main thread. Exceptional local DX (developers can click links directly from the terminal without setting up SendGrid or Mailtrap).
+* **Negative:** None.
