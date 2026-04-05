@@ -11,7 +11,9 @@
         "system_operational": "System is operational.",
         "invitation_sent": "Invitation sent successfully.",
         "invitation_accepted": "Invitation accepted successfully. Welcome to the organization.",
-        "members_retrieved": "Organization members retrieved successfully."
+        "members_retrieved": "Organization members retrieved successfully.",
+        "member_updated": "Member role updated successfully.",
+        "member_removed": "Member removed from the organization."
     },
     "validation": {
         "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."

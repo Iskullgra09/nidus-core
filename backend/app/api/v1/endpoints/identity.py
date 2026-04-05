@@ -11,7 +11,7 @@ from app.core.exceptions.base import AuthenticationError
 from app.core.i18n.service import i18n
 from app.models.identity.scopes import NidusScope
 from app.schemas.filters.identity import MemberFilter
-from app.schemas.requests.identity import InvitationAccept, InvitationCreate
+from app.schemas.requests.identity import InvitationAccept, InvitationCreate, MemberUpdateRole
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse, MemberResponse
 from app.schemas.responses.pagination import CursorPage
@@ -55,9 +55,7 @@ async def accept_invitation(
     session: AsyncSession = Depends(get_session),
     lang: str = Depends(get_language),
 ):
-    """
-    Public endpoint. Consumes an invitation token and registers the user.
-    """
+    """Public endpoint. Consumes an invitation token and registers the user."""
     user_id, org_id, role_id = await IdentityService.accept_invitation(session=session, token=data.token, password=data.password)
 
     success_msg = i18n.t("success.invitation_accepted", lang=lang)
@@ -78,10 +76,46 @@ async def list_members(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    """
-    Retrieves a paginated and filtered list of organization members.
-    """
+    """Retrieves a paginated and filtered list of organization members."""
     page_data = await IdentityService.get_organization_members(session, pagination, filters)
 
     success_msg = i18n.t("success.members_retrieved", lang=lang)
     return GenericResponse(data=page_data, message=success_msg)
+
+
+@router.patch(
+    "/members/{member_id}/role",
+    response_model=GenericResponse[MemberResponse],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_WRITE))],
+)
+async def update_member_role(
+    member_id: UUID,
+    data: MemberUpdateRole,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    """Updates a member's role within the organization."""
+    member = await IdentityService.update_member_role(session, member_id, data.role_id)
+
+    success_msg = i18n.t("success.member_updated", lang=lang)
+    return GenericResponse(data=member, message=success_msg)
+
+
+@router.delete(
+    "/members/{member_id}",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_WRITE))],
+)
+async def remove_member(
+    member_id: UUID,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+) -> GenericResponse[Any]:
+    """Removes (soft-deletes) a member from the organization."""
+    await IdentityService.remove_member(session, member_id)
+
+    success_msg = i18n.t("success.member_removed", lang=lang)
+
+    return GenericResponse[Any](data=None, message=success_msg)

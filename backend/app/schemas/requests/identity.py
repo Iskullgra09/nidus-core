@@ -9,6 +9,8 @@ class InvitationCreate(BaseModel):
 
 
 class MemberUpdateRole(BaseModel):
+    """Payload for updating a member's role."""
+
     role_id: UUID
 
 

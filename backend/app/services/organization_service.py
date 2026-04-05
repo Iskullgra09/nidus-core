@@ -9,12 +9,12 @@ from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.role import Role
 from app.models.identity.scopes import DEFAULT_ROLES_CONFIG, DefaultRole
-from app.schemas.requests.tenant import TenantCreate
+from app.schemas.requests.organization import OnboardingCreate
 
 
 class OrganizationService:
     @staticmethod
-    async def create_onboarding(session: AsyncSession, data: TenantCreate) -> tuple[UUID, UUID]:
+    async def create_onboarding(session: AsyncSession, data: OnboardingCreate) -> tuple[UUID, UUID]:
         """
         Orchestrates the Atomic Onboarding process.
         Creates the organization and bootstraps the default role starter pack.

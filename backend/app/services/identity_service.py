@@ -122,3 +122,45 @@ class IdentityService:
 
         await session.commit()
         return user.id, invitation.organization_id, invitation.role_id
+
+    @staticmethod
+    async def update_member_role(session: AsyncSession, member_id: UUID, new_role_id: UUID) -> Member:
+        """
+        Updates the role of an existing member.
+        RLS automatically ensures the member belongs to the current organization.
+        """
+        MemberModel = cast(Any, Member)
+
+        stmt = select(Member).where(MemberModel.id == member_id, MemberModel.deleted_at.is_(None))
+        result = await session.execute(stmt)
+        member = result.scalar_one_or_none()
+
+        if not member:
+            raise EntityNotFoundError(entity="member")
+
+        member.role_id = new_role_id
+        await session.commit()
+
+        fresh_stmt = (
+            select(Member).where(MemberModel.id == member_id).options(selectinload(MemberModel.user), selectinload(MemberModel.role))
+        )
+        fresh_member = (await session.execute(fresh_stmt)).scalar_one()
+
+        return fresh_member
+
+    @staticmethod
+    async def remove_member(session: AsyncSession, member_id: UUID) -> None:
+        """
+        Soft deletes a member from the organization.
+        """
+        MemberModel = cast(Any, Member)
+
+        stmt = select(Member).where(MemberModel.id == member_id, MemberModel.deleted_at.is_(None))
+        result = await session.execute(stmt)
+        member = result.scalar_one_or_none()
+
+        if not member:
+            raise EntityNotFoundError(entity="member")
+
+        member.deleted_at = datetime.now(timezone.utc)
+        await session.commit()

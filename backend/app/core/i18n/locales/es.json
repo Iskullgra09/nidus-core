@@ -11,7 +11,9 @@
         "system_operational": "El sistema está operativo.",
         "invitation_sent": "Invitación enviada exitosamente.",
         "invitation_accepted": "Invitación aceptada exitosamente. Bienvenido a la organización.",
-        "members_retrieved": "Miembros de la organización obtenidos exitosamente."
+        "members_retrieved": "Miembros de la organización obtenidos exitosamente.",
+        "member_updated": "Rol del miembro actualizado con éxito.",
+        "member_removed": "Miembro eliminado de la organización."
     },
     "validation": {
         "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."
