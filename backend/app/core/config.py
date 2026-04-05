@@ -34,6 +34,13 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: AnyHttpUrl
 
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAIL_FROM_NAME: str = "Nidus"
+    EMAIL_FROM_ADDRESS: str = "noreply@niduslabs.com"
+
     @computed_field
     @property
     def DATABASE_URL(self) -> str:

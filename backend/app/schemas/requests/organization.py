@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -18,6 +19,13 @@ class OrganizationCreate(BaseModel):
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("validation.invalid_slug_format")
         return v
+
+
+class OrganizationUpdate(BaseModel):
+    """Payload for updating organization details."""
+
+    name: Optional[str] = Field(None, min_length=2, description="The new display name.")
+    slug: Optional[str] = Field(None, min_length=2, pattern="^[a-z0-9-]+$", description="The new URL-friendly slug.")
 
 
 class OnboardingCreate(BaseModel):

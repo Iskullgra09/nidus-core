@@ -11,10 +11,10 @@ from app.core.db import get_session
 from app.core.i18n.service import i18n
 from app.models import Member
 from app.models.identity.scopes import NidusScope
-from app.schemas.requests.organization import OnboardingCreate
+from app.schemas.requests.organization import OnboardingCreate, OrganizationUpdate
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.identity import UserProfileResponse
-from app.schemas.responses.organization import OnBoardingResponse
+from app.schemas.responses.organization import OnBoardingResponse, OrganizationResponse
 from app.services.organization_service import OrganizationService
 
 router = APIRouter()
@@ -72,3 +72,40 @@ async def get_my_profile(
     )
 
     return GenericResponse(data=profile_data)
+
+
+@router.patch(
+    "/{org_id}",
+    response_model=GenericResponse[OrganizationResponse],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ORG_UPDATE))],
+)
+async def update_organization(
+    org_id: UUID,
+    data: OrganizationUpdate,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    """Updates the settings (name, slug) of the organization."""
+    org = await OrganizationService.update_organization(session, org_id, data)
+
+    success_msg = i18n.t("success.organization_updated", lang=lang)
+    return GenericResponse(data=org, message=success_msg)
+
+
+@router.delete(
+    "/{org_id}",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ORG_DELETE))],
+)
+async def delete_organization(
+    org_id: UUID,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+) -> GenericResponse[Any]:
+    """Soft-deletes the organization. Danger zone action."""
+    await OrganizationService.delete_organization(session, org_id)
+
+    success_msg = i18n.t("success.organization_deleted", lang=lang)
+    return GenericResponse[Any](data=None, message=success_msg)
