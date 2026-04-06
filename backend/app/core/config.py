@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5444
     POSTGRES_DB: str = "nidus_core"
-    POSTGRES_TEST_DB: str = "nidus_test"
+    POSTGRES_TEST_DB: str = "nidus_core_test"
 
     APP_USER: str
     APP_PASSWORD: str
