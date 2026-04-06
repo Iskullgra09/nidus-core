@@ -534,3 +534,70 @@ During the creation of new tenant-scoped records (e.g., Invitations), we encount
 ### Consequences
 * **Positive:** Eliminates "Instance not found" errors caused by premature transaction closures. Maintains strict multitenant isolation.
 * **Negative:** Requires developers to deeply understand the difference between `flush` (sends SQL, keeps transaction/RLS open) and `commit` (saves data, destroys transaction/RLS).
+
+---
+
+## ADR 029: Frontend Foundation & Package Management (pnpm)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+The Nidus frontend requires a high-performance, strict, and monorepo-ready package manager that avoids the "phantom dependency" issues common in npm/yarn.
+
+### Decision
+Adopted **`pnpm`** using Node Corepack. 
+1. **Efficiency:** Uses a content-addressable store to save disk space and speed up installations.
+2. **Strictness:** Prevents code from accessing dependencies not explicitly declared in `package.json`.
+
+### Consequences
+* **Positive:** Faster CI/CD pipelines and a cleaner `node_modules` structure.
+* **Negative:** Requires slightly different commands (`pnpm` instead of `npm`).
+
+---
+
+## ADR 030: Next.js 15 & React 19 Adoption
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Nidus Core requires a frontend framework that supports high-scale multitenancy, edge computing, and optimized data streaming.
+
+### Decision
+Selected **Next.js 15 (App Router)** and **React 19**.
+1. **Partial Prerendering (PPR):** To deliver static shells instantly while streaming dynamic tenant data.
+2. **Server Components (RSC):** To reduce client-side JavaScript bundles and improve SEO/Performance.
+
+### Consequences
+* **Positive:** State-of-the-art performance and native support for the new React "Actions" API.
+
+---
+
+## ADR 031: Native Fetch API over Axios
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Next.js 15 patches the global `fetch` API to provide advanced caching, request deduplication, and revalidation features that libraries like Axios cannot natively access.
+
+### Decision
+We will utilize the **Native Fetch API** wrapped in a custom TypeScript `FetchClient`. 
+
+### Consequences
+* **Positive:** Seamless integration with Next.js Data Cache and Tag-based revalidation.
+* **Negative:** Requires manual implementation of interceptor-like logic for JWT injection.
+
+---
+
+## ADR 032: Edge Middleware for Tenant Routing
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+In a multitenant SaaS, we must verify user sessions and tenant access before any page rendering occurs to ensure security and prevent "flicker" during redirects.
+
+### Decision
+Implemented **Next.js Middleware (`middleware.ts`)** to handle route protection at the Edge. The middleware inspects the JWT cookie and validates the `organization_id` context before allowing the request to proceed to the application routes.

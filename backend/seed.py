@@ -41,7 +41,7 @@ async def seed_data() -> None:
         for i in range(1, 6):
             email = f"test_user_{i}@niduslabs.com"
 
-            user = User(email=email, hashed_password=hash_password("Nidus2026!"), is_active=True)
+            user = User(email=email, hashed_password=hash_password("password123"), is_active=True)
             session.add(user)
             await session.flush()
 

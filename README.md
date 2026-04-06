@@ -42,27 +42,43 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 
 ---
 
-## Quick Start
+## Operational Command Center
 
-1. **Synchronize Environment:**
-    ```powershell
-    uv sync
-    ```
+Use these commands from the project root. Ensure your `.env` is present at the root.
 
-2. **Orchestrate Infrastructure:**
-    ```powershell
-    docker compose up -d
-    ```
+### 🗄 Infrastructure (Docker)
+| Goal | Command |
+| :--- | :--- |
+| **Start Everything** | `docker compose up -d` |
+| **Start Only DB** | `docker compose up -d db` |
+| **Stop Everything** | `docker compose stop` |
+| **Full Wipe & Reset** | `docker compose down -v` |
+| **View DB Logs** | `docker logs -f nidus-postgres` |
+| **View API Logs** | `docker logs -f nidus-fastapi` |
 
-3. **Baseline Evolution:**
-    ```powershell
-    uv run alembic upgrade head
-    ```
+### 🚀 Backend Development (Python/uv)
+| Goal | Command |
+| :--- | :--- |
+| **Install Deps** | `uv sync` |
+| **Run Migrations** | `uv run alembic upgrade head` |
+| **Create Migration** | `uv run alembic revision --autogenerate -m "description"` |
+| **Run Seed Script** | `docker exec -it nidus-fastapi python app/core/seed.py` |
+| **Run API Locally** | `uv run fastapi dev app/main.py` |
+| **Run Tests** | `uv run pytest` |
 
-4. **Verify Integrity (RLS & Logic):**
-    ```powershell
-    uv run pytest
-    ```
+### 💻 Frontend Development (pnpm)
+| Goal | Command |
+| :--- | :--- |
+| **Install Deps** | `pnpm install` |
+| **Dev Mode** | `pnpm --filter nidus-frontend dev` |
+| **Build Prod** | `pnpm --filter nidus-frontend build` |
+| **Clean cache** | `pnpm store prune` |
+
+### 🧹 Maintenance & Cleanup
+| Goal | Command |
+| :--- | :--- |
+| **Fix Line Endings** | `dos2unix infrastructure/db-init/*.sh` (If utility is installed) |
+| **Prune Volumes** | `docker volume prune -f` |
 
 ---
 *Developed by Isaac Granados Quesada — Principal Engineer & Computer Architect.*
