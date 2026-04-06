@@ -37,8 +37,8 @@ class IdentityService:
 
         new_invite = Invitation(email=email, role_id=role_id, organization_id=org_id)
         session.add(new_invite)
+        await session.flush()
         await session.commit()
-        await session.refresh(new_invite)
         return new_invite
 
     @staticmethod

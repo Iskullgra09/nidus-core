@@ -3,6 +3,7 @@ from typing import Any, Dict, cast
 from uuid import UUID
 
 from sqlalchemy import select, text, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions.base import ConflictError, EntityNotFoundError
@@ -22,7 +23,6 @@ class OrganizationService:
         Creates the organization and bootstraps the default role starter pack.
         Returns a tuple containing (organization_id, user_id).
         """
-
         await session.execute(text("SET LOCAL app.current_organization_id = ''"))
         await session.execute(text("SET LOCAL app.current_user_id = ''"))
 
@@ -85,7 +85,7 @@ class OrganizationService:
     async def update_organization(session: AsyncSession, org_id: UUID, data: OrganizationUpdate) -> Organization:
         """
         Updates the organization's details.
-        Ensures the new slug (if provided) is unique across all active tenants.
+        Relies on PostgreSQL IntegrityError to catch unique partial index violations (cross-tenant slugs).
         """
         OrgModel = cast(Any, Organization)
 
@@ -95,17 +95,18 @@ class OrganizationService:
         if not org:
             raise EntityNotFoundError(entity="organization")
 
-        if data.slug and data.slug != org.slug:
-            conflict_stmt = select(Organization).where(OrgModel.slug == data.slug, OrgModel.deleted_at.is_(None))
-            if (await session.execute(conflict_stmt)).scalar_one_or_none():
-                raise ConflictError(message_key="organization.slug_already_exists", slug=data.slug)
-            org.slug = data.slug
-
         if data.name:
             org.name = data.name
 
-        await session.commit()
-        await session.refresh(org)
+        if data.slug:
+            org.slug = data.slug
+
+        try:
+            await session.commit()
+            await session.refresh(org)
+        except IntegrityError:
+            await session.rollback()
+            raise ConflictError(message_key="organization.slug_already_exists", slug=data.slug)
 
         return org
 

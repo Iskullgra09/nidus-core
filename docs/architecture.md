@@ -497,3 +497,40 @@ Sending emails synchronously (e.g., using standard `smtplib`) blocks the FastAPI
 ### Consequences
 * **Positive:** Zero blocking of the main thread. Exceptional local DX (developers can click links directly from the terminal without setting up SendGrid or Mailtrap).
 * **Negative:** None.
+
+---
+
+## ADR 027: Integration Testing Over Unit Testing
+
+**Date:** 2026-04-05
+**Status:** Accepted
+
+### Context
+Testing services in isolation (Unit Testing) requires mocking the database session. In a multitenant environment relying heavily on PostgreSQL Row-Level Security (RLS), mocking the database creates "false positives" because the mock does not enforce security policies.
+
+### Decision
+1. **Focus:** Prioritize Integration Tests over Unit Tests. Tests must hit the full API endpoints (`tests/api/`) using `httpx.AsyncClient`.
+2. **Execution Flow:** The test triggers the Endpoint -> Middleware -> JWT Validation -> Service -> Real Database with RLS -> Response Serialization.
+3. **Mocking Policy:** Banned the mocking of SQLAlchemy sessions. Services are tested implicitly through the endpoints.
+
+### Consequences
+* **Positive:** Absolute confidence that the code works securely in a production-like environment. Catches Pydantic serialization errors and RLS leaks simultaneously.
+* **Negative:** Tests are slightly slower than pure unit tests (negligible due to asynchronous execution) and require a dedicated test database.
+
+---
+
+## ADR 028: Transaction Lifecycle and RLS Session Variables
+
+**Date:** 2026-04-05
+**Status:** Accepted
+
+### Context
+During the creation of new tenant-scoped records (e.g., Invitations), we encountered a `Could not refresh instance` error. This occurred because `session.commit()` closes the database transaction, which inherently destroys the `SET LOCAL app.current_organization_id` session variable required for RLS. A subsequent `session.refresh()` would fail because the new transaction lacked the RLS context.
+
+### Decision
+1. **Flush Over Commit for Retrieval:** Adopted `session.flush()` immediately after `session.add()` when the generated ID or database-default values (timestamps) are needed within the same service method.
+2. **Terminal Commits:** `session.commit()` is strictly reserved as the final operation before returning from the service layer, marking the definitive end of the RLS context.
+
+### Consequences
+* **Positive:** Eliminates "Instance not found" errors caused by premature transaction closures. Maintains strict multitenant isolation.
+* **Negative:** Requires developers to deeply understand the difference between `flush` (sends SQL, keeps transaction/RLS open) and `commit` (saves data, destroys transaction/RLS).

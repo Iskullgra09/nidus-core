@@ -1,6 +1,7 @@
 # ruff: noqa: E402
 import os
-from typing import Any, AsyncGenerator, Dict, List, cast
+import uuid
+from typing import Any, AsyncGenerator, Dict, List, Tuple, cast
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -100,3 +101,32 @@ async def cleanup_and_seed() -> None:
                     scopes=cast(List[str], r_data["scopes"]),
                 )
                 session.add(new_role)
+
+
+@pytest.fixture
+async def auth_client(async_client: AsyncClient) -> AsyncGenerator[Tuple[AsyncClient, dict[str, Any]], None]:
+    """
+    Fixture that handles onboarding and login automatically.
+    Returns the authenticated client and the generated organization data.
+    """
+    uid = str(uuid.uuid4())[:8]
+    email = f"test-{uid}@nidus.com"
+    password = "TestPassword123!"
+
+    onboarding_payload = {
+        "organization_name": f"Org {uid}",
+        "organization_slug": f"slug-{uid}",
+        "admin_email": email,
+        "password": password,
+    }
+    res = await async_client.post("/api/v1/organizations/onboarding", json=onboarding_payload)
+    org_data = res.json()["data"]
+
+    login_res = await async_client.post("/api/v1/auth/login", data={"username": email, "password": password})
+    token = login_res.json()["access_token"]
+
+    async_client.headers.update({"Authorization": f"Bearer {token}"})
+
+    yield async_client, {"org_id": org_data["organization_id"], "user_id": org_data["user_id"]}
+
+    async_client.headers.pop("Authorization", None)
