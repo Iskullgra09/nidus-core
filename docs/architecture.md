@@ -601,3 +601,72 @@ In a multitenant SaaS, we must verify user sessions and tenant access before any
 
 ### Decision
 Implemented **Next.js Middleware (`middleware.ts`)** to handle route protection at the Edge. The middleware inspects the JWT cookie and validates the `organization_id` context before allowing the request to proceed to the application routes.
+
+---
+
+## ADR 033: Headless UI Strategy (Radix & Shadcn Nova)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Nidus requires a UI system that is 100% accessible (WAI-ARIA) but allows complete brand ownership without the bloat of traditional component libraries.
+
+### Decision
+1. **Engine:** Adopted **Radix UI** as the headless primitive layer.
+2. **Preset:** Selected the **Shadcn "Nova"** preset, utilizing **Geist** for typography and **Lucide** for iconography to maintain a high-density, technical SaaS aesthetic.
+
+### Consequences
+* **Positive:** Zero styling lock-in. Full control over the component source code.
+* **Negative:** Requires manual installation of Radix primitives when scaffolding complex components.
+
+---
+
+## ADR 034: Modern Design Tokens (Tailwind v4 & OKLCH)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Standard HSL/RGB color spaces are perceptually non-uniform, leading to inconsistent brand colors across different lightness levels.
+
+### Decision
+Adopted **Tailwind CSS v4** utilizing the **OKLCH** color space for all design tokens. 
+1. **Primary Brand:** Defined "Nidus Electric Indigo" as `oklch(0.6 0.18 255)`.
+2. **Configuration:** Shifted to a "CSS-first" configuration via `@theme` blocks in `globals.css`, eliminating the need for a heavy `tailwind.config.ts`.
+
+### Consequences
+* **Positive:** Superior color vibrancy and accessibility. P3 wide-gamut support for high-end displays.
+* **Negative:** Requires VS Code workspace adjustments to silence "Unknown at-rule" warnings for Tailwind v4.
+
+---
+
+## ADR 035: Next.js 16 Gateway Transition (Proxy)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Next.js 16.2+ deprecated the `middleware.ts` convention in favor of a more powerful Edge Proxy architecture to handle advanced request buffering and rewrites.
+
+### Decision
+Migrated from `src/middleware.ts` to **`src/proxy.ts`**. Isolation logic is now handled by a default `proxy` function export, maintaining full compatibility with the existing Nidus multitenant redirection logic.
+
+---
+
+## ADR 036: Modular Directory Aliases for Enterprise Scale
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+The default Shadcn structure (`/components/ui`) is insufficient for a modular monorepo. It mixes generic UI parts with business-logic components.
+
+### Decision
+Reconfigured `components.json` and TypeScript aliases:
+1. **`@/shared/ui`**: Strictly for "Dumb" components (Buttons, Inputs).
+2. **`@/core/lib/utils`**: For infrastructure utilities (CN helper).
+3. **`@/modules/{domain}/components`**: For "Smart" components containing business logic.
+
+### Consequences
+* **Positive:** Clean architecture. High reusability across future micro-frontends or modules.

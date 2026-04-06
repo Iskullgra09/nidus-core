@@ -62,7 +62,8 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | **Install Deps** | `uv sync` |
 | **Run Migrations** | `uv run alembic upgrade head` |
 | **Create Migration** | `uv run alembic revision --autogenerate -m "description"` |
-| **Run Seed Script** | `docker exec -it nidus-fastapi python app/core/seed.py` |
+| **Run Seed Script** | `uv run seed.py ` |
+| **Run Seed Script on Docker** | `docker exec -it nidus-fastapi python app/core/seed.py` |
 | **Run API Locally** | `uv run fastapi dev app/main.py` |
 | **Run Tests** | `uv run pytest` |
 
