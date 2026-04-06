@@ -10,6 +10,14 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://nidus_app_user:nidus_app_secret@localhost:5444/nidus_test
       DATABASE_ADMIN_URL: postgresql+asyncpg://nidus_admin:nidus_local_secret@localhost:5444/nidus_test
+      SECRET_KEY: "super-secret-dummy-key-for-github-actions-that-is-long-enough"
+      ALGORITHM: "HS256"
+      APP_USER: "nidus_app_user"
+      APP_PASSWORD: "nidus_app_secret"
+      ADMIN_USER: "nidus_admin"
+      ADMIN_PASSWORD: "nidus_local_secret"
+      FRONTEND_URL: "http://localhost:3000"
+
     services:
       postgres:
         image: postgres:17
