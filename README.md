@@ -30,18 +30,11 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **1** | **Data Engine** | RLS Policies, Baseline Migration, Security Setup. |
 | **2** | **Identity Base** | JWT stateless auth, BCrypt, Atomic Tenant Onboarding. |
 | **3** | **RBAC & Governance** | Hierarchical Scopes, GIN-indexed Role Scopes, UUIDv7. |
-| **3.1**| **Identity Flow A** | Secure Invitation System (Part A: Creation & RLS). |
-| **3.5**| **Reliability Layer**| Global Exception Handlers, 100% i18n support, Pydantic 422 Translation, Centralized Secrets. |
+| **3.5**| **Reliability Layer**| Global Exception Handlers, 100% i18n support, Pydantic 422 Translation. |
+| **3.6**| **Lifecycle & Mail** | Asynchronous email dispatch (`aiosmtplib`), Secure Invitation Lifecycle, Password Recovery. |
+| **3.7**| **The Data Standard**| O(1) Keyset Pagination via UUIDv7, Dynamic Pydantic-to-SQL Filtering Engine, Cascading Soft-Deletes. |
 
 ### In Progress / Upcoming
-#### **Phase 3.6: Lifecycle & Communication** (Current)
-- [ ] **Invitation Flow B:** Public token validation, password assignment, and secure account activation.
-- [ ] **Background Tasks:** Non-blocking email dispatch mock for invitations.
-
-#### **Phase 3.7: The Data Standard**
-- [ ] **Cursor/Offset Pagination:** Standardized `PageResponse[T]` for all collections.
-- [ ] **Dynamic Filtering:** Reusable SQLAlchemy filters for list endpoints.
-
 #### **Phase 4: Frontend & Scaling** (Next.js 15)
 - [ ] **Edge Resolution:** Tenant detection via Next.js Middleware.
 - [ ] **PPR Dashboards:** Partial Prerendering for tenant shells.
