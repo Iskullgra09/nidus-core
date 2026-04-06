@@ -8,10 +8,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
+      POSTGRES_DB: "nidus_core_test"
+      POSTGRES_USER: "nidus_admin"
+      POSTGRES_PASSWORD: "fake_admin_pass"
+      POSTGRES_SERVER: "localhost"
+      POSTGRES_PORT: "5444"
       DATABASE_URL: postgresql+asyncpg://nidus_app_user:fake_app_pass@localhost:5444/nidus_core_test
       DATABASE_ADMIN_URL: postgresql+asyncpg://nidus_admin:fake_admin_pass@localhost:5444/nidus_core_test
       TEST_DATABASE_URL: postgresql+asyncpg://nidus_admin:fake_admin_pass@localhost:5444/nidus_core_test
-      
       SECRET_KEY: "dummy-secret-key-for-testing-only-123456"
       ALGORITHM: "HS256"
       APP_USER: "nidus_app_user"
