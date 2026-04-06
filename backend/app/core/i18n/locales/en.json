@@ -1,0 +1,60 @@
+{
+    "common": {
+        "internal_error": "An unexpected error occurred. Please try again later.",
+        "validation_error": "Input validation failed.",
+        "unauthorized": "You are not authorized to perform this action.",
+        "forbidden": "Access denied.",
+        "not_found": "The requested resource was not found."
+    },
+    "success": {
+        "onboarding_complete": "Onboarding completed successfully.",
+        "system_operational": "System is operational.",
+        "invitation_sent": "Invitation sent successfully.",
+        "invitation_accepted": "Invitation accepted successfully. Welcome to the organization.",
+        "members_retrieved": "Organization members retrieved successfully.",
+        "member_updated": "Member role updated successfully.",
+        "member_removed": "Member removed from the organization.",
+        "password_reset_email_sent": "If the email is registered, a reset link has been sent.",
+        "password_reset_successful": "Password has been successfully reset.",
+        "password_changed": "Password successfully changed.",
+        "organization_updated": "Organization settings updated successfully.",
+        "organization_deleted": "Organization has been scheduled for deletion."
+    },
+    "validation": {
+        "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."
+    },
+    "onboarding": {
+        "org_already_exists": "An organization with this slug already exists.",
+        "admin_already_exists": "A user with this email is already registered."
+    },
+    "auth": {
+        "login_success": "Login successful.",
+        "invalid_credentials": "Invalid email or password.",
+        "token_expired": "Session expired. Please log in again.",
+        "wrong_current_password": "The current password is incorrect."
+    },
+    "identity": {
+        "user_not_found": "User profile not found.",
+        "update_success": "Profile updated successfully.",
+        "password_mismatch": "The current password provided is incorrect."
+    },
+    "invitation": {
+        "sent": "Invitation sent successfully to {email}.",
+        "not_found": "Invitation token is invalid or does not exist.",
+        "expired": "This invitation has expired.",
+        "already_accepted": "This invitation has already been used.",
+        "already_pending": "An invitation is already pending for this email.",
+        "revoked": "Invitation has been revoked by the administrator.",
+        "existing_user_wrong_password": "An account with this email already exists. Please enter your correct existing password to accept the invitation.",
+        "user_already_in_org": "This user is already a member of the organization."
+    },
+    "email": {
+        "invitation_subject": "You have been invited to a Nidus workspace",
+        "invitation_body": "You have been invited to collaborate in Nidus. Click this link to accept your invitation: {link}",
+        "password_reset_subject": "Reset your Nidus password",
+        "password_reset_body": "We received a request to reset your password. Click this link to choose a new one: {link}"
+    },
+    "organization": {
+        "slug_already_exists": "The workspace URL (slug) is already taken."
+    }
+}

@@ -1,0 +1,60 @@
+{
+    "common": {
+        "internal_error": "Ocurrió un error inesperado. Por favor, inténtelo de nuevo más tarde.",
+        "validation_error": "La validación de los datos falló.",
+        "unauthorized": "No está autorizado para realizar esta acción.",
+        "forbidden": "Acceso denegado.",
+        "not_found": "El recurso solicitado no fue encontrado."
+    },
+    "success": {
+        "onboarding_complete": "Onboarding completado exitosamente.",
+        "system_operational": "El sistema está operativo.",
+        "invitation_sent": "Invitación enviada exitosamente.",
+        "invitation_accepted": "Invitación aceptada exitosamente. Bienvenido a la organización.",
+        "members_retrieved": "Miembros de la organización obtenidos exitosamente.",
+        "member_updated": "Rol del miembro actualizado con éxito.",
+        "member_removed": "Miembro eliminado de la organización.",
+        "password_reset_email_sent": "Si el correo está registrado, se ha enviado un enlace de recuperación.",
+        "password_reset_successful": "La contraseña ha sido restablecida con éxito.",
+        "password_changed": "La contraseña se actualizó correctamente.",
+        "organization_updated": "Configuración de la organización actualizada con éxito.",
+        "organization_deleted": "La organización ha sido programada para eliminación."
+    },
+    "validation": {
+        "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."
+    },
+    "onboarding": {
+        "org_already_exists": "Ya existe una organización con este identificador.",
+        "admin_already_exists": "Ya existe un usuario registrado con este correo electrónico."
+    },
+    "auth": {
+        "login_success": "Inicio de sesión exitoso.",
+        "invalid_credentials": "Correo electrónico o contraseña incorrectos.",
+        "token_expired": "La sesión ha expirado. Por favor, inicie sesión de nuevo.",
+        "wrong_current_password": "La contraseña actual es incorrecta."
+    },
+    "identity": {
+        "user_not_found": "No se encontró el perfil del usuario.",
+        "update_success": "Perfil actualizado correctamente.",
+        "password_mismatch": "La contraseña actual proporcionada es incorrecta."
+    },
+    "invitation": {
+        "sent": "Invitación enviada correctamente a {email}.",
+        "not_found": "El token de invitación no es válido o no existe.",
+        "expired": "Esta invitación ha expirado.",
+        "already_accepted": "Esta invitación ya ha sido utilizada.",
+        "already_pending": "Ya existe una invitación pendiente para este correo.",
+        "revoked": "La invitación ha sido revocada por el administrador.",
+        "existing_user_wrong_password": "Ya existe una cuenta con este correo. Por favor, ingresa tu contraseña actual correcta para aceptar la invitación.",
+        "user_already_in_org": "Este usuario ya es miembro de la organización."
+    },
+    "email": {
+        "invitation_subject": "Has sido invitado a un espacio de Nidus",
+        "invitation_body": "Te han invitado a colaborar en Nidus. Haz clic en este enlace para aceptar la invitación: {link}",
+        "password_reset_subject": "Restablece tu contraseña de Nidus",
+        "password_reset_body": "Recibimos una solicitud para restablecer tu contraseña. Haz clic en este enlace para elegir una nueva: {link}"
+    },
+    "organization": {
+        "slug_already_exists": "La URL del espacio de trabajo (slug) ya está en uso."
+    }
+}

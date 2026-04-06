@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Field, Relationship
@@ -18,3 +19,15 @@ class Member(UUIDMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, table=True
     user: Optional["User"] = Relationship(back_populates="memberships")
     role: Optional["Role"] = Relationship(back_populates="members")
     organization: Optional["Organization"] = Relationship(back_populates="members")
+
+    @property
+    def email(self) -> str:
+        return self.user.email if self.user else ""
+
+    @property
+    def role_name(self) -> str:
+        return self.role.name if self.role else ""
+
+    @property
+    def joined_at(self) -> datetime:
+        return self.created_at

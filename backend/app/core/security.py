@@ -31,3 +31,14 @@ def create_access_token(data: dict[str, Any]) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def create_password_reset_token(user_id: str) -> str:
+    """
+    Generates a short-lived JWT specifically for password resets.
+    Valid for 15 minutes.
+    """
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode: dict[str, Any] = {"sub": user_id, "type": "reset_password", "exp": expire}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt

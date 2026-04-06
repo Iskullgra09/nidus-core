@@ -204,7 +204,7 @@ Testing a multitenant system with PostgreSQL RLS requires verifying that restric
 
 ### Decision
 1. **Dual-Engine Setup:** Implemented two distinct engines in `conftest.py`:
-   - `admin_engine`: Uses `nidus_admin` credentials. Bypasses RLS for `TRUNCATE` and `SEED` operations.
+   - `admin_engine`: Uses `nidus_admin` credentials pointing to the **`nidus_core_test`** database. Bypasses RLS for `TRUNCATE` and `SEED` operations.
    - `app_engine`: Uses `nidus_app_user` credentials. Strictly follows RLS policies. Used for all API integration tests.
 2. **Context Bypass for Verification:** To verify DB state during tests without using the admin engine, we utilize the `SET LOCAL app.current_organization_id = ''` bypass within an explicit `session.begin()` block.
 
@@ -308,3 +308,229 @@ Adding users directly to an organization requires sensitive data (passwords) and
 ### Consequences
 * **Positive:** Decouples user creation from organization linkage. Ensures auditability of who invited whom.
 * **Negative:** Adds a step to the onboarding flow (Invite -> Accept -> Register).
+
+---
+
+## ADR 017: Centralized Monorepo Environment & Secret Management
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+In a monorepo structure, managing secrets across multiple services (Backend, Database, and future Frontend) often leads to "secret drift" and accidental hardcoding. Our initial setup had `.env` files duplicated or misplaced, making Docker synchronization and Pydantic validation brittle.
+
+### Decision
+1. **Single Source of Truth:** Moved the primary `.env` file to the **Project Root** (`nidus-core/`).
+2. **Dynamic Path Resolution:** Implemented a robust `BASE_DIR` calculation in `app/core/config.py` using `Path(__file__).resolve()` to ensure the backend can locate the root `.env` regardless of where the process is started.
+3. **Pydantic Validation:** Standardized on `pydantic-settings` to enforce that all critical infrastructure variables (Passwords, Secret Keys, DB Names) are present and correctly typed at startup. The application will now fail-fast if a secret is missing.
+4. **Naming Convention:** Standardized the test database name as **`nidus_core_test`** to maintain consistency with the production/dev `nidus_core` naming scheme.
+
+### Consequences
+* **Positive:** Absolute protection against hardcoded secrets. Simplified Docker Compose orchestration as it now reads from the same file as the Python application.
+* **Negative:** Requires developers to maintain the `.env` at the root, which is slightly counter-intuitive for pure backend tasks but essential for the monorepo's health.
+
+---
+
+## ADR 018: Reliability Layer (Global Exceptions & i18n)
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Raw API errors (tracebacks or unformatted JSON) degrade user experience and expose internal system logic. Furthermore, as a global SaaS, Nidus must support multiple languages without hardcoding strings in the business logic layer.
+
+### Decision
+1. **Generic Exception Hierarchy:** Implemented a base `NidusException` class that carries a machine-readable `code` and a translation `message_key`.
+2. **Singleton I18n Service:** Developed a lightweight `I18nService` that loads JSON dictionaries from `app/core/i18n/locales/` into memory at startup.
+3. **Middleware-driven Localization:** Adopted the `Accept-Language` HTTP header as the primary driver for selecting the response language.
+4. **Global Handler:** Registered a centralized FastAPI exception handler to intercept `NidusException` and return a standardized `GenericResponse` shape.
+
+### Consequences
+* **Positive:** Clean business logic (services only throw exceptions, they don't format responses). Native support for English and Spanish from Day 1.
+* **Negative:** None; significantly increases the professional feel and reliability of the API.
+
+---
+
+## ADR 019: Comprehensive Localization (i18n) and Full-Spectrum Error Handling
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Building upon ADR 018, we needed to ensure that *every* interaction with the API, including Pydantic validation errors (HTTP 422) and unexpected runtime crashes (HTTP 500), adheres strictly to the localized `GenericResponse` format. Furthermore, Pydantic schemas must remain static and isolated from language context.
+
+### Decision
+1. **Dynamic Success Messages:** Introduced a `get_language` dependency to dynamically inject translated success messages into routers without polluting the static Pydantic schema definitions.
+2. **Validation Interceptor:** Registered a global handler for `RequestValidationError` to parse Pydantic's internal error tree, extract the failed fields, and translate the error messages using the `I18nService`.
+3. **The "Catch-All" Shield:** Implemented `global_500_exception_handler` to intercept raw Python `Exception` instances. This acts as the final safety net, guaranteeing that unexpected crashes result in a localized JSON response rather than exposing stack traces.
+
+### Consequences
+* **Positive:** 100% guarantee of API contract stability. The frontend will never receive a raw string or unformatted HTML error. Schema definitions remain clean and strictly typed.
+* **Negative:** Requires disciplined maintenance of the `locales/` JSON files, as Pydantic validation overrides must map exactly to dictionary keys.
+
+---
+
+## ADR 020: Efficient Keyset Pagination via UUIDv7
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Standard Offset pagination (`LIMIT X OFFSET Y`) degrades performance as the dataset grows because the database must scan and discard `Y` rows. This is especially problematic for a high-scale SaaS.
+
+### Decision
+1. **Mechanism:** Implemented **Cursor-based (Keyset) Pagination** leveraging the naturally sortable property of UUIDv7.
+2. **Implementation:** Created a generic `paginate_with_cursor` utility that filters by the last seen ID (`where(id < cursor)`) and sorts descending.
+3. **Contract:** Standardized the response using a `CursorPage[T]` wrapper containing `items` and `page_info` (with `has_next_page` and `end_cursor`).
+
+### Consequences
+* **Positive:** Constant O(1) performance regardless of table size. Eliminates "missing item" bugs when new records are inserted during scrolling.
+* **Negative:** Users cannot "jump" to a specific page number (e.g., Page 50), which is acceptable for modern Infinite Scroll or "Load More" UIs.
+
+---
+
+## ADR 021: Automated Role Bootstrapping (Starter Pack)
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+New organizations require a standard set of permissions. Manually creating roles for every new tenant is error-prone and hurts User Experience.
+
+### Decision
+1. **Registry:** Defined a `DefaultRole` Enum and a `DEFAULT_ROLES_CONFIG` registry containing Owner, Admin, Member, and Viewer roles.
+2. **Automation:** Modified the `OrganizationService.create_onboarding` to atomically create all four base roles upon organization creation.
+3. **English Defaults:** All system-generated descriptions and role names are stored in canonical English to ensure database consistency.
+
+### Consequences
+* **Positive:** Immediate "Out-of-the-box" value for new users. Simplified security logic as common roles are guaranteed to exist.
+
+---
+
+## ADR 022: Property DTO Pattern for Relation Flattening
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+API responses often need data from related tables (e.g., showing a Member's email, which resides in the User table). Using Pydantic `@model_validator` in Python is slow and adds complexity to schemas.
+
+### Decision
+1. **Pattern:** Adopted the **Property DTO** pattern. Intelligence is placed in the SQLModel class using `@property` getters (e.g., `member.email` returns `self.user.email`).
+2. **Serialization:** Leveraged Pydantic's `from_attributes=True` to automatically extract these properties during serialization.
+
+### Consequences
+* **Positive:** Maximum performance (Pydantic's core extracts data in Rust). Cleaner schemas that only define "what" to return, not "how" to find it.
+* **Negative:** Slightly increases the size of the Model classes.
+
+---
+
+## ADR 023: Dynamic Filtering Engine via Pydantic Schemas
+
+**Date:** 2026-04-01
+**Status:** Accepted
+
+### Context
+Hardcoding filters for every API endpoint (e.g., `if email: query = query.where(...)`) creates massive code duplication and maintenance debt. We need a standardized way to translate URL query parameters into secure SQLAlchemy expressions.
+
+### Decision
+1. **Abstraction:** Implemented a generic `FilterEngine[T]` that introspects Pydantic schemas to build SQL queries.
+2. **Naming Convention:** Adopted the `field__operator` pattern (e.g., `email__contains`) to allow complex lookups like partial matches, case-insensitive searches, and range comparisons.
+3. **Strict Validation:** Only fields explicitly defined in a `FilterSchema` (Pydantic) are permitted as query parameters, preventing unauthorized data exposure or malicious SQL injection through introspection.
+
+### Consequences
+* **Positive:** High code reuse. Adding a new filter to any endpoint now takes seconds. Frontend developers gain powerful querying capabilities without backend changes.
+* **Negative:** Complex multi-table filters (Joins) still require manual implementation in the Service layer to maintain optimal performance and type safety.
+
+---
+
+## ADR 024: Stateless Password Recovery via Short-Lived JWTs
+
+**Date:** 2026-04-02
+**Status:** Accepted
+
+### Context
+Implementing password recovery typically requires a temporary database table to store reset tokens, tracking their expiration and consumption status. This adds unnecessary schema bloat and database I/O overhead.
+
+### Decision
+1. **Mechanism:** Adopted a purely stateless approach using short-lived (15 minutes) JSON Web Tokens (JWT).
+2. **Security:** The token payload explicitly includes a `"type": "reset_password"` claim to prevent these tokens from being hijacked and used as standard access tokens.
+3. **Endpoint Protection:** The `forgot-password` endpoint always returns a generic success message, regardless of whether the email exists in the database, actively preventing email enumeration attacks.
+
+### Consequences
+* **Positive:** Zero database footprint for token management. Highly scalable and secure.
+* **Negative:** If a token is intercepted before it expires, it cannot be actively revoked without implementing a Redis blocklist (which is currently deemed overkill for this stage).
+
+---
+
+## ADR 025: High-Performance Cascading Soft Deletes
+
+**Date:** 2026-04-02
+**Status:** Accepted
+
+### Context
+Standard PostgreSQL `ON DELETE CASCADE` constraints operate exclusively on physical row deletions. In a SaaS utilizing Soft Deletes (`deleted_at`), deleting a parent entity (Organization) leaves child entities (Members, Roles, Invitations) orphaned but logically active.
+
+### Decision
+1. **Bulk Updates:** Implemented explicit cascading soft deletes within the `OrganizationService` using SQLAlchemy's bulk `update()` expressions rather than iterating over instances (which causes severe N+1 performance degradation).
+2. **Atomic Timestamps:** A single `datetime.now(timezone.utc)` instance is generated at the start of the transaction and applied to all dependent tables to guarantee forensic consistency.
+
+### Consequences
+* **Positive:** O(1) performance for cascading deletes regardless of the organization's size. Zero orphaned data.
+* **Negative:** Requires developers to manually maintain cascading logic in the Service layer whenever new tenant-scoped tables are added.
+
+---
+
+## ADR 026: Asynchronous Non-Blocking Email Infrastructure
+
+**Date:** 2026-04-02
+**Status:** Accepted
+
+### Context
+Sending emails synchronously (e.g., using standard `smtplib`) blocks the FastAPI event loop, severely degrading API throughput under load. Additionally, forcing local environments to connect to real SMTP servers hinders Developer Experience (DX).
+
+### Decision
+1. **Library Selection:** Integrated `aiosmtplib` to handle all SMTP communications asynchronously.
+2. **Graceful Fallback (Mocking):** Implemented an automatic interceptor in `EmailService._send_email`. If SMTP credentials are not present in the `.env` file, the service safely intercepts the payload and prints the fully formatted email and URLs to the terminal.
+3. **Standardization:** Adopted Python's native `email.message.EmailMessage` to construct multi-part (Text + HTML) payloads securely.
+
+### Consequences
+* **Positive:** Zero blocking of the main thread. Exceptional local DX (developers can click links directly from the terminal without setting up SendGrid or Mailtrap).
+* **Negative:** None.
+
+---
+
+## ADR 027: Integration Testing Over Unit Testing
+
+**Date:** 2026-04-05
+**Status:** Accepted
+
+### Context
+Testing services in isolation (Unit Testing) requires mocking the database session. In a multitenant environment relying heavily on PostgreSQL Row-Level Security (RLS), mocking the database creates "false positives" because the mock does not enforce security policies.
+
+### Decision
+1. **Focus:** Prioritize Integration Tests over Unit Tests. Tests must hit the full API endpoints (`tests/api/`) using `httpx.AsyncClient`.
+2. **Execution Flow:** The test triggers the Endpoint -> Middleware -> JWT Validation -> Service -> Real Database with RLS -> Response Serialization.
+3. **Mocking Policy:** Banned the mocking of SQLAlchemy sessions. Services are tested implicitly through the endpoints.
+
+### Consequences
+* **Positive:** Absolute confidence that the code works securely in a production-like environment. Catches Pydantic serialization errors and RLS leaks simultaneously.
+* **Negative:** Tests are slightly slower than pure unit tests (negligible due to asynchronous execution) and require a dedicated test database.
+
+---
+
+## ADR 028: Transaction Lifecycle and RLS Session Variables
+
+**Date:** 2026-04-05
+**Status:** Accepted
+
+### Context
+During the creation of new tenant-scoped records (e.g., Invitations), we encountered a `Could not refresh instance` error. This occurred because `session.commit()` closes the database transaction, which inherently destroys the `SET LOCAL app.current_organization_id` session variable required for RLS. A subsequent `session.refresh()` would fail because the new transaction lacked the RLS context.
+
+### Decision
+1. **Flush Over Commit for Retrieval:** Adopted `session.flush()` immediately after `session.add()` when the generated ID or database-default values (timestamps) are needed within the same service method.
+2. **Terminal Commits:** `session.commit()` is strictly reserved as the final operation before returning from the service layer, marking the definitive end of the RLS context.
+
+### Consequences
+* **Positive:** Eliminates "Instance not found" errors caused by premature transaction closures. Maintains strict multitenant isolation.
+* **Negative:** Requires developers to deeply understand the difference between `flush` (sends SQL, keeps transaction/RLS open) and `commit` (saves data, destroys transaction/RLS).

@@ -1,7 +1,7 @@
 from typing import Annotated, Any, Set, cast
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.db import get_session
+from app.core.exceptions.base import AuthenticationError, NidusException
 from app.models.identity.member import Member
 from app.models.identity.scopes import NidusScope
 
@@ -23,11 +24,7 @@ async def get_jwt_payload(token: Annotated[str, Depends(oauth2_scheme)]) -> dict
             raise ValueError("Missing critical claims")
         return payload
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise AuthenticationError(message_key="auth.token_expired")
 
 
 async def get_current_tenant_session(
@@ -46,9 +43,15 @@ async def get_current_tenant_session(
     return session
 
 
+def get_language(request: Request) -> str:
+    """Extracts preferred language from the request."""
+    accept_lang = request.headers.get("accept-language", "en")
+    return accept_lang.split(",")[0].split("-")[0].lower()
+
+
 class ScopeGuard:
     """
-    Dependency for evaluating Hierarchical JSONB Scopes (ADR 014).
+    Dependency for evaluating Hierarchical JSONB Scopes.
     Uses the Dynamic Model Alias pattern to ensure Pylance strict compatibility.
     """
 
@@ -61,7 +64,6 @@ class ScopeGuard:
         payload: Annotated[dict[str, Any], Depends(get_jwt_payload)],
     ) -> bool:
         user_id = payload.get("sub")
-
         MemberModel = cast(Any, Member)
 
         stmt = (
@@ -75,11 +77,10 @@ class ScopeGuard:
 
         result = await session.execute(stmt)
         member = result.scalar_one_or_none()
-
         role = cast(Any, member).role if member else None
 
         if not member or not role or role.deleted_at is not None:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied: No active role assigned.")
+            raise NidusException(code="NO_ACTIVE_ROLE", message_key="common.forbidden", status_code=403)
 
         user_scopes: Set[str] = set(role.scopes)
 
@@ -93,10 +94,10 @@ class ScopeGuard:
         if user_scopes.intersection(allowed_scopes):
             return True
 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Access denied: Missing scope '{self.required_scope}'.")
+        raise NidusException(code="MISSING_SCOPE", message_key="common.unauthorized", status_code=403, scope=self.required_scope)
 
     def _get_implied_scopes(self, required_scope: str) -> Set[str]:
-        """Calculates superset scopes (e.g., needing 'read' is satisfied by 'write')."""
+        """Calculates superset scopes."""
         allowed = {required_scope}
         if required_scope.endswith(":read"):
             allowed.add(required_scope.replace(":read", ":write"))

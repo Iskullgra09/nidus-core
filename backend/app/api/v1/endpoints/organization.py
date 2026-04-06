@@ -1,15 +1,20 @@
+from typing import Any, cast
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.api.deps import ScopeGuard, get_current_tenant_session
+from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
 from app.core.db import get_session
+from app.core.i18n.service import i18n
+from app.models import Member
 from app.models.identity.scopes import NidusScope
-from app.models.organization.organization import Organization
-from app.schemas.requests.tenant import TenantCreate
+from app.schemas.requests.organization import OnboardingCreate, OrganizationUpdate
 from app.schemas.responses.base import GenericResponse
-from app.schemas.responses.organization import OrganizationResponse
-from app.schemas.responses.tenant import TenantResponse
+from app.schemas.responses.identity import UserProfileResponse
+from app.schemas.responses.organization import OnBoardingResponse, OrganizationResponse
 from app.services.organization_service import OrganizationService
 
 router = APIRouter()
@@ -17,34 +22,90 @@ router = APIRouter()
 
 @router.post(
     "/onboarding",
-    response_model=GenericResponse[TenantResponse],
+    response_model=GenericResponse[OnBoardingResponse],
     status_code=status.HTTP_201_CREATED,
 )
-async def onboard_tenant(data: TenantCreate, session: AsyncSession = Depends(get_session)):
-    """
-    Creates a new organization, its first admin user, and assigns the correct roles.
-    """
+async def onboard_tenant(data: OnboardingCreate, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
+    """Creates a new organization, its first admin user, and assigns the correct roles."""
     org_id, user_id = await OrganizationService.create_onboarding(session, data)
 
-    response_data = TenantResponse(
+    response_data = OnBoardingResponse(
         organization_id=org_id,
         user_id=user_id,
-        message="Onboarding completed successfully",
     )
-    return GenericResponse(data=response_data, message="Welcome to NIDUS!")
+
+    success_msg = i18n.t("success.onboarding_complete", lang=lang)
+
+    return GenericResponse(data=response_data, message=success_msg)
 
 
-@router.get("/me", response_model=GenericResponse[OrganizationResponse], dependencies=[Depends(ScopeGuard(NidusScope.ORG_READ))])
-async def get_my_organization(
+@router.get("/me", response_model=GenericResponse[UserProfileResponse], dependencies=[Depends(ScopeGuard(NidusScope.ORG_READ))])
+async def get_my_profile(
     session: AsyncSession = Depends(get_current_tenant_session),
+    payload: dict[str, Any] = Depends(get_jwt_payload),
 ):
     """
-    Returns the organization details for the currently authenticated user.
-    No need to pass IDs, the database RLS handles the isolation automatically.
+    Returns the complete profile for the currently authenticated user,
+    including their identity, role, scopes, and organization details.
     """
-    stmt = select(Organization)
+
+    user_id = UUID(str(payload["sub"]))
+    MemberModel = cast(Any, Member)
+
+    stmt = (
+        select(Member)
+        .where(MemberModel.user_id == user_id, MemberModel.deleted_at.is_(None))
+        .options(selectinload(MemberModel.user), selectinload(MemberModel.role), selectinload(MemberModel.organization))
+    )
     result = await session.execute(stmt)
+    member = result.scalar_one()
 
-    org = result.scalar_one()
+    m = cast(Any, member)
 
-    return GenericResponse(data=org)
+    profile_data = UserProfileResponse(
+        id=m.user.id,
+        email=m.user.email,
+        is_superuser=m.user.is_superuser,
+        role_name=m.role.name,
+        scopes=m.role.scopes,
+        organization=m.organization,
+    )
+
+    return GenericResponse(data=profile_data)
+
+
+@router.patch(
+    "/{org_id}",
+    response_model=GenericResponse[OrganizationResponse],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ORG_UPDATE))],
+)
+async def update_organization(
+    org_id: UUID,
+    data: OrganizationUpdate,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    """Updates the settings (name, slug) of the organization."""
+    org = await OrganizationService.update_organization(session, org_id, data)
+
+    success_msg = i18n.t("success.organization_updated", lang=lang)
+    return GenericResponse(data=org, message=success_msg)
+
+
+@router.delete(
+    "/{org_id}",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ORG_DELETE))],
+)
+async def delete_organization(
+    org_id: UUID,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+) -> GenericResponse[Any]:
+    """Soft-deletes the organization. Danger zone action."""
+    await OrganizationService.delete_organization(session, org_id)
+
+    success_msg = i18n.t("success.organization_deleted", lang=lang)
+    return GenericResponse[Any](data=None, message=success_msg)

@@ -1,21 +1,22 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:17-alpine
     container_name: nidus-postgres
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-nidus_admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-nidus_local_secret}
-      POSTGRES_DB: ${DB_NAME:-nidus_core}
+      POSTGRES_USER: ${ADMIN_USER}
+      POSTGRES_PASSWORD: ${ADMIN_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      APP_USER: ${APP_USER}
+      APP_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_TEST_DB: ${POSTGRES_TEST_DB}
     ports:
-      - "5444:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/db-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-nidus_admin} -d ${DB_NAME:-nidus_core}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${ADMIN_USER} -d ${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -30,9 +31,11 @@ services:
       - ./app:/workspace/app
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://nidus_app_user:nidus_app_secret@db:5432/nidus_core
-      - ENVIRONMENT=development
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
     depends_on:
       db:
         condition: service_healthy

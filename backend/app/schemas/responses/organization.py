@@ -14,3 +14,10 @@ class OrganizationResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OnBoardingResponse(BaseModel):
+    """Schema for the successful onboarding response."""
+
+    organization_id: UUID
+    user_id: UUID
