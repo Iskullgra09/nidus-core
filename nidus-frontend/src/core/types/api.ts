@@ -27,3 +27,14 @@ export interface CursorPage<T> {
   items: T[];
   page_info: PageInfo;
 }
+
+export interface FastAPIErrorDetail {
+  loc?: (string | number)[];
+  msg: string;
+  type?: string;
+}
+
+export interface FastAPIErrorResponse {
+  detail?: string | FastAPIErrorDetail[];
+  message?: string;
+}

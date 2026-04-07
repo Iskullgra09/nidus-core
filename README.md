@@ -35,10 +35,15 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **3.7**| **The Data Standard**| O(1) Keyset Pagination via UUIDv7, Dynamic Pydantic-to-SQL Filtering Engine, Cascading Soft-Deletes. |
 
 ### In Progress / Upcoming
-#### **Phase 4: Frontend & Scaling** (Next.js 15)
-- [ ] **Edge Resolution:** Tenant detection via Next.js Middleware.
-- [ ] **PPR Dashboards:** Partial Prerendering for tenant shells.
-- [ ] **Connection Pooling:** PgBouncer integration for 100k+ scaling.
+#### **Phase 4: Frontend Core & UI Architecture** (Next.js 16)
+- [x] **Gateway Proxy:** Edge routing and JWT session validation (`src/proxy.ts`).
+- [x] **Design System:** Shadcn "Nova" + Tailwind v4 + OKLCH for predictable, high-density SaaS UI.
+- [x] **Type-Safe Forms:** Zod (pinned to v3 for ecosystem stability) + React Hook Form.
+- [x] **Authentication Pipeline:** Login Server Actions with HttpOnly cookie generation.
+- [ ] **The Happy Path:** Minimalist Command-Driven Top-Bar, Org Switcher, and secure Logout.
+- [ ] **Frontend i18n:** Localization pipeline integration for UI components and client-side schemas.
+- [ ] **Secondary Auth Flows:** Registration, Atomic Onboarding, and Stateless Password Recovery.
+- [ ] **Data Fetching:** SWR or React 19 `use` cache for fetching and streaming tenant data.
 
 ---
 

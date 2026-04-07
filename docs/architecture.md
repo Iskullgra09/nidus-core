@@ -670,3 +670,43 @@ Reconfigured `components.json` and TypeScript aliases:
 
 ### Consequences
 * **Positive:** Clean architecture. High reusability across future micro-frontends or modules.
+
+---
+
+## ADR 037: Dependency Pinning for Ecosystem Stability (Zod v3)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Upgrading to Zod v4 introduced breaking changes to internal type definitions (`_def`, `typeName`), causing severe TypeScript incompatibilities (`TS2769`) with `@hookform/resolvers`. Using `as any` to bypass this breaks our Strict Typing mandate.
+
+### Decision
+1. **Downgrade & Pin:** Pinned Zod explicitly to version `3.23.8`.
+2. **Schema Encapsulation:** Export schemas using the generic `z.ZodType<T>` interface when necessary to hide internal metadata from external libraries.
+
+### Consequences
+* **Positive:** Restored 100% strict typing without ESLint warnings. Guaranteed compatibility with the React Hook Form ecosystem.
+* **Negative:** Temporarily blocks adoption of Zod v4 features until the resolver ecosystem fully catches up.
+
+---
+
+## ADR 038: Command-Driven Minimalist UI Architecture
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Traditional SaaS dashboards rely on heavy, permanent sidebars that consume valuable horizontal viewport space. Nidus requires a data-dense, highly focused interface for managing complex multitenant resources.
+
+### Decision
+1. **Top-Bar Only:** Adopted a minimalist top navigation bar structure.
+2. **Component Distribution:**
+   - Left: Branding and Breadcrumb Context.
+   - Center: Reserved for a future Global Command Palette (Cmd+K).
+   - Right: Organization Switcher and User Profile Dropdown.
+3. **Viewport Optimization:** Dedicates >90% of the screen strictly to tenant data and tables.
+
+### Consequences
+* **Positive:** Clean, modern, "developer-first" aesthetic. Excellent use of screen real estate.
+* **Negative:** Navigation relies heavily on dropdowns or command palettes, requiring a slight learning curve for users accustomed to traditional sidebars.
