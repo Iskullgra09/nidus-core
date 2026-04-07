@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/core/i18n/routing";
 import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
@@ -17,14 +18,17 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 
-import { loginSchema, LoginFormData } from "../types/auth";
+import { LoginFormData } from "../types/auth";
+import { getLoginSchema, ValidationTranslator } from "../model/auth.schema";
 import { loginAction } from "../actions/auth";
 
 export function LoginForm() {
   const router = useRouter();
+  const tAuth = useTranslations("Auth");
+  const tVal = useTranslations("Validation");
 
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(getLoginSchema(tVal as ValidationTranslator)),
     defaultValues: {
       email: "",
       password: "",
@@ -35,11 +39,11 @@ export function LoginForm() {
     const result = await loginAction(values);
 
     if (result.status === "success") {
-      toast.success(result.message || "Autenticación exitosa");
+      toast.success(tAuth("successMessage"));
       router.push("/dashboard");
       router.refresh();
     } else {
-      toast.error(result.message || "Error al iniciar sesión");
+      toast.error(result.message || tAuth("errorMessage"));
     }
   }
 
@@ -51,10 +55,10 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Correo Electrónico</FormLabel>
+              <FormLabel>{tAuth("emailLabel")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="admin@nidus.com"
+                  placeholder={tAuth("emailPlaceholder")}
                   type="email"
                   autoComplete="email"
                   {...field}
@@ -69,10 +73,10 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contraseña</FormLabel>
+              <FormLabel>{tAuth("passwordLabel")}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="••••••••"
+                  placeholder={tAuth("passwordPlaceholder")}
                   type="password"
                   autoComplete="current-password"
                   {...field}
@@ -87,7 +91,9 @@ export function LoginForm() {
           className="w-full"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Autenticando..." : "Ingresar"}
+          {form.formState.isSubmitting
+            ? tAuth("submittingButton")
+            : tAuth("submitButton")}
         </Button>
       </form>
     </Form>

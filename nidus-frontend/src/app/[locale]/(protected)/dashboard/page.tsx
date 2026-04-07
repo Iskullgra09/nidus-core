@@ -1,13 +1,14 @@
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const t = await getTranslations("Dashboard");
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-        <p className="text-muted-foreground">
-          Bienvenido al centro de control de tu organización.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

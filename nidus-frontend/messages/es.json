@@ -1,0 +1,29 @@
+{
+  "Auth": {
+    "loginTitle": "Iniciar Sesión",
+    "loginDescription": "Ingresa tus credenciales para acceder a tu entorno.",
+    "emailLabel": "Correo Electrónico",
+    "emailPlaceholder": "admin@nidus.com",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "submitButton": "Ingresar",
+    "submittingButton": "Autenticando...",
+    "successMessage": "Autenticación exitosa",
+    "errorMessage": "Credenciales inválidas"
+  },
+  "TopBar": {
+    "profile": "Mi Perfil",
+    "settings": "Ajustes de Perfil",
+    "orgSettings": "Ajustes de Organización",
+    "logout": "Cerrar Sesión"
+  },
+  "Dashboard": {
+    "title": "Centro de Control",
+    "description": "Bienvenido al centro de control de tu organización."
+  },
+  "Validation": {
+    "emailRequired": "El correo es requerido.",
+    "emailInvalid": "Formato de correo inválido.",
+    "passwordMin": "La contraseña debe tener al menos 8 caracteres."
+  }
+}

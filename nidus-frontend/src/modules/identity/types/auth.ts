@@ -1,17 +1,10 @@
-import { z } from "zod";
 import { ApiStatus } from "@/core/types/api";
 
-export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "El correo es requerido.")
-    .email("Formato de correo inválido."),
-  password: z
-    .string()
-    .min(8, "La contraseña debe tener al menos 8 caracteres."),
-});
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
-export type LoginRequest = z.infer<typeof loginSchema>;
 export type LoginFormData = LoginRequest;
 
 export interface TokenResponse {

@@ -1,0 +1,29 @@
+{
+  "Auth": {
+    "loginTitle": "Sign In",
+    "loginDescription": "Enter your credentials to access your workspace.",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "admin@nidus.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "submitButton": "Sign In",
+    "submittingButton": "Authenticating...",
+    "successMessage": "Authentication successful",
+    "errorMessage": "Invalid credentials"
+  },
+  "TopBar": {
+    "profile": "My Profile",
+    "settings": "Profile Settings",
+    "orgSettings": "Organization Settings",
+    "logout": "Log Out"
+  },
+  "Dashboard": {
+    "title": "Overview",
+    "description": "Welcome to your organization's control center."
+  },
+  "Validation": {
+    "emailRequired": "Email is required.",
+    "emailInvalid": "Invalid email format.",
+    "passwordMin": "Password must be at least 8 characters long."
+  }
+}
