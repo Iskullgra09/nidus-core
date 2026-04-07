@@ -18,38 +18,50 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 
-import { LoginFormData } from "../types/auth";
-import { getLoginSchema, ValidationTranslator } from "../model/auth.schema";
-import { loginAction } from "../actions/auth";
+import { RegisterFormData } from "../types/auth";
+import { getRegisterSchema } from "../model/register.schema";
+import { ValidationTranslator } from "../model/auth.schema";
+import { registerAction } from "../actions/auth";
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter();
+  const tReg = useTranslations("Register");
   const tAuth = useTranslations("Auth");
   const tVal = useTranslations("Validation");
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(getLoginSchema(tVal as ValidationTranslator)),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(getRegisterSchema(tVal as ValidationTranslator)),
+    defaultValues: { organization_name: "", email: "", password: "" },
   });
 
-  async function onSubmit(values: LoginFormData) {
-    const result = await loginAction(values);
+  async function onSubmit(values: RegisterFormData) {
+    const result = await registerAction(values);
 
     if (result.status === "success") {
-      toast.success(tAuth("successMessage"));
-      router.push("/dashboard");
-      router.refresh();
+      toast.success(result.message);
+      router.push("/login");
     } else {
-      toast.error(result.message || tAuth("errorMessage"));
+      toast.error(result.message);
     }
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="organization_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{tReg("orgNameLabel")}</FormLabel>
+              <FormControl>
+                <Input placeholder={tReg("orgNamePlaceholder")} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="email"
@@ -60,7 +72,6 @@ export function LoginForm() {
                 <Input
                   placeholder={tAuth("emailPlaceholder")}
                   type="email"
-                  autoComplete="email"
                   {...field}
                 />
               </FormControl>
@@ -68,6 +79,7 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="password"
@@ -78,7 +90,6 @@ export function LoginForm() {
                 <Input
                   placeholder={tAuth("passwordPlaceholder")}
                   type="password"
-                  autoComplete="current-password"
                   {...field}
                 />
               </FormControl>
@@ -86,25 +97,21 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+
         <Button
           type="submit"
           className="w-full"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting
-            ? tAuth("submittingButton")
-            : tAuth("submitButton")}
+            ? tReg("submittingButton")
+            : tReg("submitButton")}
         </Button>
+
         <div className="text-center mt-4">
-          <p className="text-sm text-muted-foreground">
-            {tAuth("noAccount")}{" "}
-            <Link
-              href="/register"
-              className="text-primary font-medium hover:underline"
-            >
-              {tAuth("registerLink")}
-            </Link>
-          </p>
+          <Link href="/login" className="text-sm text-primary hover:underline">
+            {tReg("loginLink")}
+          </Link>
         </div>
       </form>
     </Form>

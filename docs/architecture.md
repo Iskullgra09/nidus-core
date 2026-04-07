@@ -710,3 +710,77 @@ Traditional SaaS dashboards rely on heavy, permanent sidebars that consume valua
 ### Consequences
 * **Positive:** Clean, modern, "developer-first" aesthetic. Excellent use of screen real estate.
 * **Negative:** Navigation relies heavily on dropdowns or command palettes, requiring a slight learning curve for users accustomed to traditional sidebars.
+
+---
+
+## ADR 039: Multilingual Routing and i18n Strategy
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Nidus requires a global-first approach where the URL is the source of truth for the user's language, ensuring SEO compatibility and shareable localized links.
+
+### Decision
+1. **Engine:** Adopted `next-intl` with the **Dynamic [locale] Segment** strategy.
+2. **Routing:** All application routes moved inside `src/app/[locale]/`.
+3. **Middleware:** Implemented a composite proxy in `src/proxy.ts` that merges authentication guarding with automatic language detection and redirection.
+
+### Consequences
+* **Positive:** Consistent UX across different regions. Native support for localized metadata.
+* **Negative:** Requires wrapping all routes in a dynamic segment, increasing file depth by one level.
+
+---
+
+## ADR 040: Localized Form Validation (Zod Factory Pattern)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Zod schemas are static, but validation messages must be dynamic based on the user's locale. Using `any` to bypass type checks for translators is unacceptable and violates our strict typing mandate.
+
+### Decision
+1. **Pattern:** Adopted the **Schema Factory Pattern**. Validation schemas are now functions that accept a strictly typed `ValidationTranslator`.
+2. **Type Safety:** Leveraged the `IntlMessages` global interface to ensure that only existing JSON keys can be used for error messages, maintaining **Zero `any`** in the domain logic.
+
+### Consequences
+* **Positive:** 100% type-safe translations. VS Code provides autocompletion for dictionary keys within Zod schemas.
+* **Negative:** Adds a layer of functional wrapping to schema definitions.
+
+---
+
+## ADR 041: Unified UI Feedback and Global Toast System
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Users require immediate, non-intrusive feedback for background operations (Server Actions) to understand the outcome of their interactions.
+
+### Decision
+1. **Library:** Integrated **Sonner** as the primary notification engine.
+2. **Implementation:** Placed a single `<Toaster />` in the `RootLayout` with `richColors` enabled.
+3. **Contract:** Server Actions now return a standardized `{ status, message }` object where the message is pre-translated on the server, allowing the frontend to remain "dumb" regarding localized strings.
+
+### Consequences
+* **Positive:** Centralized feedback management. "Success" and "Error" states are visually distinguishable and accessible.
+
+---
+
+## ADR 042: Automatic Tenant Slugification
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Tenants require a unique URL identifier (`slug`), but asking for it manually during onboarding increases friction and often leads to invalid formats.
+
+### Decision
+1. **UX:** Implemented automatic slugification on the frontend/server-action layer.
+2. **Logic:** The `organization_name` is transformed into a URL-safe string (lowercase, alphanumeric, hyphenated) before being sent to the FastAPI `OnboardingCreate` schema.
+3. **Consistency:** The transformation uses a deterministic regex pattern to ensure parity with the backend's Pydantic `slug_format` validator.
+
+### Consequences
+* **Positive:** Reduced onboarding friction. Guaranteed valid slugs for new tenants.
+* **Negative:** If two organizations share a very similar name, the slug might conflict (to be handled by backend unique constraints).

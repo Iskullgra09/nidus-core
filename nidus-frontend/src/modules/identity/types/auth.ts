@@ -16,3 +16,21 @@ export interface AuthActionResponse {
   status: ApiStatus;
   message: string | null;
 }
+
+export interface RegisterFormData {
+  organization_name: string;
+  email: string;
+  password: string;
+}
+
+export interface OnboardingPayload {
+  organization_name: string;
+  organization_slug: string;
+  admin_email: string;
+  password: string;
+}
+
+export interface AuthActionResponse {
+  status: ApiStatus;
+  message: string | null;
+}

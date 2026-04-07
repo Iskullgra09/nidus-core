@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/core/i18n/routing";
+import { Toaster } from "sonner";
 
 import "@/app/globals.css";
 
@@ -38,6 +39,13 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          expand={false}
+          duration={4000}
+        />
       </body>
     </html>
   );

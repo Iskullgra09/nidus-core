@@ -9,7 +9,11 @@
     "submitButton": "Ingresar",
     "submittingButton": "Autenticando...",
     "successMessage": "Autenticación exitosa",
-    "errorMessage": "Credenciales inválidas"
+    "errorMessage": "Credenciales inválidas",
+    "loginSuccess": "¡Bienvenido de nuevo!",
+    "logoutSuccess": "Sesión cerrada correctamente",
+    "noAccount": "¿No tienes una cuenta?",
+    "registerLink": "Regístrate aquí"
   },
   "TopBar": {
     "profile": "Mi Perfil",
@@ -24,6 +28,23 @@
   "Validation": {
     "emailRequired": "El correo es requerido.",
     "emailInvalid": "Formato de correo inválido.",
-    "passwordMin": "La contraseña debe tener al menos 8 caracteres."
+    "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
+    "orgNameRequired": "El nombre de la organización es requerido.",
+    "orgNameMin": "El nombre debe tener al menos 3 caracteres."
+  },
+  "Register": {
+    "title": "Crear Cuenta",
+    "description": "Empieza a gestionar tu organización hoy mismo.",
+    "orgNameLabel": "Nombre de la Organización",
+    "orgNamePlaceholder": "Ej. Nidus Corp",
+    "submitButton": "Registrarme",
+    "submittingButton": "Creando entorno...",
+    "loginLink": "¿Ya tienes cuenta? Inicia sesión",
+    "successMessage": "Organización creada con éxito"
+  },
+  "Common": {
+    "connectionError": "Error de conexión con el servidor",
+    "unknownError": "Ha ocurrido un error inesperado",
+    "invalidCredentials": "Correo o contraseña incorrectos"
   }
 }

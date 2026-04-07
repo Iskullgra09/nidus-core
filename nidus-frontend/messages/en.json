@@ -9,7 +9,11 @@
     "submitButton": "Sign In",
     "submittingButton": "Authenticating...",
     "successMessage": "Authentication successful",
-    "errorMessage": "Invalid credentials"
+    "errorMessage": "Invalid credentials",
+    "loginSuccess": "Welcome back!",
+    "logoutSuccess": "Logged out successfully",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Register here"
   },
   "TopBar": {
     "profile": "My Profile",
@@ -24,6 +28,23 @@
   "Validation": {
     "emailRequired": "Email is required.",
     "emailInvalid": "Invalid email format.",
-    "passwordMin": "Password must be at least 8 characters long."
+    "passwordMin": "Password must be at least 8 characters long.",
+    "orgNameRequired": "Organization name is required.",
+    "orgNameMin": "Name must be at least 3 characters long."
+  },
+  "Register": {
+    "title": "Create Account",
+    "description": "Start managing your organization today.",
+    "orgNameLabel": "Organization Name",
+    "orgNamePlaceholder": "e.g. Nidus Corp",
+    "submitButton": "Register",
+    "submittingButton": "Creating environment...",
+    "loginLink": "Already have an account? Sign in",
+    "successMessage": "Organization created successfully"
+  },
+  "Common": {
+    "connectionError": "Server connection error",
+    "unknownError": "An unexpected error occurred",
+    "invalidCredentials": "Incorrect email or password"
   }
 }
