@@ -8,7 +8,7 @@ import { useRouter } from "@/core/i18n/routing";
 import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
+import { PasswordInput } from "@/shared/ui/password-input";
 import {
   Form,
   FormControl,
@@ -42,6 +42,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     if (result.status === "success") {
       toast.success(result.message);
       router.push("/login");
+      router.refresh();
     } else {
       toast.error(result.message);
     }
@@ -57,7 +58,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
             <FormItem>
               <FormLabel>{tReset("newPasswordLabel")}</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <PasswordInput type="password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -70,7 +71,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
             <FormItem>
               <FormLabel>{tReset("confirmPasswordLabel")}</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <PasswordInput type="password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

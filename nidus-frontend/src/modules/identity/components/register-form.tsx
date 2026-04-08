@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { PasswordInput } from "@/shared/ui/password-input";
 import {
   Form,
   FormControl,
@@ -87,7 +88,7 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>{tAuth("passwordLabel")}</FormLabel>
               <FormControl>
-                <Input
+                <PasswordInput
                   placeholder={tAuth("passwordPlaceholder")}
                   type="password"
                   {...field}

@@ -27,3 +27,14 @@ export interface MemberFilter {
   limit?: number;
   cursor?: string;
 }
+
+export interface ChangePasswordFormData {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
+export interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}

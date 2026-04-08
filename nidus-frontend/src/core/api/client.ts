@@ -1,3 +1,4 @@
+import { getLocale } from "next-intl/server";
 import { GenericResponse } from "@/core/types/api";
 
 const BASE_URL =
@@ -23,8 +24,12 @@ export const fetchClient = async <T>(
     });
   }
 
+  const locale = await getLocale();
   const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  headers.set("Accept-Language", locale);
 
   try {
     const response = await fetch(url.toString(), {
@@ -33,24 +38,38 @@ export const fetchClient = async <T>(
     });
 
     const text = await response.text();
-    const data: GenericResponse<T> = text ? JSON.parse(text) : {};
+    const data = text ? JSON.parse(text) : {};
 
-    if (data.status !== "success" || !response.ok) {
+    if (!response.ok || data.status === "error") {
+      let errorMessage = data.message || "Request failed";
+
+      if (!data.message && data.detail) {
+        if (typeof data.detail === "string") {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+          errorMessage = data.detail[0].msg;
+        }
+      }
+
       return {
         status: "error",
         data: null,
-        message: data.message || "Request failed",
+        message: errorMessage,
         errors: data.errors || [],
-      };
+      } as GenericResponse<T>;
     }
 
-    return data;
+    return {
+      status: "success",
+      data: data.data !== undefined ? data.data : data,
+      message: data.message || "Success",
+    } as GenericResponse<T>;
   } catch (error) {
     return {
       status: "error",
-      data: null,
+      data: null as unknown as T,
       message: "Internal Connection Error",
       errors: [{ field: "network", message: String(error) }],
-    };
+    } as GenericResponse<T>;
   }
 };

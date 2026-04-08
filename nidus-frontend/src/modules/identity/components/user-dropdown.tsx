@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/core/i18n/routing";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import {
@@ -48,8 +49,10 @@ export function UserDropdown({ user }: UserDropdownProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem className="cursor-pointer">
-            {t("settings")}
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/settings" className="w-full">
+              {t("settings")}
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer">
             {t("orgSettings")}

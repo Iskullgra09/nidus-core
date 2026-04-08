@@ -47,7 +47,9 @@
   "Common": {
     "connectionError": "Server connection error",
     "unknownError": "An unexpected error occurred",
-    "invalidCredentials": "Incorrect email or password"
+    "invalidCredentials": "Incorrect email or password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "ForgotPassword": {
     "title": "Recover Password",
@@ -65,5 +67,19 @@
     "submitButton": "Save password",
     "submittingButton": "Saving...",
     "successMessage": "Password updated successfully. You can now sign in."
+  },
+  "Settings": {
+    "title": "Settings",
+    "description": "Manage your account preferences and security.",
+    "tabGeneral": "General",
+    "tabSecurity": "Security",
+    "securityTitle": "Change Password",
+    "securityDescription": "Ensure your account is using a long, secure password.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "submitPassword": "Update Password",
+    "submittingPassword": "Updating...",
+    "passwordSuccess": "Your password has been successfully updated."
   }
 }

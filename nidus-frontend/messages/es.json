@@ -47,7 +47,9 @@
   "Common": {
     "connectionError": "Error de conexión con el servidor",
     "unknownError": "Ha ocurrido un error inesperado",
-    "invalidCredentials": "Correo o contraseña incorrectos"
+    "invalidCredentials": "Correo o contraseña incorrectos",
+    "showPassword": "Ver contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "ForgotPassword": {
     "title": "Recuperar Contraseña",
@@ -65,5 +67,19 @@
     "submitButton": "Guardar contraseña",
     "submittingButton": "Guardando...",
     "successMessage": "Contraseña actualizada con éxito. Ya puedes iniciar sesión."
+  },
+  "Settings": {
+    "title": "Configuración",
+    "description": "Administra las preferencias de tu cuenta y seguridad.",
+    "tabGeneral": "General",
+    "tabSecurity": "Seguridad",
+    "securityTitle": "Cambiar Contraseña",
+    "securityDescription": "Asegúrate de usar una contraseña larga y segura.",
+    "currentPassword": "Contraseña Actual",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "submitPassword": "Actualizar Contraseña",
+    "submittingPassword": "Actualizando...",
+    "passwordSuccess": "Tu contraseña ha sido actualizada correctamente."
   }
 }

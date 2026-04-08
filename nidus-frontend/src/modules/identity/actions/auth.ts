@@ -14,7 +14,6 @@ import {
   ForgotPasswordFormData,
   ResetPasswordPayload,
 } from "../types/auth";
-import { FastAPIErrorResponse } from "@/core/types/api";
 
 export async function getCurrentUser(): Promise<UserProfileResponse | null> {
   const cookieStore = await cookies();
@@ -26,7 +25,7 @@ export async function getCurrentUser(): Promise<UserProfileResponse | null> {
     headers: { Authorization: `Bearer ${session}` },
   });
 
-  return response.status === "success" ? response.data : null;
+  return response.status === "success" && response.data ? response.data : null;
 }
 
 export async function loginAction(
@@ -40,36 +39,28 @@ export async function loginAction(
   formData.append("password", credentials.password);
 
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-    const response = await fetch(`${baseUrl}/auth/login`, {
+    const response = await fetchClient<TokenResponse>("/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: formData.toString(),
     });
 
-    if (response.ok) {
-      const data = (await response.json()) as TokenResponse;
+    if (response.status === "success" && response.data) {
       const cookieStore = await cookies();
-
-      cookieStore.set("nidus_session", data.access_token, {
+      cookieStore.set("nidus_session", response.data.access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
       });
-
       return { status: "success", message: tAuth("loginSuccess") };
     }
 
-    const errorData = (await response.json()) as FastAPIErrorResponse;
-    const errorMessage =
-      typeof errorData.detail === "string"
-        ? errorData.detail
-        : t("invalidCredentials");
-
-    return { status: "error", message: errorMessage };
+    return {
+      status: "error",
+      message: response.message || t("invalidCredentials"),
+    };
   } catch (error) {
     console.error("Login Error:", error);
     return { status: "error", message: t("connectionError") };
@@ -93,8 +84,6 @@ export async function registerAction(
   const tReg = await getTranslations("Register");
 
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
     const payload: OnboardingPayload = {
       organization_name: formData.organization_name,
       organization_slug: slugify(formData.organization_name),
@@ -102,26 +91,21 @@ export async function registerAction(
       password: formData.password,
     };
 
-    const response = await fetch(`${baseUrl}/organizations/onboarding`, {
+    const response = await fetchClient("/organizations/onboarding", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    if (response.ok) {
+    if (response.status === "success") {
       return { status: "success", message: tReg("successMessage") };
     }
 
-    const errorData = (await response.json()) as FastAPIErrorResponse;
     return {
       status: "error",
-      message:
-        typeof errorData.detail === "string"
-          ? errorData.detail
-          : tCommon("unknownError"),
+      message: response.message || tCommon("unknownError"),
     };
   } catch (error) {
-    console.error("Register Error:", error);
+    console.error("Onboarding Error:", error);
     return { status: "error", message: tCommon("connectionError") };
   }
 }
@@ -139,26 +123,18 @@ export async function forgotPasswordAction(
   const tForgot = await getTranslations("ForgotPassword");
 
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-
-    const response = await fetch(`${baseUrl}/auth/forgot-password`, {
+    const response = await fetchClient("/auth/forgot-password", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: formData.email }),
     });
 
-    if (response.ok || response.status === 404) {
+    if (response.status === "success") {
       return { status: "success", message: tForgot("successMessage") };
     }
 
-    const errorData = (await response.json()) as FastAPIErrorResponse;
     return {
       status: "error",
-      message:
-        typeof errorData.detail === "string"
-          ? errorData.detail
-          : tCommon("unknownError"),
+      message: response.message || tCommon("unknownError"),
     };
   } catch (error) {
     console.error("Forgot Password Error:", error);
@@ -173,26 +149,20 @@ export async function resetPasswordAction(
   const tReset = await getTranslations("ResetPassword");
 
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
-
-    const response = await fetch(`${baseUrl}/auth/reset-password`, {
+    const response = await fetchClient("/auth/reset-password", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    if (response.ok) {
+    if (response.status === "success") {
+      const cookieStore = await cookies();
+      cookieStore.delete("nidus_session");
       return { status: "success", message: tReset("successMessage") };
     }
 
-    const errorData = (await response.json()) as FastAPIErrorResponse;
     return {
       status: "error",
-      message:
-        typeof errorData.detail === "string"
-          ? errorData.detail
-          : tCommon("unknownError"),
+      message: response.message || tCommon("unknownError"),
     };
   } catch (error) {
     console.error("Reset Password Error:", error);
