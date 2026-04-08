@@ -13,7 +13,8 @@
     "loginSuccess": "Welcome back!",
     "logoutSuccess": "Logged out successfully",
     "noAccount": "Don't have an account?",
-    "registerLink": "Register here"
+    "registerLink": "Register here",
+    "forgotPasswordLink": "Forgot password?"
   },
   "TopBar": {
     "profile": "My Profile",
@@ -30,7 +31,8 @@
     "emailInvalid": "Invalid email format.",
     "passwordMin": "Password must be at least 8 characters long.",
     "orgNameRequired": "Organization name is required.",
-    "orgNameMin": "Name must be at least 3 characters long."
+    "orgNameMin": "Name must be at least 3 characters long.",
+    "passwordsDoNotMatch": "Passwords do not match."
   },
   "Register": {
     "title": "Create Account",
@@ -46,5 +48,22 @@
     "connectionError": "Server connection error",
     "unknownError": "An unexpected error occurred",
     "invalidCredentials": "Incorrect email or password"
+  },
+  "ForgotPassword": {
+    "title": "Recover Password",
+    "description": "Enter your email and we will send you a link to reset your password.",
+    "submitButton": "Send recovery link",
+    "submittingButton": "Sending...",
+    "successMessage": "If the email exists, you will receive a link shortly.",
+    "backToLogin": "Back to sign in"
+  },
+  "ResetPassword": {
+    "title": "New Password",
+    "description": "Enter your new password to regain access.",
+    "newPasswordLabel": "New Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "submitButton": "Save password",
+    "submittingButton": "Saving...",
+    "successMessage": "Password updated successfully. You can now sign in."
   }
 }

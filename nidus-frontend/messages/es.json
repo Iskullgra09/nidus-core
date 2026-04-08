@@ -13,7 +13,8 @@
     "loginSuccess": "¡Bienvenido de nuevo!",
     "logoutSuccess": "Sesión cerrada correctamente",
     "noAccount": "¿No tienes una cuenta?",
-    "registerLink": "Regístrate aquí"
+    "registerLink": "Regístrate aquí",
+    "forgotPasswordLink": "¿Olvidaste tu contraseña?"
   },
   "TopBar": {
     "profile": "Mi Perfil",
@@ -30,7 +31,8 @@
     "emailInvalid": "Formato de correo inválido.",
     "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
     "orgNameRequired": "El nombre de la organización es requerido.",
-    "orgNameMin": "El nombre debe tener al menos 3 caracteres."
+    "orgNameMin": "El nombre debe tener al menos 3 caracteres.",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden."
   },
   "Register": {
     "title": "Crear Cuenta",
@@ -46,5 +48,22 @@
     "connectionError": "Error de conexión con el servidor",
     "unknownError": "Ha ocurrido un error inesperado",
     "invalidCredentials": "Correo o contraseña incorrectos"
+  },
+  "ForgotPassword": {
+    "title": "Recuperar Contraseña",
+    "description": "Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.",
+    "submitButton": "Enviar enlace de recuperación",
+    "submittingButton": "Enviando...",
+    "successMessage": "Si el correo existe, recibirás un enlace en breve.",
+    "backToLogin": "Volver a iniciar sesión"
+  },
+  "ResetPassword": {
+    "title": "Nueva Contraseña",
+    "description": "Ingresa tu nueva contraseña para recuperar el acceso.",
+    "newPasswordLabel": "Nueva Contraseña",
+    "confirmPasswordLabel": "Confirmar Contraseña",
+    "submitButton": "Guardar contraseña",
+    "submittingButton": "Guardando...",
+    "successMessage": "Contraseña actualizada con éxito. Ya puedes iniciar sesión."
   }
 }

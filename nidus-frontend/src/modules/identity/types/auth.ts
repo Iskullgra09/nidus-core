@@ -34,3 +34,17 @@ export interface AuthActionResponse {
   status: ApiStatus;
   message: string | null;
 }
+
+export interface ForgotPasswordFormData {
+  email: string;
+}
+
+export interface ResetPasswordFormData {
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  new_password: string;
+}

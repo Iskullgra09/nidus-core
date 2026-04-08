@@ -24,7 +24,7 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 
 ## Project Roadmap (Updated Q2 2026)
 
-### Completed Milestones
+### Completed Milestones (Backend)
 | Phase | Goal | Achievements |
 | :--- | :--- | :--- |
 | **1** | **Data Engine** | RLS Policies, Baseline Migration, Security Setup. |
@@ -34,16 +34,33 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **3.6**| **Lifecycle & Mail** | Asynchronous email dispatch (`aiosmtplib`), Secure Invitation Lifecycle, Password Recovery. |
 | **3.7**| **The Data Standard**| O(1) Keyset Pagination via UUIDv7, Dynamic Pydantic-to-SQL Filtering Engine, Cascading Soft-Deletes. |
 
-### In Progress / Upcoming
-#### **Phase 4: Frontend Core & UI Architecture** (Next.js 16)
+---
+
+### In Progress / Upcoming (Frontend & Ecosystem)
+
+#### **Phase 4: Frontend Foundation & Auth Pipeline** (Next.js 15)
 - [x] **Gateway Proxy:** Edge routing and JWT session validation (`src/proxy.ts`).
 - [x] **Design System:** Shadcn "Nova" + Tailwind v4 + OKLCH for predictable, high-density SaaS UI.
-- [x] **Type-Safe Forms:** Zod (pinned to v3 for ecosystem stability) + React Hook Form.
-- [x] **Authentication Pipeline:** Login Server Actions with HttpOnly cookie generation.
-- [ ] **The Happy Path:** Minimalist Command-Driven Top-Bar, Org Switcher, and secure Logout.
-- [ ] **Frontend i18n:** Localization pipeline integration for UI components and client-side schemas.
-- [ ] **Secondary Auth Flows:** Registration, Atomic Onboarding, and Stateless Password Recovery.
-- [ ] **Data Fetching:** SWR or React 19 `use` cache for fetching and streaming tenant data.
+- [x] **Type-Safe Forms:** Zod (pinned to v3) + React Hook Form + Zero `any` policy.
+- [x] **Authentication Flow:** Login Server Actions with HttpOnly cookie generation & Logout.
+- [x] **Frontend i18n:** `next-intl` integration, Dynamic `[locale]` segments, and Zod Schema Factory.
+- [x] **Tenant Onboarding:** Multilingual registration with automatic slugification.
+- [x] **Unified Feedback:** Global Sonner Toaster with Server-Side translation bindings.
+
+#### **Phase 5: The Security & Access Loop** (Up Next)
+- [ ] **Stateless Password Recovery:** Forgot Password (Email dispatch) and Reset Password (short-lived JWT) views.
+- [ ] **Profile Management:** User Settings view for name changes and avatar uploads.
+- [ ] **Preference Persistence:** Syncing UI Theme (Dark/Light) and Language (EN/ES) preferences to the DB.
+
+#### **Phase 6: Tenant Collaboration (B2B Engine)**
+- [ ] **Organization Governance:** Org Settings view (Rename tenant, manage slug).
+- [ ] **Invitation Workflow:** Secure UI for dispatching invites and the "Accept Invitation" landing page.
+- [ ] **Member Management:** Data Tables for viewing tenant members and mutating their RBAC roles.
+
+#### **Phase 7: Premium UX & Developer-First Navigation**
+- [ ] **Command Palette (Cmd+K):** Global search and command execution via Radix `cmdk`.
+- [ ] **Modular Navigation:** Implementation of contextual horizontal Sub-Tabs (No heavy sidebars).
+- [ ] **Optimized Data Fetching:** SWR or React 19 `use` cache for streaming tenant data seamlessly.
 
 ---
 
@@ -67,7 +84,7 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | **Install Deps** | `uv sync` |
 | **Run Migrations** | `uv run alembic upgrade head` |
 | **Create Migration** | `uv run alembic revision --autogenerate -m "description"` |
-| **Run Seed Script** | `uv run seed.py ` |
+| **Run Seed Script** | `uv run seed.py` |
 | **Run Seed Script on Docker** | `docker exec -it nidus-fastapi python app/core/seed.py` |
 | **Run API Locally** | `uv run fastapi dev app/main.py` |
 | **Run Tests** | `uv run pytest` |
@@ -78,6 +95,9 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | **Install Deps** | `pnpm install` |
 | **Dev Mode** | `pnpm --filter nidus-frontend dev` |
 | **Build Prod** | `pnpm --filter nidus-frontend build` |
+| **Strict Typecheck** | `pnpm --filter nidus-frontend tsc --noEmit` |
+| **Run Linter** | `pnpm --filter nidus-frontend lint` |
+| **Add UI Component** | `pnpm --filter nidus-frontend dlx shadcn@latest add <component>` |
 | **Clean cache** | `pnpm store prune` |
 
 ### 🧹 Maintenance & Cleanup

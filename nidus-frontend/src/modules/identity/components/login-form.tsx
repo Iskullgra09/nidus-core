@@ -73,7 +73,15 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{tAuth("passwordLabel")}</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>{tAuth("passwordLabel")}</FormLabel>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  {tAuth("forgotPasswordLink")}
+                </Link>
+              </div>
               <FormControl>
                 <Input
                   placeholder={tAuth("passwordPlaceholder")}
@@ -95,7 +103,7 @@ export function LoginForm() {
             ? tAuth("submittingButton")
             : tAuth("submitButton")}
         </Button>
-        <div className="text-center mt-4">
+        <div className="text-center mt-4 space-y-2">
           <p className="text-sm text-muted-foreground">
             {tAuth("noAccount")}{" "}
             <Link

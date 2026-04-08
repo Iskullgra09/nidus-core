@@ -11,6 +11,8 @@ import {
   AuthActionResponse,
   RegisterFormData,
   OnboardingPayload,
+  ForgotPasswordFormData,
+  ResetPasswordPayload,
 } from "../types/auth";
 import { FastAPIErrorResponse } from "@/core/types/api";
 
@@ -128,4 +130,72 @@ export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("nidus_session");
   redirect("/login");
+}
+
+export async function forgotPasswordAction(
+  formData: ForgotPasswordFormData,
+): Promise<AuthActionResponse> {
+  const tCommon = await getTranslations("Common");
+  const tForgot = await getTranslations("ForgotPassword");
+
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+
+    const response = await fetch(`${baseUrl}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email }),
+    });
+
+    if (response.ok || response.status === 404) {
+      return { status: "success", message: tForgot("successMessage") };
+    }
+
+    const errorData = (await response.json()) as FastAPIErrorResponse;
+    return {
+      status: "error",
+      message:
+        typeof errorData.detail === "string"
+          ? errorData.detail
+          : tCommon("unknownError"),
+    };
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    return { status: "error", message: tCommon("connectionError") };
+  }
+}
+
+export async function resetPasswordAction(
+  payload: ResetPasswordPayload,
+): Promise<AuthActionResponse> {
+  const tCommon = await getTranslations("Common");
+  const tReset = await getTranslations("ResetPassword");
+
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+
+    const response = await fetch(`${baseUrl}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      return { status: "success", message: tReset("successMessage") };
+    }
+
+    const errorData = (await response.json()) as FastAPIErrorResponse;
+    return {
+      status: "error",
+      message:
+        typeof errorData.detail === "string"
+          ? errorData.detail
+          : tCommon("unknownError"),
+    };
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    return { status: "error", message: tCommon("connectionError") };
+  }
 }

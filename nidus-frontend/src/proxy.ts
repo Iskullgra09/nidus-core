@@ -6,7 +6,12 @@ import { routing } from "@/core/i18n/routing";
 const intlMiddleware = createIntlMiddleware(routing);
 
 const PROTECTED_PATHS = ["/dashboard", "/settings", "/org"];
-const AUTH_PATHS = ["/login", "/register", "/forgot-password"];
+const AUTH_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
 
 export default function proxy(request: NextRequest) {
   const token = request.cookies.get("nidus_session")?.value;
