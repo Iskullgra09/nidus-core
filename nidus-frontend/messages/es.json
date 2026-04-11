@@ -73,13 +73,17 @@
     "submittingButton": "Guardando...",
     "successMessage": "Contraseña actualizada con éxito. Ya puedes iniciar sesión."
   },
-  "Settings": {
+  "SettingsLayout": {
     "title": "Configuración",
-    "description": "Administra las preferencias de tu cuenta y seguridad.",
-    "tabGeneral": "General",
-    "tabSecurity": "Seguridad",
-    "generalTitle": "Perfil General",
-    "generalDescription": "Actualiza tu información personal y preferencias de sistema.",
+    "description": "Administra tu cuenta, preferencias y entorno de trabajo.",
+    "navProfile": "Perfil General",
+    "navSecurity": "Seguridad",
+    "navOrganization": "Organización",
+    "navMembers": "Miembros del Equipo"
+  },
+  "SettingsProfile": {
+    "title": "Perfil General",
+    "description": "Actualiza tu información personal y preferencias de sistema.",
     "fullName": "Nombre Completo",
     "fullNamePlaceholder": "Ej. Juan Pérez",
     "emailAddress": "Correo Electrónico (Solo Lectura)",
@@ -90,17 +94,19 @@
     "themeSystem": "Sistema",
     "saveChanges": "Guardar Cambios",
     "savingChanges": "Guardando...",
-    "profileSuccess": "Tu perfil ha sido actualizado correctamente.",
-    "securityTitle": "Seguridad",
-    "securityDescription": "Asegúrate de usar una contraseña larga y segura.",
+    "successMessage": "Tu perfil ha sido actualizado correctamente."
+  },
+  "SettingsSecurity": {
+    "title": "Seguridad",
+    "description": "Asegúrate de usar una contraseña larga y segura.",
     "currentPassword": "Contraseña Actual",
     "newPassword": "Nueva Contraseña",
     "confirmNewPassword": "Confirmar Nueva Contraseña",
     "submitPassword": "Actualizar Contraseña",
     "submittingPassword": "Actualizando...",
-    "passwordSuccess": "Tu contraseña ha sido actualizada correctamente."
+    "successMessage": "Tu contraseña ha sido actualizada correctamente."
   },
-  "OrgSettings": {
+  "SettingsOrg": {
     "title": "Ajustes de Organización",
     "description": "Administra el nombre público y el identificador de tu entorno.",
     "orgNameLabel": "Nombre de la Organización",
@@ -110,5 +116,25 @@
     "savingChanges": "Guardando...",
     "noChangesDetected": "No hay cambios para guardar.",
     "successMessage": "Organización actualizada exitosamente."
+  },
+  "SettingsMembers": {
+    "title": "Miembros",
+    "description": "Gestiona quién tiene acceso a esta organización y sus niveles de permiso.",
+    "inviteButton": "Invitar Miembro",
+    "tableHeaderName": "Nombre",
+    "tableHeaderRole": "Rol",
+    "tableHeaderActions": "Acciones",
+    "tableHeaderStatus": "Estado",
+    "statusActive": "Activo",
+    "statusPending": "Pendiente",
+    "roleOwner": "Propietario",
+    "roleAdmin": "Administrador",
+    "roleMember": "Miembro",
+    "roleViewer": "Observador",
+    "changeRole": "Cambiar Rol",
+    "removeMember": "Eliminar del equipo",
+    "removeConfirm": "¿Estás seguro de que deseas eliminar a este miembro?",
+    "removeSuccess": "Miembro eliminado correctamente.",
+    "roleUpdateSuccess": "Rol actualizado correctamente."
   }
 }

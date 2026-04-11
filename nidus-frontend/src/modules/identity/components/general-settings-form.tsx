@@ -36,7 +36,7 @@ interface GeneralSettingsFormProps {
 
 export function GeneralSettingsForm({ user }: GeneralSettingsFormProps) {
   const router = useRouter();
-  const tSet = useTranslations("Settings");
+  const tSet = useTranslations("SettingsProfile");
   const tVal = useTranslations("Validation");
 
   const form = useForm<UpdateProfileFormData>({
@@ -68,10 +68,8 @@ export function GeneralSettingsForm({ user }: GeneralSettingsFormProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">{tSet("generalTitle")}</h3>
-        <p className="text-sm text-muted-foreground">
-          {tSet("generalDescription")}
-        </p>
+        <h3 className="text-lg font-medium">{tSet("title")}</h3>
+        <p className="text-sm text-muted-foreground">{tSet("description")}</p>
       </div>
 
       <Form {...form}>

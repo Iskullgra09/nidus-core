@@ -5,9 +5,6 @@ export interface ApiError {
   message: string;
 }
 
-/**
- * Standardized response wrapper (Mirroring Backend's GenericResponse)
- */
 export interface GenericResponse<T> {
   status: ApiStatus;
   message: string | null;
@@ -20,21 +17,7 @@ export interface PageInfo {
   end_cursor: string | null;
 }
 
-/**
- * Standardized pagination wrapper (Mirroring Backend's CursorPage)
- */
 export interface CursorPage<T> {
   items: T[];
   page_info: PageInfo;
-}
-
-export interface FastAPIErrorDetail {
-  loc?: (string | number)[];
-  msg: string;
-  type?: string;
-}
-
-export interface FastAPIErrorResponse {
-  detail?: string | FastAPIErrorDetail[];
-  message?: string;
 }

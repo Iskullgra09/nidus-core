@@ -73,13 +73,17 @@
     "submittingButton": "Saving...",
     "successMessage": "Password updated successfully. You can now sign in."
   },
-  "Settings": {
-    "title": "Profile Settings",
-    "description": "Manage your account preferences and security.",
-    "tabGeneral": "General",
-    "tabSecurity": "Security",
-    "generalTitle": "General Profile",
-    "generalDescription": "Update your personal information and system preferences.",
+  "SettingsLayout": {
+    "title": "Settings",
+    "description": "Manage your account settings, preferences, and workspace.",
+    "navProfile": "General Profile",
+    "navSecurity": "Security",
+    "navOrganization": "Organization",
+    "navMembers": "Team members"
+  },
+  "SettingsProfile": {
+    "title": "General Profile",
+    "description": "Update your personal information and system preferences.",
     "fullName": "Full Name",
     "fullNamePlaceholder": "E.g. John Doe",
     "emailAddress": "Email Address (Read Only)",
@@ -90,17 +94,19 @@
     "themeSystem": "System",
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
-    "profileSuccess": "Your profile has been successfully updated.",
-    "securityTitle": "Security",
-    "securityDescription": "Ensure your account is using a long, secure password.",
+    "successMessage": "Your profile has been successfully updated."
+  },
+  "SettingsSecurity": {
+    "title": "Security",
+    "description": "Ensure your account is using a long, secure password.",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmNewPassword": "Confirm New Password",
     "submitPassword": "Update Password",
     "submittingPassword": "Updating...",
-    "passwordSuccess": "Your password has been successfully updated."
+    "successMessage": "Your password has been successfully updated."
   },
-  "OrgSettings": {
+  "SettingsOrg": {
     "title": "Organization Settings",
     "description": "Manage your environment's public name and identifier.",
     "orgNameLabel": "Organization Name",
@@ -110,5 +116,25 @@
     "savingChanges": "Saving...",
     "noChangesDetected": "No changes to save.",
     "successMessage": "Organization updated successfully."
+  },
+  "SettingsMembers": {
+    "title": "Members",
+    "description": "Manage who has access to this organization and their permission levels.",
+    "inviteButton": "Invite Member",
+    "tableHeaderName": "Name",
+    "tableHeaderRole": "Role",
+    "tableHeaderActions": "Actions",
+    "tableHeaderStatus": "Status",
+    "statusActive": "Active",
+    "statusPending": "Pending",
+    "roleOwner": "Owner",
+    "roleAdmin": "Administrator",
+    "roleMember": "Member",
+    "roleViewer": "Viewer",
+    "changeRole": "Change Role",
+    "removeMember": "Remove from team",
+    "removeConfirm": "Are you sure you want to remove this member?",
+    "removeSuccess": "Member removed successfully.",
+    "roleUpdateSuccess": "Role updated successfully."
   }
 }

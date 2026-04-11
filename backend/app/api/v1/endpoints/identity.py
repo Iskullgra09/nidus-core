@@ -13,7 +13,7 @@ from app.models.identity.scopes import NidusScope
 from app.schemas.filters.identity import MemberFilter
 from app.schemas.requests.identity import InvitationAccept, InvitationCreate, MemberUpdateRole
 from app.schemas.responses.base import GenericResponse
-from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse, MemberResponse
+from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse, MemberResponse, RoleResponse
 from app.schemas.responses.pagination import CursorPage
 from app.services.email_service import EmailService
 from app.services.identity_service import IdentityService
@@ -119,3 +119,20 @@ async def remove_member(
     success_msg = i18n.t("success.member_removed", lang=lang)
 
     return GenericResponse[Any](data=None, message=success_msg)
+
+
+@router.get(
+    "/roles",
+    response_model=GenericResponse[list[RoleResponse]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ROLE_READ))],
+)
+async def list_roles(
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    """Retrieves all roles defined for the current organization."""
+    roles = await IdentityService.get_roles(session)
+
+    success_msg = i18n.t("success.roles_retrieved", lang=lang)
+    return GenericResponse(data=roles, message=success_msg)

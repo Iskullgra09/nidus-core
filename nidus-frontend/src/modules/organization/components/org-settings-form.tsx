@@ -33,7 +33,7 @@ export function OrganizationSettingsForm({
   organization,
 }: OrgSettingsFormProps) {
   const router = useRouter();
-  const tOrg = useTranslations("OrgSettings");
+  const tOrg = useTranslations("SettingsOrg");
   const tVal = useTranslations("Validation");
 
   const form = useForm<OrganizationFormData>({

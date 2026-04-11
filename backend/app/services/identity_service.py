@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any, cast
+from typing import Any, Sequence, cast
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import asc, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -167,3 +167,13 @@ class IdentityService:
 
         member.deleted_at = datetime.now(timezone.utc)
         await session.commit()
+
+    @staticmethod
+    async def get_roles(session: AsyncSession) -> Sequence[Role]:
+        """
+        Retrieves all roles available for the current tenant.
+        RLS automatically handles the organization filtering.
+        """
+        statement = select(Role).order_by(asc(Role.name))
+        result = await session.execute(statement)
+        return result.scalars().all()

@@ -28,3 +28,14 @@ class InvitationAcceptedResponse(BaseModel):
     user_id: UUID
     organization_id: UUID
     role_id: UUID
+
+
+class RoleResponse(BaseModel):
+    """Schema for returning role details to the frontend."""
+
+    id: UUID
+    name: str
+    description: str | None = None
+    scopes: list[str]
+
+    model_config = ConfigDict(from_attributes=True)

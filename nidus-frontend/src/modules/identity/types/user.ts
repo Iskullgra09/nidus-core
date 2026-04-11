@@ -22,7 +22,7 @@ export interface UpdateProfilePayload {
 }
 
 export interface UpdateProfileFormData {
-  fullName: string;
+  fullName?: string;
   language: "es" | "en";
   theme: "light" | "dark" | "system";
 }

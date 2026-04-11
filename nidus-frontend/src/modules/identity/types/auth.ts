@@ -48,3 +48,13 @@ export interface ResetPasswordPayload {
   token: string;
   new_password: string;
 }
+
+export interface AuthActionResponse {
+  status: ApiStatus;
+  message: string | null;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}

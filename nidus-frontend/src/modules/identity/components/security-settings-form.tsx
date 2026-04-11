@@ -23,7 +23,7 @@ import { ValidationTranslator } from "../model/auth.schema";
 import { changePasswordAction } from "../actions/user";
 
 export function SecuritySettingsForm() {
-  const tSet = useTranslations("Settings");
+  const tSet = useTranslations("SettingsSecurity");
   const tVal = useTranslations("Validation");
 
   const form = useForm<ChangePasswordFormData>({
@@ -58,10 +58,8 @@ export function SecuritySettingsForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">{tSet("securityTitle")}</h3>
-        <p className="text-sm text-muted-foreground">
-          {tSet("securityDescription")}
-        </p>
+        <h3 className="text-lg font-medium">{tSet("title")}</h3>
+        <p className="text-sm text-muted-foreground">{tSet("description")}</p>
       </div>
       <Form {...form}>
         <form

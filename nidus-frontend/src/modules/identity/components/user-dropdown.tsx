@@ -32,8 +32,8 @@ interface UserDropdownProps {
 }
 
 export function UserDropdown({ user }: UserDropdownProps) {
-  const t = useTranslations("TopBar");
-  const tSet = useTranslations("Settings");
+  const tTop = useTranslations("TopBar");
+  const tSet = useTranslations("SettingsProfile");
   const { setTheme } = useTheme();
 
   const initials = user.full_name
@@ -59,7 +59,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative size-8 rounded-full">
-          <Avatar className="size-8">
+          <Avatar className="size-8 border border-border/50">
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {initials}
             </AvatarFallback>
@@ -70,9 +70,9 @@ export function UserDropdown({ user }: UserDropdownProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.full_name || t("profile")}
+              {user.full_name || tTop("profile")}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-xs leading-none text-muted-foreground truncate">
               {user.email}
             </p>
           </div>
@@ -80,18 +80,21 @@ export function UserDropdown({ user }: UserDropdownProps) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href="/settings" className="w-full flex items-center">
-              <Settings className="mr-2 size-4" />
-              {t("settings")}
+            <Link href="/settings/profile" className="w-full flex items-center">
+              <Settings className="mr-2 size-4 text-muted-foreground" />
+              {tTop("settings")}
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             asChild
             className="cursor-pointer flex items-center"
           >
-            <Link href="/org/settings" className="w-full flex items-center">
-              <Building className="mr-2 size-4" />
-              {t("orgSettings")}
+            <Link
+              href="/settings/organization"
+              className="w-full flex items-center"
+            >
+              <Building className="mr-2 size-4 text-muted-foreground" />
+              {tTop("orgSettings")}
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
@@ -99,8 +102,8 @@ export function UserDropdown({ user }: UserDropdownProps) {
         <DropdownMenuGroup>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
-              <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-muted-foreground" />
+              <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-muted-foreground" />
               <span>{tSet("theme")}</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -109,21 +112,21 @@ export function UserDropdown({ user }: UserDropdownProps) {
                   onClick={() => handleThemeChange("light")}
                   className="cursor-pointer"
                 >
-                  <Sun className="mr-2 size-4" />
+                  <Sun className="mr-2 size-4 text-muted-foreground" />
                   <span>{tSet("themeLight")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleThemeChange("dark")}
                   className="cursor-pointer"
                 >
-                  <Moon className="mr-2 size-4" />
+                  <Moon className="mr-2 size-4 text-muted-foreground" />
                   <span>{tSet("themeDark")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleThemeChange("system")}
                   className="cursor-pointer"
                 >
-                  <Monitor className="mr-2 size-4" />
+                  <Monitor className="mr-2 size-4 text-muted-foreground" />
                   <span>{tSet("themeSystem")}</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -138,7 +141,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
               className="w-full text-left text-destructive cursor-pointer flex items-center"
             >
               <LogOut className="mr-2 size-4" />
-              {t("logout")}
+              {tTop("logout")}
             </button>
           </form>
         </DropdownMenuItem>

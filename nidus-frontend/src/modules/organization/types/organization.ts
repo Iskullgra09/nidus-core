@@ -1,9 +1,12 @@
+import { OrganizationMember } from "./members";
+
 export interface OrganizationResponse {
   id: string;
   name: string;
   slug: string;
   is_active: boolean;
   created_at: string;
+  members: OrganizationMember[];
 }
 
 export interface OnboardingResponse {
