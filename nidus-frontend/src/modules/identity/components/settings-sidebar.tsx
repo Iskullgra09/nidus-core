@@ -6,6 +6,8 @@ import { Link } from "@/core/i18n/routing";
 import { useTranslations } from "next-intl";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
+import { CanAccess } from "@/shared/components/auth/can-access";
+import { NidusScope } from "@/modules/identity/types/scopes";
 
 type SidebarNavProps = React.HTMLAttributes<HTMLElement>;
 
@@ -45,41 +47,50 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
   const pathname = usePathname();
   const t = useTranslations("SettingsLayout");
 
-  const sidebarGroups = [
-    {
-      label: "Personal",
-      items: [
-        { title: t("navProfile"), href: "/settings/profile" },
-        { title: t("navSecurity"), href: "/settings/security" },
-      ] as NavItem[],
-    },
-    {
-      label: "Workspace",
-      items: [
-        { title: t("navOrganization"), href: "/settings/organization" },
-        { title: t("navMembers"), href: "/settings/organization/members" },
-      ] as NavItem[],
-    },
-  ];
-
   return (
     <nav className={cn("flex flex-col space-y-8", className)} {...props}>
-      {sidebarGroups.map((group) => (
-        <div key={group.label} className="flex flex-col space-y-2">
-          <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-            {group.label}
-          </h4>
-          <div className="flex flex-col space-y-1">
-            {group.items.map((item) => (
-              <SidebarNavItem
-                key={item.href}
-                item={item}
-                isActive={pathname === item.href}
-              />
-            ))}
-          </div>
+      <div className="flex flex-col space-y-2">
+        <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
+          Personal
+        </h4>
+        <div className="flex flex-col space-y-1">
+          <SidebarNavItem
+            item={{ title: t("navProfile"), href: "/settings/profile" }}
+            isActive={pathname === "/settings/profile"}
+          />
+          <SidebarNavItem
+            item={{ title: t("navSecurity"), href: "/settings/security" }}
+            isActive={pathname === "/settings/security"}
+          />
         </div>
-      ))}
+      </div>
+
+      <div className="flex flex-col space-y-2">
+        <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
+          Workspace
+        </h4>
+        <div className="flex flex-col space-y-1">
+          <CanAccess scope={NidusScope.ORG_UPDATE}>
+            <SidebarNavItem
+              item={{
+                title: t("navOrganization"),
+                href: "/settings/organization",
+              }}
+              isActive={pathname === "/settings/organization"}
+            />
+          </CanAccess>
+
+          <CanAccess scope={NidusScope.MEMBER_READ}>
+            <SidebarNavItem
+              item={{
+                title: t("navMembers"),
+                href: "/settings/organization/members",
+              }}
+              isActive={pathname === "/settings/organization/members"}
+            />
+          </CanAccess>
+        </div>
+      </div>
     </nav>
   );
 }

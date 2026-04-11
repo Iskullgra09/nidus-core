@@ -26,6 +26,8 @@ import {
 import { UserProfileResponse } from "../types/user";
 import { logoutAction } from "../actions/auth";
 import { updateProfileAction } from "../actions/user";
+import { CanAccess } from "@/shared/components/auth/can-access";
+import { NidusScope } from "../types/scopes";
 
 interface UserDropdownProps {
   user: UserProfileResponse;
@@ -85,18 +87,17 @@ export function UserDropdown({ user }: UserDropdownProps) {
               {tTop("settings")}
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            asChild
-            className="cursor-pointer flex items-center"
-          >
-            <Link
-              href="/settings/organization"
-              className="w-full flex items-center"
-            >
-              <Building className="mr-2 size-4 text-muted-foreground" />
-              {tTop("orgSettings")}
-            </Link>
-          </DropdownMenuItem>
+          <CanAccess scope={NidusScope.ORG_UPDATE}>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link
+                href="/settings/organization"
+                className="w-full flex items-center"
+              >
+                <Building className="mr-2 size-4 text-muted-foreground" />
+                {tTop("orgSettings")}
+              </Link>
+            </DropdownMenuItem>
+          </CanAccess>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>

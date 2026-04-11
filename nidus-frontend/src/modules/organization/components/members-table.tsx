@@ -30,6 +30,8 @@ import { Badge } from "@/shared/ui/badge";
 import { OrganizationMember } from "../types/members";
 import { updateMemberRoleAction, removeMemberAction } from "../actions/members";
 import { RoleResponse } from "@/modules/identity/types/roles";
+import { CanAccess } from "@/shared/components/auth/can-access";
+import { NidusScope } from "@/modules/identity/types/scopes";
 
 interface MembersTableProps {
   members: OrganizationMember[];
@@ -117,60 +119,64 @@ export function MembersTable({
               </Badge>
             </TableCell>
             <TableCell className="text-right">
-              {member.user_id !== currentUserId &&
-                member.role_name !== "owner" && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>
-                        {t("tableHeaderActions") || "Actions"}
-                      </DropdownMenuLabel>
+              <CanAccess scope={NidusScope.MEMBER_WRITE}>
+                {member.user_id !== currentUserId &&
+                  member.role_name !== "owner" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>
+                          {t("tableHeaderActions") || "Actions"}
+                        </DropdownMenuLabel>
 
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <UserCog className="mr-2 h-4 w-4" />
-                          <span>{t("changeRole") || "Change Role"}</span>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem
-                            onClick={() => handleRoleChange(member.id, "admin")}
-                          >
-                            <ShieldCheck className="mr-2 h-4 w-4" />
-                            <span>{t("roleAdmin")}</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleRoleChange(member.id, "member")
-                            }
-                          >
-                            <span>{t("roleMember")}</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleRoleChange(member.id, "viewer")
-                            }
-                          >
-                            <span>{t("roleViewer")}</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <UserCog className="mr-2 h-4 w-4" />
+                            <span>{t("changeRole") || "Change Role"}</span>
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleRoleChange(member.id, "admin")
+                              }
+                            >
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              <span>{t("roleAdmin")}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleRoleChange(member.id, "member")
+                              }
+                            >
+                              <span>{t("roleMember")}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleRoleChange(member.id, "viewer")
+                              }
+                            >
+                              <span>{t("roleViewer")}</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
 
-                      <DropdownMenuSeparator />
+                        <DropdownMenuSeparator />
 
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => handleRemove(member.id)}
-                      >
-                        <UserMinus className="mr-2 h-4 w-4" />
-                        <span>{t("removeMember") || "Remove"}</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => handleRemove(member.id)}
+                        >
+                          <UserMinus className="mr-2 h-4 w-4" />
+                          <span>{t("removeMember") || "Remove"}</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+              </CanAccess>
             </TableCell>
           </TableRow>
         ))}

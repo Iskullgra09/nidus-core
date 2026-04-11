@@ -781,3 +781,59 @@ Tenants require a unique URL identifier (`slug`), but asking for it manually dur
 ### Consequences
 * **Positive:** Reduced onboarding friction. Guaranteed valid slugs for new tenants.
 * **Negative:** If two organizations share a very similar name, the slug might conflict (to be handled by backend unique constraints).
+
+---
+
+## ADR 043: JWT-Embedded Scopes for Atomic Authorization
+
+**Date:** 2026-04-11
+**Status:** Accepted
+
+### Context
+Initially, the frontend was "blind" to user permissions, requiring secondary API calls or unsafe cookies to determine UI visibility. This caused a synchronization lag between the user's actual permissions (Backend) and the rendered UI (Frontend).
+
+### Decision
+1. **JWT Injection:** Modified `AuthService.authenticate` (Backend) to inject the user's `scopes` directly into the JWT payload.
+2. **Stateless UI Check:** The Next.js Proxy now decodes the JWT at the Edge using `jose`, allowing for instantaneous authorization checks without hitting the database.
+3. **Implicit Permissions:** Implemented a hierarchical check where `:write` and `:update` scopes automatically grant `:read` access to the same resource.
+
+### Consequences
+* **Positive:** Atomic updates (permissions change as soon as the token is refreshed). zero-latency authorization at the Edge.
+* **Negative:** Slightly increases the JWT size, but remains well within the cookie header limits.
+
+---
+
+## ADR 044: Client-Side Authorization Shielding (CanAccess Pattern)
+
+**Date:** 2026-04-11
+**Status:** Accepted
+
+### Context
+Protecting routes at the Proxy level (ADR 035) prevents unauthorized URL access, but does not prevent the rendering of forbidden UI elements (buttons, links). This leads to a poor UX where users see actions they cannot execute.
+
+### Decision
+1. **Global Auth Context:** Implemented an `AuthProvider` at the `ProtectedLayout` level to provide a single source of truth for the current user and their scopes.
+2. **Headless Shielding:** Created a `<CanAccess />` component that wraps sensitive UI elements. It uses the `hasScope` utility to conditionally render children based on the user's active permissions.
+3. **UX Policy:** Adopted the "Invisible Shield" policy: if a user lacks the permission for an action, the UI element is completely omitted rather than disabled.
+
+### Consequences
+* **Positive:** Clean, permission-aware UI. Zero "prop-drilling" of the user object.
+* **Negative:** Requires developers to wrap sensitive components manually, but provides absolute control over visibility.
+
+---
+
+## ADR 045: Organization Hierarchy and Owner Privileges
+
+**Date:** 2026-04-11
+**Status:** Accepted
+
+### Context
+Confusion arose between `is_superuser` (System Creator/Developer) and the `Owner` role (Organization Authority).
+
+### Decision
+1. **Distinction:** `is_superuser` remains a global database flag for internal infrastructure management.
+2. **Wildcard Scopes:** The `Owner` role is assigned the `*` scope within their organization, granting them the `NidusScope.SUPERADMIN` privilege. 
+3. **Code Safety:** Updated `hasScope` to treat the `*` scope as a universal bypass for any organization-level permission check.
+
+### Consequences
+* **Positive:** Clear separation between "Platform Admin" and "Tenant Admin". Standardized permission logic that handles both explicit scopes and total authority.
