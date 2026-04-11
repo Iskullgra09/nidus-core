@@ -691,25 +691,22 @@ Upgrading to Zod v4 introduced breaking changes to internal type definitions (`_
 
 ---
 
-## ADR 038: Command-Driven Minimalist UI Architecture
+## ADR 038: Command-Driven Minimalist UI Architecture (Updated)
 
-**Date:** 2026-04-06
+**Date:** 2026-04-10
 **Status:** Accepted
 
 ### Context
-Traditional SaaS dashboards rely on heavy, permanent sidebars that consume valuable horizontal viewport space. Nidus requires a data-dense, highly focused interface for managing complex multitenant resources.
+Traditional SaaS dashboards rely on heavy, permanent sidebars that consume valuable horizontal viewport space. Nidus requires a data-dense, highly focused interface for managing complex multitenant resources. However, administrative configuration pages (Settings) inherently require deep categorization (Profile, Security, Organization, Members, Billing) which causes horizontal Tab layouts to overflow and degrade UX.
 
 ### Decision
-1. **Top-Bar Only:** Adopted a minimalist top navigation bar structure.
-2. **Component Distribution:**
-   - Left: Branding and Breadcrumb Context.
-   - Center: Reserved for a future Global Command Palette (Cmd+K).
-   - Right: Organization Switcher and User Profile Dropdown.
-3. **Viewport Optimization:** Dedicates >90% of the screen strictly to tenant data and tables.
+1. **Top-Bar Only (Primary Routes):** Adopted a minimalist top navigation bar structure for primary application routes (e.g., `/dashboard`).
+2. **Viewport Optimization:** Dedicates >90% of the screen strictly to tenant data and tables.
+3. **Exception (Administrative Routes):** For deeply nested administrative views (`/settings/*`), a localized left-sidebar (Nested Layout) is permitted. This hybrid approach handles categorized navigation infinitely without causing horizontal tab overflow, while respecting the top-bar architecture everywhere else.
 
 ### Consequences
-* **Positive:** Clean, modern, "developer-first" aesthetic. Excellent use of screen real estate.
-* **Negative:** Navigation relies heavily on dropdowns or command palettes, requiring a slight learning curve for users accustomed to traditional sidebars.
+* **Positive:** Clean aesthetic for core work. Highly scalable and organized navigation for administrative settings.
+* **Negative:** Requires maintaining a secondary navigation component specifically for the settings domain.
 
 ---
 

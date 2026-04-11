@@ -85,9 +85,14 @@ export function UserDropdown({ user }: UserDropdownProps) {
               {t("settings")}
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer flex items-center">
-            <Building className="mr-2 size-4" />
-            {t("orgSettings")}
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer flex items-center"
+          >
+            <Link href="/org/settings" className="w-full flex items-center">
+              <Building className="mr-2 size-4" />
+              {t("orgSettings")}
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

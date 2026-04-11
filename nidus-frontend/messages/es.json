@@ -22,6 +22,9 @@
     "orgSettings": "Ajustes de Organización",
     "logout": "Cerrar Sesión"
   },
+  "MainNav": {
+    "dashboard": "Dashboard"
+  },
   "Dashboard": {
     "title": "Centro de Control",
     "description": "Bienvenido al centro de control de tu organización."
@@ -33,7 +36,8 @@
     "orgNameRequired": "El nombre de la organización es requerido.",
     "orgNameMin": "El nombre debe tener al menos 3 caracteres.",
     "passwordsDoNotMatch": "Las contraseñas no coinciden.",
-    "stringMin": "Debe tener al menos 2 caracteres."
+    "stringMin": "Debe tener al menos 2 caracteres.",
+    "invalidSlug": "El slug solo puede contener minúsculas, números y guiones (-)."
   },
   "Register": {
     "title": "Crear Cuenta",
@@ -95,5 +99,16 @@
     "submitPassword": "Actualizar Contraseña",
     "submittingPassword": "Actualizando...",
     "passwordSuccess": "Tu contraseña ha sido actualizada correctamente."
+  },
+  "OrgSettings": {
+    "title": "Ajustes de Organización",
+    "description": "Administra el nombre público y el identificador de tu entorno.",
+    "orgNameLabel": "Nombre de la Organización",
+    "orgSlugLabel": "Slug de la URL",
+    "orgSlugDescription": "Identificador único usado en las rutas (ej: mi-empresa).",
+    "saveChanges": "Guardar Cambios",
+    "savingChanges": "Guardando...",
+    "noChangesDetected": "No hay cambios para guardar.",
+    "successMessage": "Organización actualizada exitosamente."
   }
 }

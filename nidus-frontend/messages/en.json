@@ -22,6 +22,9 @@
     "orgSettings": "Organization Settings",
     "logout": "Log Out"
   },
+  "MainNav": {
+    "dashboard": "Dashboard"
+  },
   "Dashboard": {
     "title": "Overview",
     "description": "Welcome to your organization's control center."
@@ -33,7 +36,8 @@
     "orgNameRequired": "Organization name is required.",
     "orgNameMin": "Name must be at least 3 characters long.",
     "passwordsDoNotMatch": "Passwords do not match.",
-    "stringMin": "Must be at least 2 characters."
+    "stringMin": "Must be at least 2 characters.",
+    "invalidSlug": "Slug can only contain lowercase letters, numbers, and hyphens (-)."
   },
   "Register": {
     "title": "Create Account",
@@ -70,7 +74,7 @@
     "successMessage": "Password updated successfully. You can now sign in."
   },
   "Settings": {
-    "title": "Settings",
+    "title": "Profile Settings",
     "description": "Manage your account preferences and security.",
     "tabGeneral": "General",
     "tabSecurity": "Security",
@@ -95,5 +99,16 @@
     "submitPassword": "Update Password",
     "submittingPassword": "Updating...",
     "passwordSuccess": "Your password has been successfully updated."
+  },
+  "OrgSettings": {
+    "title": "Organization Settings",
+    "description": "Manage your environment's public name and identifier.",
+    "orgNameLabel": "Organization Name",
+    "orgSlugLabel": "URL Slug",
+    "orgSlugDescription": "Unique identifier used in routes (e.g. my-company).",
+    "saveChanges": "Save Changes",
+    "savingChanges": "Saving...",
+    "noChangesDetected": "No changes to save.",
+    "successMessage": "Organization updated successfully."
   }
 }
