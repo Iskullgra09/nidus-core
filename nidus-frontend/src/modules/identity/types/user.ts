@@ -1,12 +1,30 @@
 import { OrganizationResponse } from "../../organization/types/organization";
 
+export interface UserPreferences {
+  language: "es" | "en";
+  theme: "light" | "dark" | "system";
+}
+
 export interface UserProfileResponse {
   id: string;
   email: string;
+  full_name: string | null;
+  preferences: UserPreferences;
   is_superuser: boolean;
   role_name: string;
   scopes: string[];
   organization: OrganizationResponse;
+}
+
+export interface UpdateProfilePayload {
+  full_name?: string | null;
+  preferences?: UserPreferences;
+}
+
+export interface UpdateProfileFormData {
+  fullName: string;
+  language: "es" | "en";
+  theme: "light" | "dark" | "system";
 }
 
 export interface MemberResponse {

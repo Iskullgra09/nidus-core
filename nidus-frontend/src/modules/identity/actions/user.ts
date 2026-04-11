@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
-import { ChangePasswordPayload } from "../types/user";
+import { ChangePasswordPayload, UpdateProfilePayload } from "../types/user";
 import { AuthActionResponse } from "../types/auth";
 
 export async function changePasswordAction(
@@ -40,4 +40,28 @@ export async function changePasswordAction(
     console.error("Change password Error:", error);
     return { status: "error", message: tCommon("connectionError") };
   }
+}
+
+export async function updateProfileAction(
+  payload: UpdateProfilePayload,
+): Promise<AuthActionResponse> {
+  const tCommon = await getTranslations("Common");
+
+  const cookieStore = await cookies();
+  const session = cookieStore.get("nidus_session")?.value;
+
+  if (!session) {
+    return { status: "error", message: tCommon("connectionError") };
+  }
+
+  const response = await fetchClient("/users/me", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${session}` },
+    body: JSON.stringify(payload),
+  });
+
+  return {
+    status: response.status,
+    message: response.message || tCommon("unknownError"),
+  };
 }

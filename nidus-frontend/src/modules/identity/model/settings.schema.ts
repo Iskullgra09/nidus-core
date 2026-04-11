@@ -12,3 +12,10 @@ export const getChangePasswordSchema = (t: ValidationTranslator) =>
       message: t("passwordsDoNotMatch"),
       path: ["confirmNewPassword"],
     });
+
+export const getUpdateProfileSchema = (t: ValidationTranslator) =>
+  z.object({
+    fullName: z.string().min(2, t("stringMin")).max(100).or(z.literal("")),
+    language: z.enum(["es", "en"]),
+    theme: z.enum(["light", "dark", "system"]),
+  });

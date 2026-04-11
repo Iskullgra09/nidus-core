@@ -21,7 +21,7 @@ export async function getCurrentUser(): Promise<UserProfileResponse | null> {
 
   if (!session) return null;
 
-  const response = await fetchClient<UserProfileResponse>("/organizations/me", {
+  const response = await fetchClient<UserProfileResponse>("/users/me", {
     headers: { Authorization: `Bearer ${session}` },
   });
 

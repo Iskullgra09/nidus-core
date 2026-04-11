@@ -5,6 +5,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/core/i18n/routing";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/core/providers/theme-provider";
 
 import "@/app/globals.css";
 
@@ -27,7 +28,7 @@ export default async function RootLayout({
 }>) {
   const { locale } = await params;
 
-  if (!(routing.locales as readonly string[]).includes(locale)) {
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
     notFound();
   }
 
@@ -35,9 +36,18 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistMono.variable} antialiased bg-background text-foreground`}
+      >
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
         </NextIntlClientProvider>
         <Toaster
           position="top-right"

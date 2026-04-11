@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship
 
 from app.models.base import SoftDeleteMixin, TimestampMixin, UUIDMixin
@@ -14,6 +15,10 @@ if TYPE_CHECKING:
 class Organization(UUIDMixin, TimestampMixin, SoftDeleteMixin, table=True):
     name: str = Field(index=True)
     slug: str = Field()
+    avatar_url: Optional[str] = Field(default=None)
+    settings: Dict[str, Any] = Field(
+        default_factory=dict, sa_column=sa.Column(JSONB(astext_type=sa.Text()), server_default=sa.text("'{}'::jsonb"), nullable=False)
+    )
     is_active: bool = Field(default=True)
 
     members: List["Member"] = Relationship(back_populates="organization")
