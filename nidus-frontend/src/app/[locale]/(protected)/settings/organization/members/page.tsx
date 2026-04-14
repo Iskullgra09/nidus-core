@@ -5,21 +5,19 @@ import {
   getOrganizationMembers,
   getAvailableRoles,
 } from "@/modules/organization/actions/members";
-import { Button } from "@/shared/ui/button";
-import { PlusIcon } from "lucide-react";
 import { MembersTable } from "@/modules/organization/components/members-table";
+import { InviteMemberButton } from "@/modules/organization/components/invite-member-button";
 
 export default async function MembersPage() {
   const t = await getTranslations("SettingsMembers");
-  const user = (await getCurrentUser())!;
+  const user = await getCurrentUser();
 
-  const [membersData, rolesData] = await Promise.all([
+  if (!user) return null;
+
+  const [members, roles] = await Promise.all([
     getOrganizationMembers(),
     getAvailableRoles(),
   ]);
-
-  const members = JSON.parse(JSON.stringify(membersData ?? []));
-  const roles = JSON.parse(JSON.stringify(rolesData ?? []));
 
   return (
     <div className="space-y-6">
@@ -28,10 +26,8 @@ export default async function MembersPage() {
           <h3 className="text-lg font-medium">{t("title")}</h3>
           <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
-        <Button size="sm">
-          <PlusIcon className="mr-2 h-4 w-4" />
-          {t("inviteButton")}
-        </Button>
+
+        <InviteMemberButton roles={roles} />
       </div>
 
       <div className="border rounded-md bg-card shadow-sm">

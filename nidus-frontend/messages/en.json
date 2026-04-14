@@ -11,10 +11,10 @@
     "successMessage": "Authentication successful",
     "errorMessage": "Invalid credentials",
     "loginSuccess": "Welcome back!",
-    "logoutSuccess": "Logged out successfully",
+    "logoutSuccess": "Successfully logged out",
     "noAccount": "Don't have an account?",
-    "registerLink": "Register here",
-    "forgotPasswordLink": "Forgot password?"
+    "registerLink": "Sign up here",
+    "forgotPasswordLink": "Forgot your password?"
   },
   "TopBar": {
     "profile": "My Profile",
@@ -26,26 +26,29 @@
     "dashboard": "Dashboard"
   },
   "Dashboard": {
-    "title": "Overview",
+    "title": "Control Center",
     "description": "Welcome to your organization's control center."
   },
   "Validation": {
     "emailRequired": "Email is required.",
     "emailInvalid": "Invalid email format.",
+    "invalidEmail": "Please enter a valid email address.",
     "passwordMin": "Password must be at least 8 characters long.",
     "orgNameRequired": "Organization name is required.",
     "orgNameMin": "Name must be at least 3 characters long.",
     "passwordsDoNotMatch": "Passwords do not match.",
-    "stringMin": "Must be at least 2 characters.",
-    "invalidSlug": "Slug can only contain lowercase letters, numbers, and hyphens (-)."
+    "stringMin": "Must be at least 2 characters long.",
+    "invalidSlug": "Slug can only contain lowercase letters, numbers, and hyphens (-).",
+    "roleRequired": "Role is required.",
+    "requiredRole": "You must select a role."
   },
   "Register": {
     "title": "Create Account",
     "description": "Start managing your organization today.",
     "orgNameLabel": "Organization Name",
     "orgNamePlaceholder": "e.g. Nidus Corp",
-    "submitButton": "Register",
-    "submittingButton": "Creating environment...",
+    "submitButton": "Sign Up",
+    "submittingButton": "Creating workspace...",
     "loginLink": "Already have an account? Sign in",
     "successMessage": "Organization created successfully"
   },
@@ -54,7 +57,11 @@
     "unknownError": "An unexpected error occurred",
     "invalidCredentials": "Incorrect email or password",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "success": "Operation successful"
   },
   "ForgotPassword": {
     "title": "Recover Password",
@@ -62,7 +69,7 @@
     "submitButton": "Send recovery link",
     "submittingButton": "Sending...",
     "successMessage": "If the email exists, you will receive a link shortly.",
-    "backToLogin": "Back to sign in"
+    "backToLogin": "Back to login"
   },
   "ResetPassword": {
     "title": "New Password",
@@ -75,17 +82,17 @@
   },
   "SettingsLayout": {
     "title": "Settings",
-    "description": "Manage your account settings, preferences, and workspace.",
+    "description": "Manage your account, preferences, and workspace.",
     "navProfile": "General Profile",
     "navSecurity": "Security",
     "navOrganization": "Organization",
-    "navMembers": "Team members"
+    "navMembers": "Team Members"
   },
   "SettingsProfile": {
     "title": "General Profile",
     "description": "Update your personal information and system preferences.",
     "fullName": "Full Name",
-    "fullNamePlaceholder": "E.g. John Doe",
+    "fullNamePlaceholder": "e.g. John Doe",
     "emailAddress": "Email Address (Read Only)",
     "language": "Interface Language",
     "theme": "Visual Theme",
@@ -94,24 +101,24 @@
     "themeSystem": "System",
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
-    "successMessage": "Your profile has been successfully updated."
+    "successMessage": "Your profile has been updated successfully."
   },
   "SettingsSecurity": {
     "title": "Security",
-    "description": "Ensure your account is using a long, secure password.",
+    "description": "Ensure you are using a long, secure password.",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmNewPassword": "Confirm New Password",
     "submitPassword": "Update Password",
     "submittingPassword": "Updating...",
-    "successMessage": "Your password has been successfully updated."
+    "successMessage": "Your password has been updated successfully."
   },
   "SettingsOrg": {
     "title": "Organization Settings",
-    "description": "Manage your environment's public name and identifier.",
+    "description": "Manage the public name and identifier of your workspace.",
     "orgNameLabel": "Organization Name",
     "orgSlugLabel": "URL Slug",
-    "orgSlugDescription": "Unique identifier used in routes (e.g. my-company).",
+    "orgSlugDescription": "Unique identifier used in URLs (e.g., my-company).",
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
     "noChangesDetected": "No changes to save.",
@@ -128,13 +135,38 @@
     "statusActive": "Active",
     "statusPending": "Pending",
     "roleOwner": "Owner",
-    "roleAdmin": "Administrator",
+    "roleAdmin": "Admin",
     "roleMember": "Member",
     "roleViewer": "Viewer",
     "changeRole": "Change Role",
     "removeMember": "Remove from team",
     "removeConfirm": "Are you sure you want to remove this member?",
     "removeSuccess": "Member removed successfully.",
-    "roleUpdateSuccess": "Role updated successfully."
+    "roleUpdateSuccess": "Role updated successfully.",
+    "noMembersFound": "No members found in this organization."
+  },
+  "Invitations": {
+    "inviteMember": "Invite Member",
+    "inviteDescription": "Send an email invitation to add a new member to your workspace.",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "colleague@company.com",
+    "roleLabel": "Workspace Role",
+    "rolePlaceholder": "Select a role",
+    "sendInvite": "Send Invitation",
+    "inviteSuccess": "Invitation sent successfully to {email}"
+  },
+  "InviteAccept": {
+    "title": "Join the Organization",
+    "description": "You are one step away from collaborating with your team. Create a secure password to get started.",
+    "passwordLabel": "New Password",
+    "passwordPlaceholder": "••••••••",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "••••••••",
+    "submitButton": "Accept Invitation",
+    "submittingButton": "Registering...",
+    "invalidTokenTitle": "Invalid Link",
+    "invalidTokenDescription": "The invitation link is missing or incorrect. Please ask your administrator for a new invitation.",
+    "backToHome": "Back to home",
+    "successMessage": "Account created successfully! You can now log in."
   }
 }

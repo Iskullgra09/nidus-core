@@ -27,14 +27,14 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 
-import { OrganizationMember } from "../types/members";
+import { MemberResponse } from "../types/members";
 import { updateMemberRoleAction, removeMemberAction } from "../actions/members";
 import { RoleResponse } from "@/modules/identity/types/roles";
 import { CanAccess } from "@/shared/components/auth/can-access";
 import { NidusScope } from "@/modules/identity/types/scopes";
 
 interface MembersTableProps {
-  members: OrganizationMember[];
+  members: MemberResponse[];
   roles: RoleResponse[];
   currentUserId: string;
 }

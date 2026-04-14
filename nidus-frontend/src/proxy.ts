@@ -19,6 +19,7 @@ const AUTH_PATHS = [
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/invite",
 ];
 
 export default function proxy(request: NextRequest) {

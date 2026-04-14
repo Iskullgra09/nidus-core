@@ -32,12 +32,15 @@
   "Validation": {
     "emailRequired": "El correo es requerido.",
     "emailInvalid": "Formato de correo inválido.",
+    "invalidEmail": "Por favor, ingresa un correo electrónico válido.",
     "passwordMin": "La contraseña debe tener al menos 8 caracteres.",
     "orgNameRequired": "El nombre de la organización es requerido.",
     "orgNameMin": "El nombre debe tener al menos 3 caracteres.",
     "passwordsDoNotMatch": "Las contraseñas no coinciden.",
     "stringMin": "Debe tener al menos 2 caracteres.",
-    "invalidSlug": "El slug solo puede contener minúsculas, números y guiones (-)."
+    "invalidSlug": "El slug solo puede contener minúsculas, números y guiones (-).",
+    "roleRequired": "El rol es requerido.",
+    "requiredRole": "Debes seleccionar un rol."
   },
   "Register": {
     "title": "Crear Cuenta",
@@ -54,7 +57,11 @@
     "unknownError": "Ha ocurrido un error inesperado",
     "invalidCredentials": "Correo o contraseña incorrectos",
     "showPassword": "Ver contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "loading": "Cargando...",
+    "success": "Operación exitosa"
   },
   "ForgotPassword": {
     "title": "Recuperar Contraseña",
@@ -135,6 +142,31 @@
     "removeMember": "Eliminar del equipo",
     "removeConfirm": "¿Estás seguro de que deseas eliminar a este miembro?",
     "removeSuccess": "Miembro eliminado correctamente.",
-    "roleUpdateSuccess": "Rol actualizado correctamente."
+    "roleUpdateSuccess": "Rol actualizado correctamente.",
+    "noMembersFound": "No se encontraron miembros en esta organización."
+  },
+  "Invitations": {
+    "inviteMember": "Invitar Miembro",
+    "inviteDescription": "Envía una invitación por correo para agregar un nuevo miembro a tu espacio de trabajo.",
+    "emailLabel": "Correo Electrónico",
+    "emailPlaceholder": "colega@empresa.com",
+    "roleLabel": "Rol en el Espacio",
+    "rolePlaceholder": "Selecciona un rol",
+    "sendInvite": "Enviar Invitación",
+    "inviteSuccess": "Invitación enviada con éxito a {email}"
+  },
+  "InviteAccept": {
+    "title": "Unirse a la Organización",
+    "description": "Estás a un paso de colaborar con tu equipo. Crea tu contraseña segura para comenzar.",
+    "passwordLabel": "Nueva Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "confirmPasswordLabel": "Confirmar Contraseña",
+    "confirmPasswordPlaceholder": "••••••••",
+    "submitButton": "Aceptar Invitación",
+    "submittingButton": "Registrando...",
+    "invalidTokenTitle": "Enlace Inválido",
+    "invalidTokenDescription": "El enlace de invitación falta o es incorrecto. Por favor, solicita una nueva invitación a tu administrador.",
+    "backToHome": "Volver al inicio",
+    "successMessage": "¡Cuenta creada con éxito! Ahora puedes iniciar sesión."
   }
 }

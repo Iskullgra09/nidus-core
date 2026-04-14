@@ -1,14 +1,17 @@
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
 from app.api.pagination import CursorParams
 from app.core.db import get_session
-from app.core.exceptions.base import AuthenticationError
+from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError
 from app.core.i18n.service import i18n
+from app.models.identity.invitation import Invitation
 from app.models.identity.scopes import NidusScope
 from app.schemas.filters.identity import MemberFilter
 from app.schemas.requests.identity import InvitationAccept, InvitationCreate, MemberUpdateRole
@@ -34,19 +37,38 @@ async def invite_member(
     payload: dict[str, Any] = Depends(get_jwt_payload),
     lang: str = Depends(get_language),
 ):
-    """Invites a new member to the organization."""
     raw_org_id = payload.get("org_id")
     if not raw_org_id:
         raise AuthenticationError(message_key="common.forbidden")
 
     org_id = UUID(str(raw_org_id))
-
     invite = await IdentityService.invite_user(session, org_id=org_id, email=data.email, role_id=data.role_id)
-
     background_tasks.add_task(EmailService.send_invitation_email, email=invite.email, token=invite.token, lang=lang)
 
-    success_msg = i18n.t("success.invitation_sent", lang=lang)
-    return GenericResponse(data=invite, message=success_msg)
+    return GenericResponse(data=invite, message=i18n.t("success.invitation_sent", lang=lang))
+
+
+@router.get("/invitations/verify/{token}", response_model=GenericResponse[dict[str, bool]], status_code=status.HTTP_200_OK)
+async def verify_invitation(token: str, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
+    """Public Endpoint: Verifies if a token is valid before showing the accept form."""
+    await session.execute(text("SET LOCAL app.current_organization_id = ''"))
+
+    InvitationModel = cast(Any, Invitation)
+
+    stmt = select(Invitation).where(InvitationModel.token == token, InvitationModel.deleted_at.is_(None))
+
+    invitation = (await session.execute(stmt)).scalar_one_or_none()
+
+    if not invitation:
+        raise EntityNotFoundError(entity="invitation")
+
+    if invitation.is_accepted:
+        raise ConflictError(message_key="invitation.already_accepted")
+
+    if invitation.expires_at < datetime.now(timezone.utc):
+        raise ConflictError(message_key="invitation.expired")
+
+    return GenericResponse(data={"valid": True}, message=i18n.t("success.valid_token", lang=lang))
 
 
 @router.post("/invitations/accept", response_model=GenericResponse[InvitationAcceptedResponse], status_code=status.HTTP_200_OK)
@@ -55,13 +77,10 @@ async def accept_invitation(
     session: AsyncSession = Depends(get_session),
     lang: str = Depends(get_language),
 ):
-    """Public endpoint. Consumes an invitation token and registers the user."""
     user_id, org_id, role_id = await IdentityService.accept_invitation(session=session, token=data.token, password=data.password)
-
-    success_msg = i18n.t("success.invitation_accepted", lang=lang)
     response_data = InvitationAcceptedResponse(user_id=user_id, organization_id=org_id, role_id=role_id)
 
-    return GenericResponse(data=response_data, message=success_msg)
+    return GenericResponse(data=response_data, message=i18n.t("success.invitation_accepted", lang=lang))
 
 
 @router.get(
@@ -76,11 +95,8 @@ async def list_members(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    """Retrieves a paginated and filtered list of organization members."""
     page_data = await IdentityService.get_organization_members(session, pagination, filters)
-
-    success_msg = i18n.t("success.members_retrieved", lang=lang)
-    return GenericResponse(data=page_data, message=success_msg)
+    return GenericResponse(data=page_data, message=i18n.t("success.members_retrieved", lang=lang))
 
 
 @router.patch(
@@ -95,11 +111,8 @@ async def update_member_role(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    """Updates a member's role within the organization."""
     member = await IdentityService.update_member_role(session, member_id, data.role_id)
-
-    success_msg = i18n.t("success.member_updated", lang=lang)
-    return GenericResponse(data=member, message=success_msg)
+    return GenericResponse(data=member, message=i18n.t("success.member_updated", lang=lang))
 
 
 @router.delete(
@@ -112,8 +125,7 @@ async def remove_member(
     member_id: UUID,
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
-) -> GenericResponse[Any]:
-    """Removes (soft-deletes) a member from the organization."""
+):
     await IdentityService.remove_member(session, member_id)
 
     success_msg = i18n.t("success.member_removed", lang=lang)
@@ -131,8 +143,5 @@ async def list_roles(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    """Retrieves all roles defined for the current organization."""
     roles = await IdentityService.get_roles(session)
-
-    success_msg = i18n.t("success.roles_retrieved", lang=lang)
-    return GenericResponse(data=roles, message=success_msg)
+    return GenericResponse(data=roles, message=i18n.t("success.roles_retrieved", lang=lang))
