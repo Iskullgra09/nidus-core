@@ -15,7 +15,6 @@ import {
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
-  // Reutilizamos las traducciones que ya hiciste para el perfil
   const t = useTranslations("SettingsProfile");
 
   return (
