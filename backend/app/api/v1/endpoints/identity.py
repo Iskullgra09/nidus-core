@@ -3,7 +3,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
@@ -11,6 +11,7 @@ from app.api.pagination import CursorParams
 from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError
 from app.core.i18n.service import i18n
+from app.core.rls import clear_rls_context
 from app.models.identity.invitation import Invitation
 from app.models.identity.scopes import NidusScope
 from app.schemas.filters.identity import InvitationFilter, MemberFilter
@@ -63,7 +64,7 @@ async def invite_member(
 @router.get("/invitations/verify/{token}", response_model=GenericResponse[dict[str, bool]], status_code=status.HTTP_200_OK)
 async def verify_invitation(token: str, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
     """Public Endpoint: Verifies if a token is valid before showing the accept form."""
-    await session.execute(text("SET LOCAL app.current_organization_id = ''"))
+    await clear_rls_context(session)
 
     InvitationModel = cast(Any, Invitation)
 
@@ -251,7 +252,7 @@ async def delete_role(
 )
 async def list_scopes(lang: str = Depends(get_language)):
     scopes = [
-        ScopeResponse(value=scope.value, group=scope.value.split(":")[0])
+        ScopeResponse(value=scope.value, group=NidusScope.scope_group(scope.value))
         for scope in NidusScope
         if scope != NidusScope.SUPERADMIN
     ]

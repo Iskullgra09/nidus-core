@@ -29,6 +29,7 @@ os.environ["DATABASE_URL"] = APP_DB_URL
 from app.main import app
 from app.models import Organization
 from app.models.identity.role import Role
+from app.models.identity.scopes import NidusScope
 
 app_engine = create_async_engine(APP_DB_URL, poolclass=NullPool)
 app_session_maker = async_sessionmaker(app_engine, class_=AsyncSession, expire_on_commit=False)
@@ -99,8 +100,16 @@ async def cleanup_and_seed() -> None:
                 raise RuntimeError("Critical: Failed to generate Test Organization ID.")
 
             system_roles: List[Dict[str, Any]] = [
-                {"name": "Admin", "desc": "Full administrative access", "scopes": ["*"]},
-                {"name": "Member", "desc": "Standard read-only access", "scopes": ["identity:user:read"]},
+                {
+                    "name": "Admin",
+                    "desc": "Full administrative access",
+                    "scopes": [NidusScope.SUPERADMIN.value],
+                },
+                {
+                    "name": "Member",
+                    "desc": "Standard read-only access",
+                    "scopes": [NidusScope.MEMBER_READ.value],
+                },
             ]
 
             for r_data in system_roles:

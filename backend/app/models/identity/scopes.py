@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Any, Dict, Set
+from typing import Any, Dict, Iterable, Set
 
 
 class NidusScope(StrEnum):
@@ -23,13 +23,34 @@ class NidusScope(StrEnum):
 
     @classmethod
     def get_implied_scopes(cls, scope: str) -> Set[str]:
-        """Calculates implicit permissions (e.g., write implies read)."""
+        """Calculates implicit permissions granted by holding a scope (write → read, invite → read)."""
         permissions = {scope}
         if ":write" in scope:
             permissions.add(scope.replace(":write", ":read"))
         if ":invite" in scope:
             permissions.add(scope.replace(":invite", ":read"))
         return permissions
+
+    @classmethod
+    def grants_access(cls, user_scopes: Iterable[str], required: str) -> bool:
+        """Returns True when any held scope satisfies the required scope."""
+        scope_set = set(user_scopes)
+
+        if cls.SUPERADMIN in scope_set:
+            return True
+
+        if required in scope_set:
+            return True
+
+        return any(required in cls.get_implied_scopes(held) for held in scope_set)
+
+    @classmethod
+    def scope_group(cls, scope: str) -> str:
+        """UI grouping key: `identity:member:read` → `identity:member`."""
+        parts = scope.split(":")
+        if len(parts) >= 2:
+            return ":".join(parts[:-1])
+        return parts[0]
 
     @classmethod
     def assignable_scopes(cls) -> list[str]:

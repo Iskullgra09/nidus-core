@@ -2,11 +2,12 @@ from datetime import datetime, timezone
 from typing import Any, Dict, cast
 from uuid import UUID
 
-from sqlalchemy import select, text, update
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions.base import ConflictError, EntityNotFoundError
+from app.core.rls import clear_rls_context
 from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.invitation import Invitation
@@ -23,8 +24,7 @@ class OrganizationService:
         Creates the organization and bootstraps the default role starter pack.
         Returns a tuple containing (organization_id, user_id).
         """
-        await session.execute(text("SET LOCAL app.current_organization_id = ''"))
-        await session.execute(text("SET LOCAL app.current_user_id = ''"))
+        await clear_rls_context(session)
 
         OrgModel = cast(Any, Organization)
         UserModel = cast(Any, User)

@@ -2,13 +2,14 @@ from datetime import datetime, timezone
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import asc, func, select, text
+from sqlalchemy import asc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.pagination import CursorParams
 from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError
 from app.core.pagination import paginate_with_cursor
+from app.core.rls import clear_rls_context
 from app.core.security import hash_password, verify_password
 from app.models import Member, User
 from app.models.identity.invitation import Invitation
@@ -108,8 +109,7 @@ class IdentityService:
         Validates the token, creates/links the User, and creates the Member.
         This function bypasses RLS because the user is not authenticated yet.
         """
-        await session.execute(text("SET LOCAL app.current_organization_id = ''"))
-        await session.execute(text("SET LOCAL app.current_user_id = ''"))
+        await clear_rls_context(session)
 
         InvitationModel = cast(Any, Invitation)
         UserModel = cast(Any, User)
@@ -121,9 +121,6 @@ class IdentityService:
 
         if not invitation:
             raise EntityNotFoundError(entity="invitation")
-
-        if invitation.deleted_at is not None:
-            raise ConflictError(message_key="invitation.revoked")
 
         if invitation.is_accepted:
             raise ConflictError(message_key="invitation.already_accepted")

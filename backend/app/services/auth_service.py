@@ -2,12 +2,13 @@ from typing import Any, Dict, List, Union, cast
 from uuid import UUID
 
 import jwt
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError, NidusException
+from app.core.rls import clear_rls_context
 from app.core.security import (
     create_access_token,
     create_org_selection_token,
@@ -22,8 +23,7 @@ from app.schemas.responses.auth import UserOrganizationSummary
 class AuthService:
     @staticmethod
     async def _reset_rls_context(session: AsyncSession) -> None:
-        await session.execute(text("SET LOCAL app.current_organization_id = ''"))
-        await session.execute(text("SET LOCAL app.current_user_id = ''"))
+        await clear_rls_context(session)
 
     @staticmethod
     async def validate_credentials(session: AsyncSession, email: str, password: str) -> User:
@@ -101,17 +101,6 @@ class AuthService:
             "pre_auth_token": create_org_selection_token(str(user.id)),
             "organizations": [AuthService._membership_to_summary(m).model_dump(mode="json") for m in memberships],
         }
-
-    @staticmethod
-    async def authenticate(session: AsyncSession, email: str, password: str) -> str:
-        """Issues a JWT for the user's first active membership (tests / legacy callers)."""
-        user = await AuthService.validate_credentials(session, email, password)
-        memberships = await AuthService.get_active_memberships(session, user.id)
-
-        if not memberships:
-            raise NidusException(code="NO_ACTIVE_ORG", message_key="common.forbidden", status_code=403)
-
-        return AuthService._build_token_for_membership(user, memberships[0])
 
     @staticmethod
     async def select_organization(session: AsyncSession, pre_auth_token: str, organization_id: UUID) -> str:
