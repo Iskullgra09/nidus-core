@@ -11,7 +11,6 @@ import { AuthActionResponse } from "@/modules/identity/types/auth";
  * Updates the current organization settings.
  */
 export async function updateOrganizationAction(
-  orgId: string,
   payload: OrganizationUpdatePayload,
 ): Promise<AuthActionResponse> {
   const tCommon = await getTranslations("Common");
@@ -24,7 +23,7 @@ export async function updateOrganizationAction(
       return { status: "error", message: tCommon("connectionError") };
     }
 
-    const response = await fetchClient(`/organizations/${orgId}`, {
+    const response = await fetchClient("/organizations/me", {
       method: "PATCH",
       headers: { Authorization: `Bearer ${session}` },
       body: JSON.stringify(payload),

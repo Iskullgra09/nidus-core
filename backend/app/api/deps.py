@@ -1,4 +1,5 @@
 from typing import Annotated, Any, cast
+from uuid import UUID
 
 import jwt
 from fastapi import Depends, Request
@@ -10,6 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.config import settings
 from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError, NidusException
+from app.core.i18n.request import get_request_language
 from app.core.rls import set_rls_context
 from app.models.identity.member import Member
 from app.models.identity.scopes import NidusScope
@@ -45,14 +47,21 @@ async def get_current_tenant_session(
 
 def get_language(request: Request) -> str:
     """Extracts preferred language from the request."""
-    accept_lang = request.headers.get("accept-language", "en")
-    return accept_lang.split(",")[0].split("-")[0].lower()
+    return get_request_language(request)
+
+
+async def get_current_org_id(
+    payload: Annotated[dict[str, Any], Depends(get_jwt_payload)],
+) -> UUID:
+    """Returns the active organization id from the JWT (tenant context)."""
+    return UUID(str(payload["org_id"]))
 
 
 class ScopeGuard:
     """
-    Evaluates hierarchical JSONB scopes from the member's DB role (source of truth).
-    JWT `scopes` are for frontend UX only; authorization always re-reads the role.
+    Evaluates hierarchical JSONB scopes.
+    Fast path: JWT embedded scopes (issued at login/switch-org).
+    Fallback: DB role lookup for legacy tokens missing scopes.
     """
 
     def __init__(self, required_scope: str):
@@ -63,6 +72,11 @@ class ScopeGuard:
         session: Annotated[AsyncSession, Depends(get_current_tenant_session)],
         payload: Annotated[dict[str, Any], Depends(get_jwt_payload)],
     ) -> bool:
+        jwt_scopes = payload.get("scopes")
+        if isinstance(jwt_scopes, list) and jwt_scopes:
+            if NidusScope.grants_access(jwt_scopes, self.required_scope):
+                return True
+
         user_id = payload.get("sub")
         MemberModel = cast(Any, Member)
 

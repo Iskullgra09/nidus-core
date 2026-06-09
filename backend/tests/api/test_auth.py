@@ -67,9 +67,10 @@ async def test_auth_and_onboarding_journey(async_client: AsyncClient, db_session
     login_res = await async_client.post("/api/v1/auth/login", data=login_payload)
 
     assert login_res.status_code == 200
-    token_data = login_res.json()
-    assert "access_token" in token_data
-    assert token_data["token_type"].lower() == "bearer"
+    login_body = login_res.json()
+    assert login_body["status"] == "success"
+    assert "access_token" in login_body["data"]
+    assert login_body["data"]["token_type"].lower() == "bearer"
 
 
 @pytest.mark.asyncio

@@ -142,7 +142,8 @@ async def auth_client(async_client: AsyncClient) -> AsyncGenerator[Tuple[AsyncCl
     org_data = res.json()["data"]
 
     login_res = await async_client.post("/api/v1/auth/login", data={"username": email, "password": password})
-    token = login_res.json()["access_token"]
+    login_body = login_res.json()
+    token = login_body["data"]["access_token"]
 
     async_client.headers.update({"Authorization": f"Bearer {token}"})
 

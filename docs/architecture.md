@@ -928,7 +928,7 @@ Integration tests truncate and seed data before every test case. When `conftest.
 A single User can belong to multiple Organizations via Member records. Login previously selected the first membership arbitrarily, making B2B multi-tenant usage incorrect for invited users.
 
 ### Decision
-1. **Login Branching:** `POST /auth/login` returns a standard OAuth2 token when the user has one membership. When N>1, it returns `{ org_selection_required, organizations[], pre_auth_token }`.
+1. **Login Branching:** `POST /auth/login` returns a standard OAuth2 token when the user has one membership. When N>1, it returns `{ org_selection_required, organizations[], pre_auth_token }`. All auth endpoints wrap payloads in `GenericResponse` (`{ status, data, message }`).
 2. **Selection Token:** `pre_auth_token` is a 15-minute JWT with `"type": "org_selection"` containing only `sub` (user id).
 3. **Completion:** `POST /auth/select-org` exchanges `pre_auth_token` + `organization_id` for a full access JWT.
 4. **Switching:** Authenticated users call `POST /auth/switch-org` to re-issue JWT with new `org_id` and scopes without re-entering credentials.
@@ -957,3 +957,26 @@ Phase 6 delivered member listing and invite-send, but roles were read-only boots
 ### Consequences
 * **Positive:** Full IAM loop for tenant admins without DB access. Scope drift reduced via catalog endpoint.
 * **Negative:** Custom roles assigned to members block deletion until reassigned.
+
+---
+
+## ADR 052: Backend IAM Architecture Hardening
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+After Phase 10 IAM endpoints landed, a backend review surfaced authorization inconsistencies, a monolithic `IdentityService`, dead code, and mixed API response shapes (some endpoints returned raw JSON while others used `GenericResponse`).
+
+### Decision
+1. **Service split:** Replace `IdentityService` with focused modules under `app/services/identity/` — `InvitationService`, `MemberService`, `RoleService`, plus shared validators in `role_policy.py`.
+2. **Unified API envelope:** All v1 endpoints return `GenericResponse[T]` (`status`, `data`, `message`). Login/multi-org payloads live under `data` (breaking change for clients that read top-level tokens).
+3. **Authorization (`ScopeGuard`):** Single evaluation via `NidusScope.grants_access()`. Fast path uses scopes embedded in the JWT at login/switch-org; DB role lookup remains as fallback for legacy tokens without `scopes`.
+4. **Tenant context:** Organization mutations use `PATCH/DELETE /organizations/me`; the active tenant comes from the JWT via `get_current_org_id` (aligned with `/identity/*` routes).
+5. **RLS context:** `set_rls_context()` / `clear_rls_context()` use parameterized `set_config()` — no string interpolation in SQL.
+6. **Dead code removal:** Delete unused `FilterEngine` (`core/filters.py`) and duplicate `api/pagination.py` (use `schemas/requests/pagination.py`).
+7. **Test coverage:** Unit tests for scope hierarchy; API tests for password reset/change, invitation accept, org path mismatch, and unauthenticated access.
+
+### Consequences
+* **Positive:** Consistent API contract, safer RLS injection, clearer IAM boundaries, faster authorization on the JWT fast path.
+* **Negative:** Login response shape change requires clients/tests to read `response.data`. Legacy tokens without embedded scopes incur a DB lookup per guarded request until re-login.

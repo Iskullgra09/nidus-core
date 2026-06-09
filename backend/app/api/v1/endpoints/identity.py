@@ -1,18 +1,13 @@
-from datetime import datetime, timezone
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
-from app.api.pagination import CursorParams
 from app.core.db import get_session
-from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError
+from app.core.exceptions.base import AuthenticationError
 from app.core.i18n.service import i18n
-from app.core.rls import clear_rls_context
-from app.models.identity.invitation import Invitation
 from app.models.identity.scopes import NidusScope
 from app.schemas.filters.identity import InvitationFilter, MemberFilter
 from app.schemas.requests.identity import (
@@ -22,6 +17,7 @@ from app.schemas.requests.identity import (
     RoleCreate,
     RoleUpdate,
 )
+from app.schemas.requests.pagination import CursorParams
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.identity import (
     InvitationAcceptedResponse,
@@ -32,7 +28,7 @@ from app.schemas.responses.identity import (
 )
 from app.schemas.responses.pagination import CursorPage
 from app.services.email_service import EmailService
-from app.services.identity_service import IdentityService
+from app.services.identity import InvitationService, MemberService, RoleService
 
 router = APIRouter()
 
@@ -55,35 +51,25 @@ async def invite_member(
         raise AuthenticationError(message_key="common.forbidden")
 
     org_id = UUID(str(raw_org_id))
-    invite = await IdentityService.invite_user(session, org_id=org_id, email=data.email, role_id=data.role_id)
+    invite = await InvitationService.invite_user(session, org_id=org_id, email=data.email, role_id=data.role_id)
     background_tasks.add_task(EmailService.send_invitation_email, email=invite.email, token=invite.token, lang=lang)
 
-    return GenericResponse(data=invite, message=i18n.t("success.invitation_sent", lang=lang))
+    return GenericResponse(
+        data=InvitationResponse(
+            id=invite.id,
+            email=invite.email,
+            role_id=invite.role_id,
+            expires_at=invite.expires_at,
+            is_accepted=invite.is_accepted,
+        ),
+        message=i18n.t("success.invitation_sent", lang=lang),
+    )
 
 
 @router.get("/invitations/verify/{token}", response_model=GenericResponse[dict[str, bool]], status_code=status.HTTP_200_OK)
 async def verify_invitation(token: str, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
     """Public Endpoint: Verifies if a token is valid before showing the accept form."""
-    await clear_rls_context(session)
-
-    InvitationModel = cast(Any, Invitation)
-
-    stmt = select(Invitation).where(InvitationModel.token == token, InvitationModel.deleted_at.is_(None))
-
-    invitation = (await session.execute(stmt)).scalar_one_or_none()
-
-    if not invitation:
-        raise EntityNotFoundError(entity="invitation")
-
-    if invitation.deleted_at is not None:
-        raise ConflictError(message_key="invitation.revoked")
-
-    if invitation.is_accepted:
-        raise ConflictError(message_key="invitation.already_accepted")
-
-    if invitation.expires_at < datetime.now(timezone.utc):
-        raise ConflictError(message_key="invitation.expired")
-
+    await InvitationService.get_valid_invitation(session, token)
     return GenericResponse(data={"valid": True}, message=i18n.t("success.valid_token", lang=lang))
 
 
@@ -93,7 +79,11 @@ async def accept_invitation(
     session: AsyncSession = Depends(get_session),
     lang: str = Depends(get_language),
 ):
-    user_id, org_id, role_id = await IdentityService.accept_invitation(session=session, token=data.token, password=data.password)
+    user_id, org_id, role_id = await InvitationService.accept_invitation(
+        session=session,
+        token=data.token,
+        password=data.password,
+    )
     response_data = InvitationAcceptedResponse(user_id=user_id, organization_id=org_id, role_id=role_id)
 
     return GenericResponse(data=response_data, message=i18n.t("success.invitation_accepted", lang=lang))
@@ -110,7 +100,7 @@ async def list_invitations(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    invitations = await IdentityService.list_invitations(session, filters)
+    invitations = await InvitationService.list_invitations(session, filters)
     return GenericResponse(data=invitations, message=i18n.t("success.invitations_retrieved", lang=lang))
 
 
@@ -125,7 +115,7 @@ async def revoke_invitation(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    await IdentityService.revoke_invitation(session, invitation_id)
+    await InvitationService.revoke_invitation(session, invitation_id)
     return GenericResponse(data=None, message=i18n.t("success.invitation_revoked", lang=lang))
 
 
@@ -141,7 +131,7 @@ async def list_members(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    page_data = await IdentityService.get_organization_members(session, pagination, filters)
+    page_data = await MemberService.get_organization_members(session, pagination, filters)
     return GenericResponse(data=page_data, message=i18n.t("success.members_retrieved", lang=lang))
 
 
@@ -157,7 +147,7 @@ async def update_member_role(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    member = await IdentityService.update_member_role(session, member_id, data.role_id)
+    member = await MemberService.update_member_role(session, member_id, data.role_id)
     return GenericResponse(data=member, message=i18n.t("success.member_updated", lang=lang))
 
 
@@ -172,11 +162,8 @@ async def remove_member(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    await IdentityService.remove_member(session, member_id)
-
-    success_msg = i18n.t("success.member_removed", lang=lang)
-
-    return GenericResponse[Any](data=None, message=success_msg)
+    await MemberService.remove_member(session, member_id)
+    return GenericResponse(data=None, message=i18n.t("success.member_removed", lang=lang))
 
 
 @router.get(
@@ -189,7 +176,7 @@ async def list_roles(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    roles = await IdentityService.get_roles(session)
+    roles = await RoleService.get_roles(session)
     return GenericResponse(data=roles, message=i18n.t("success.roles_retrieved", lang=lang))
 
 
@@ -209,7 +196,7 @@ async def create_role(
     if not raw_org_id:
         raise AuthenticationError(message_key="common.forbidden")
 
-    role = await IdentityService.create_role(session, org_id=UUID(str(raw_org_id)), data=data)
+    role = await RoleService.create_role(session, org_id=UUID(str(raw_org_id)), data=data)
     return GenericResponse(data=role, message=i18n.t("success.role_created", lang=lang))
 
 
@@ -225,7 +212,7 @@ async def update_role(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    role = await IdentityService.update_role(session, role_id, data)
+    role = await RoleService.update_role(session, role_id, data)
     return GenericResponse(data=role, message=i18n.t("success.role_updated", lang=lang))
 
 
@@ -240,7 +227,7 @@ async def delete_role(
     session: AsyncSession = Depends(get_current_tenant_session),
     lang: str = Depends(get_language),
 ):
-    await IdentityService.delete_role(session, role_id)
+    await RoleService.delete_role(session, role_id)
     return GenericResponse(data=None, message=i18n.t("success.role_deleted", lang=lang))
 
 

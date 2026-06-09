@@ -6,15 +6,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.exceptions.base import NidusException
+from app.core.i18n.request import get_request_language
 from app.core.i18n.service import i18n
-
-
-def _get_lang(request: Request) -> str:
-    """
-    Private helper to extract the preferred language from the request headers.
-    """
-    accept_lang: str = request.headers.get("accept-language", "en")
-    return accept_lang.split(",")[0].split("-")[0].lower()
 
 
 async def nidus_exception_handler(request: Request, exc: NidusException) -> JSONResponse:
@@ -22,7 +15,7 @@ async def nidus_exception_handler(request: Request, exc: NidusException) -> JSON
     Global handler for NidusException.
     Detects language from headers and returns a localized JSON response.
     """
-    lang: str = _get_lang(request)
+    lang: str = get_request_language(request)
 
     translated_message: str = i18n.t(exc.message_key, lang=lang, **exc.params)
 
@@ -38,7 +31,7 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -
     """
     print(f"DB Error: {exc}")
 
-    lang: str = _get_lang(request)
+    lang: str = get_request_language(request)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -54,7 +47,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """
     Captures Pydantic validation errors (422) and translates them.
     """
-    lang: str = _get_lang(request)
+    lang: str = get_request_language(request)
 
     translated_errors: List[Dict[str, str]] = []
 
@@ -88,7 +81,7 @@ async def global_500_exception_handler(request: Request, exc: Exception) -> JSON
     """
     print(f"CRITICAL SYSTEM ERROR: {exc}")
 
-    lang: str = _get_lang(request)
+    lang: str = get_request_language(request)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

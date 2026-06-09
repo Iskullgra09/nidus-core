@@ -22,16 +22,18 @@ from app.services.email_service import EmailService
 router = APIRouter()
 
 
-@router.post("/login")
+@router.post("/login", response_model=GenericResponse[dict[str, Any]], status_code=status.HTTP_200_OK)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_session),
-):
+    lang: str = Depends(get_language),
+) -> GenericResponse[dict[str, Any]]:
     """
     OAuth2-compatible login.
-    Single org: returns access_token. Multiple orgs: returns org list + pre_auth_token.
+    Single org: data contains access_token. Multiple orgs: org list + pre_auth_token.
     """
-    return await AuthService.login(session, email=form_data.username, password=form_data.password)
+    result = await AuthService.login(session, email=form_data.username, password=form_data.password)
+    return GenericResponse(data=result, message=i18n.t("auth.login_success", lang=lang))
 
 
 @router.post("/select-org", response_model=GenericResponse[dict[str, str]], status_code=status.HTTP_200_OK)

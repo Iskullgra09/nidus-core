@@ -79,6 +79,7 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 
 #### **Phase 10: IAM Completion**
 - [x] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.
+- [x] Backend hardening: IAM service split · `GenericResponse` on all endpoints · JWT scope fast path · org path guard · ADR 052.
 
 #### **Phase 11: Observability & Audit**
 - [ ] Structured logging · `audit_log` table.

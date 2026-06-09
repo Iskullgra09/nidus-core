@@ -24,7 +24,7 @@ async def test_multi_org_login_requires_selection(async_client: AsyncClient) -> 
 
     login_res = await async_client.post("/api/v1/auth/login", data={"username": email, "password": password})
     assert login_res.status_code == 200
-    payload = login_res.json()
+    payload = login_res.json()["data"]
 
     assert payload["org_selection_required"] is True
     assert len(payload["organizations"]) == 2
@@ -52,7 +52,7 @@ async def test_select_org_and_switch_org(async_client: AsyncClient) -> None:
         org_ids.append(res.json()["data"]["organization_id"])
 
     login_res = await async_client.post("/api/v1/auth/login", data={"username": email, "password": password})
-    login_payload = login_res.json()
+    login_payload = login_res.json()["data"]
 
     select_res = await async_client.post(
         "/api/v1/auth/select-org",

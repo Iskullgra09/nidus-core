@@ -56,7 +56,7 @@ export function OrganizationSettingsForm({
       return;
     }
 
-    const result = await updateOrganizationAction(organization.id, payload);
+    const result = await updateOrganizationAction(payload);
 
     if (result.status === "success") {
       toast.success(result.message || tOrg("successMessage"));
