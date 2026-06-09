@@ -31,6 +31,15 @@ class NidusScope(StrEnum):
             permissions.add(scope.replace(":invite", ":read"))
         return permissions
 
+    @classmethod
+    def assignable_scopes(cls) -> list[str]:
+        """Scopes that can be assigned to custom roles (excludes wildcard)."""
+        return [scope.value for scope in cls if scope != cls.SUPERADMIN]
+
+    @classmethod
+    def is_assignable(cls, scope: str) -> bool:
+        return scope in cls.assignable_scopes()
+
 
 class DefaultRole(StrEnum):
     """Standard roles created automatically for every new organization."""
@@ -39,6 +48,9 @@ class DefaultRole(StrEnum):
     ADMIN = "Admin"
     MEMBER = "Member"
     VIEWER = "Viewer"
+
+
+DEFAULT_ROLE_NAMES = {role.value for role in DefaultRole}
 
 
 DEFAULT_ROLES_CONFIG: Dict[DefaultRole, Dict[str, Any]] = {
@@ -62,5 +74,8 @@ DEFAULT_ROLES_CONFIG: Dict[DefaultRole, Dict[str, Any]] = {
         "description": "Standard collaborator. Can view the organization and fellow members.",
         "scopes": [NidusScope.ORG_READ, NidusScope.MEMBER_READ],
     },
-    DefaultRole.VIEWER: {"description": "Read-only access for auditing or consultation purposes.", "scopes": [NidusScope.ORG_READ]},
+    DefaultRole.VIEWER: {
+        "description": "Read-only access for auditing or consultation purposes.",
+        "scopes": [NidusScope.ORG_READ],
+    },
 }

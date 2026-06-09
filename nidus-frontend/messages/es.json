@@ -92,7 +92,8 @@
     "navProfile": "Perfil General",
     "navSecurity": "Seguridad",
     "navOrganization": "Organización",
-    "navMembers": "Miembros del Equipo"
+    "navMembers": "Miembros del Equipo",
+    "navRoles": "Roles y Permisos"
   },
   "SettingsProfile": {
     "title": "Perfil General",
@@ -151,7 +152,34 @@
     "roleUpdateSuccess": "Rol actualizado correctamente.",
     "noMembersFound": "No se encontraron miembros en esta organización.",
     "searchPlaceholder": "Buscar por correo...",
-    "paginationInfo": "Mostrando {start} a {end} de {total} entradas"
+    "paginationInfo": "Mostrando {start} a {end} de {total} entradas",
+    "pendingTitle": "Invitaciones pendientes",
+    "pendingDescription": "Personas invitadas que aún no han ingresado.",
+    "revokeInvite": "Revocar",
+    "revokeConfirm": "¿Revocar esta invitación?",
+    "noPendingInvites": "No hay invitaciones pendientes."
+  },
+  "SettingsRoles": {
+    "title": "Roles y Permisos",
+    "description": "Gestiona roles personalizados y sus permisos en este espacio de trabajo.",
+    "createRole": "Crear rol",
+    "createRoleButton": "Nuevo rol",
+    "editRole": "Editar rol",
+    "deleteRole": "Eliminar rol",
+    "saveRole": "Guardar rol",
+    "formDescription": "Define un nombre de rol y selecciona los permisos que otorga.",
+    "nameLabel": "Nombre del rol",
+    "namePlaceholder": "Ej. Gestor de facturación",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Resumen opcional del rol",
+    "permissionsLabel": "Permisos",
+    "systemBadge": "Sistema",
+    "tableName": "Rol",
+    "tablePermissions": "Permisos",
+    "tableActions": "Acciones",
+    "searchPlaceholder": "Buscar roles...",
+    "noRolesFound": "No se encontraron roles.",
+    "deleteConfirm": "¿Eliminar el rol \"{name}\"?"
   },
   "Invitations": {
     "inviteMember": "Invitar Miembro",

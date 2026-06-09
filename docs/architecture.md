@@ -937,3 +937,23 @@ A single User can belong to multiple Organizations via Member records. Login pre
 ### Consequences
 * **Positive:** Correct multi-tenant UX for invited users. Downstream repos inherit org switching.
 * **Negative:** Login response is a union type; frontend must handle org picker flow.
+
+---
+
+## ADR 051: IAM Completion — Custom Roles & Invitation Governance
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+Phase 6 delivered member listing and invite-send, but roles were read-only bootstrap records. Admins could not define custom roles, revoke pending invitations, or discover assignable scopes from a single source of truth.
+
+### Decision
+1. **Custom Roles CRUD:** `POST/PATCH/DELETE /identity/roles` with `ROLE_WRITE`; system roles (`Owner`, `Admin`, `Member`, `Viewer`) are protected from mutation/deletion.
+2. **Scope Catalog:** `GET /identity/scopes` returns assignable scopes (excludes `*`); frontend mirrors `NidusScope` and consumes the catalog for role editors.
+3. **Invitation Governance:** `GET /identity/invitations` lists pending invites; `DELETE /identity/invitations/{id}` soft-revokes them. Create uses `MEMBER_INVITE` scope.
+4. **UI:** Settings → Roles & Permissions page; Members page shows pending invitations with revoke action; member role picker uses dynamic roles from API.
+
+### Consequences
+* **Positive:** Full IAM loop for tenant admins without DB access. Scope drift reduced via catalog endpoint.
+* **Negative:** Custom roles assigned to members block deletion until reassigned.

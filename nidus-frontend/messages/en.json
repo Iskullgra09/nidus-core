@@ -92,7 +92,8 @@
     "navProfile": "General Profile",
     "navSecurity": "Security",
     "navOrganization": "Organization",
-    "navMembers": "Team Members"
+    "navMembers": "Team Members",
+    "navRoles": "Roles & Permissions"
   },
   "SettingsProfile": {
     "title": "General Profile",
@@ -151,7 +152,34 @@
     "roleUpdateSuccess": "Role updated successfully.",
     "noMembersFound": "No members found in this organization.",
     "searchPlaceholder": "Search by mail...",
-    "paginationInfo": "Showing {start} to {end} of {total} entries"
+    "paginationInfo": "Showing {start} to {end} of {total} entries",
+    "pendingTitle": "Pending invitations",
+    "pendingDescription": "People invited who have not joined yet.",
+    "revokeInvite": "Revoke",
+    "revokeConfirm": "Revoke this invitation?",
+    "noPendingInvites": "No pending invitations."
+  },
+  "SettingsRoles": {
+    "title": "Roles & Permissions",
+    "description": "Manage custom roles and their permission scopes for this workspace.",
+    "createRole": "Create role",
+    "createRoleButton": "New role",
+    "editRole": "Edit role",
+    "deleteRole": "Delete role",
+    "saveRole": "Save role",
+    "formDescription": "Define a role name and select the permissions it grants.",
+    "nameLabel": "Role name",
+    "namePlaceholder": "e.g. Billing Manager",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional summary of this role",
+    "permissionsLabel": "Permissions",
+    "systemBadge": "System",
+    "tableName": "Role",
+    "tablePermissions": "Permissions",
+    "tableActions": "Actions",
+    "searchPlaceholder": "Search roles...",
+    "noRolesFound": "No roles found.",
+    "deleteConfirm": "Delete the role \"{name}\"?"
   },
   "Invitations": {
     "inviteMember": "Invite Member",

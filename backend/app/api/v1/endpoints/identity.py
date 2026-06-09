@@ -13,10 +13,22 @@ from app.core.exceptions.base import AuthenticationError, ConflictError, EntityN
 from app.core.i18n.service import i18n
 from app.models.identity.invitation import Invitation
 from app.models.identity.scopes import NidusScope
-from app.schemas.filters.identity import MemberFilter
-from app.schemas.requests.identity import InvitationAccept, InvitationCreate, MemberUpdateRole
+from app.schemas.filters.identity import InvitationFilter, MemberFilter
+from app.schemas.requests.identity import (
+    InvitationAccept,
+    InvitationCreate,
+    MemberUpdateRole,
+    RoleCreate,
+    RoleUpdate,
+)
 from app.schemas.responses.base import GenericResponse
-from app.schemas.responses.identity import InvitationAcceptedResponse, InvitationResponse, MemberResponse, RoleResponse
+from app.schemas.responses.identity import (
+    InvitationAcceptedResponse,
+    InvitationResponse,
+    MemberResponse,
+    RoleResponse,
+    ScopeResponse,
+)
 from app.schemas.responses.pagination import CursorPage
 from app.services.email_service import EmailService
 from app.services.identity_service import IdentityService
@@ -28,7 +40,7 @@ router = APIRouter()
     "/invitations",
     response_model=GenericResponse[InvitationResponse],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_WRITE))],
+    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_INVITE))],
 )
 async def invite_member(
     data: InvitationCreate,
@@ -62,6 +74,9 @@ async def verify_invitation(token: str, session: AsyncSession = Depends(get_sess
     if not invitation:
         raise EntityNotFoundError(entity="invitation")
 
+    if invitation.deleted_at is not None:
+        raise ConflictError(message_key="invitation.revoked")
+
     if invitation.is_accepted:
         raise ConflictError(message_key="invitation.already_accepted")
 
@@ -81,6 +96,36 @@ async def accept_invitation(
     response_data = InvitationAcceptedResponse(user_id=user_id, organization_id=org_id, role_id=role_id)
 
     return GenericResponse(data=response_data, message=i18n.t("success.invitation_accepted", lang=lang))
+
+
+@router.get(
+    "/invitations",
+    response_model=GenericResponse[list[InvitationResponse]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_READ))],
+)
+async def list_invitations(
+    filters: InvitationFilter = Depends(),
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    invitations = await IdentityService.list_invitations(session, filters)
+    return GenericResponse(data=invitations, message=i18n.t("success.invitations_retrieved", lang=lang))
+
+
+@router.delete(
+    "/invitations/{invitation_id}",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_INVITE))],
+)
+async def revoke_invitation(
+    invitation_id: UUID,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    await IdentityService.revoke_invitation(session, invitation_id)
+    return GenericResponse(data=None, message=i18n.t("success.invitation_revoked", lang=lang))
 
 
 @router.get(
@@ -145,3 +190,69 @@ async def list_roles(
 ):
     roles = await IdentityService.get_roles(session)
     return GenericResponse(data=roles, message=i18n.t("success.roles_retrieved", lang=lang))
+
+
+@router.post(
+    "/roles",
+    response_model=GenericResponse[RoleResponse],
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(ScopeGuard(NidusScope.ROLE_WRITE))],
+)
+async def create_role(
+    data: RoleCreate,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    payload: dict[str, Any] = Depends(get_jwt_payload),
+    lang: str = Depends(get_language),
+):
+    raw_org_id = payload.get("org_id")
+    if not raw_org_id:
+        raise AuthenticationError(message_key="common.forbidden")
+
+    role = await IdentityService.create_role(session, org_id=UUID(str(raw_org_id)), data=data)
+    return GenericResponse(data=role, message=i18n.t("success.role_created", lang=lang))
+
+
+@router.patch(
+    "/roles/{role_id}",
+    response_model=GenericResponse[RoleResponse],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ROLE_WRITE))],
+)
+async def update_role(
+    role_id: UUID,
+    data: RoleUpdate,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    role = await IdentityService.update_role(session, role_id, data)
+    return GenericResponse(data=role, message=i18n.t("success.role_updated", lang=lang))
+
+
+@router.delete(
+    "/roles/{role_id}",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ROLE_WRITE))],
+)
+async def delete_role(
+    role_id: UUID,
+    session: AsyncSession = Depends(get_current_tenant_session),
+    lang: str = Depends(get_language),
+):
+    await IdentityService.delete_role(session, role_id)
+    return GenericResponse(data=None, message=i18n.t("success.role_deleted", lang=lang))
+
+
+@router.get(
+    "/scopes",
+    response_model=GenericResponse[list[ScopeResponse]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ROLE_READ))],
+)
+async def list_scopes(lang: str = Depends(get_language)):
+    scopes = [
+        ScopeResponse(value=scope.value, group=scope.value.split(":")[0])
+        for scope in NidusScope
+        if scope != NidusScope.SUPERADMIN
+    ]
+    return GenericResponse(data=scopes, message=i18n.t("success.scopes_retrieved", lang=lang))

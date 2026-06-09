@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { MoreHorizontal, ShieldCheck, UserMinus, UserCog } from "lucide-react";
+import { MoreHorizontal, UserMinus, UserCog } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -39,15 +39,20 @@ export function MembersTable({
 }: MembersTableProps) {
   const t = useTranslations("SettingsMembers");
 
-  const getRoleIdByName = (name: string) => {
-    if (!Array.isArray(roles)) return undefined;
-    return roles.find((r) => r.name.toLowerCase() === name.toLowerCase())?.id;
+  const assignableRoles = roles.filter(
+    (role) => role.name.toLowerCase() !== "owner",
+  );
+
+  const getRoleLabel = (roleName: string) => {
+    const normalized = roleName.toLowerCase();
+    if (normalized === "owner") return t("roleOwner");
+    if (normalized === "admin") return t("roleAdmin");
+    if (normalized === "member") return t("roleMember");
+    if (normalized === "viewer") return t("roleViewer");
+    return roleName;
   };
 
-  const handleRoleChange = async (memberId: string, roleName: string) => {
-    const roleId = getRoleIdByName(roleName);
-    if (!roleId) return toast.error("Role UUID not found");
-
+  const handleRoleChange = async (memberId: string, roleId: string) => {
     const res = await updateMemberRoleAction(memberId, roleId);
     if (res.status === "success") {
       toast.success(res.message);
@@ -87,9 +92,7 @@ export function MembersTable({
           }
           className="capitalize font-medium shadow-none"
         >
-          {t(
-            `role${member.role_name.charAt(0).toUpperCase() + member.role_name.slice(1)}`,
-          )}
+          {getRoleLabel(member.role_name)}
         </Badge>
       ),
     },
@@ -116,22 +119,14 @@ export function MembersTable({
                       <span>{t("changeRole")}</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                      <DropdownMenuItem
-                        onClick={() => handleRoleChange(member.id, "admin")}
-                      >
-                        <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
-                        <span>{t("roleAdmin")}</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleRoleChange(member.id, "member")}
-                      >
-                        <span className="ml-6">{t("roleMember")}</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleRoleChange(member.id, "viewer")}
-                      >
-                        <span className="ml-6">{t("roleViewer")}</span>
-                      </DropdownMenuItem>
+                      {assignableRoles.map((role) => (
+                        <DropdownMenuItem
+                          key={role.id}
+                          onClick={() => handleRoleChange(member.id, role.id)}
+                        >
+                          <span className="capitalize">{getRoleLabel(role.name)}</span>
+                        </DropdownMenuItem>
+                      ))}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                   <DropdownMenuSeparator />

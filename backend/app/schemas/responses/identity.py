@@ -9,6 +9,7 @@ class InvitationResponse(BaseModel):
     id: UUID
     email: EmailStr
     role_id: UUID
+    role_name: str | None = None
     expires_at: datetime
     is_accepted: bool
 
@@ -39,5 +40,11 @@ class RoleResponse(BaseModel):
     name: str
     description: str | None = None
     scopes: list[str]
+    is_system: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ScopeResponse(BaseModel):
+    value: str
+    group: str

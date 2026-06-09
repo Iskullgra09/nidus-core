@@ -20,7 +20,15 @@
         "organization_updated": "Configuración de la organización actualizada con éxito.",
         "organization_deleted": "La organización ha sido programada para eliminación.",
         "profile_updated": "Perfil actualizado exitosamente.",
-        "organization_switched": "Organización activa cambiada exitosamente."
+        "organization_switched": "Organización activa cambiada exitosamente.",
+        "roles_retrieved": "Roles obtenidos exitosamente.",
+        "role_created": "Rol personalizado creado exitosamente.",
+        "role_updated": "Rol actualizado exitosamente.",
+        "role_deleted": "Rol eliminado exitosamente.",
+        "invitations_retrieved": "Invitaciones obtenidas exitosamente.",
+        "invitation_revoked": "Invitación revocada exitosamente.",
+        "scopes_retrieved": "Permisos obtenidos exitosamente.",
+        "valid_token": "El token de invitación es válido."
     },
     "validation": {
         "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."
@@ -58,5 +66,12 @@
     },
     "organization": {
         "slug_already_exists": "La URL del espacio de trabajo (slug) ya está en uso."
+    },
+    "role": {
+        "name_conflict": "Ya existe un rol llamado '{name}' en esta organización.",
+        "reserved_name": "El nombre '{name}' está reservado para un rol del sistema.",
+        "system_role_protected": "Los roles del sistema no se pueden modificar ni eliminar.",
+        "in_use": "Este rol está asignado a miembros activos y no se puede eliminar.",
+        "invalid_scopes": "Permisos inválidos: {scopes}."
     }
 }

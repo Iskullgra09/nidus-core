@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any, Sequence, cast
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import asc, select, text
+from sqlalchemy import asc, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,11 +13,43 @@ from app.core.security import hash_password, verify_password
 from app.models import Member, User
 from app.models.identity.invitation import Invitation
 from app.models.identity.role import Role
-from app.schemas.filters.identity import MemberFilter
+from app.models.identity.scopes import DEFAULT_ROLE_NAMES, NidusScope
+from app.schemas.filters.identity import InvitationFilter, MemberFilter
+from app.schemas.requests.identity import RoleCreate, RoleUpdate
+from app.schemas.responses.identity import InvitationResponse, RoleResponse
 from app.schemas.responses.pagination import CursorPage, PageInfo
 
 
 class IdentityService:
+    @staticmethod
+    def _to_role_response(role: Role) -> RoleResponse:
+        return RoleResponse(
+            id=role.id,
+            name=role.name,
+            description=role.description,
+            scopes=role.scopes,
+            is_system=role.name in DEFAULT_ROLE_NAMES,
+        )
+
+    @staticmethod
+    def _validate_custom_role_name(name: str) -> None:
+        if name in DEFAULT_ROLE_NAMES:
+            raise ConflictError(message_key="role.reserved_name", name=name)
+
+    @staticmethod
+    def _validate_scopes(scopes: list[str]) -> None:
+        invalid = [scope for scope in scopes if not NidusScope.is_assignable(scope)]
+        if invalid:
+            raise ConflictError(message_key="role.invalid_scopes", scopes=", ".join(invalid))
+
+    @staticmethod
+    def _ensure_custom_role(role: Role | None) -> Role:
+        if not role or role.deleted_at is not None:
+            raise EntityNotFoundError(entity="role")
+        if role.name in DEFAULT_ROLE_NAMES:
+            raise ConflictError(message_key="role.system_role_protected")
+        return role
+
     @staticmethod
     async def invite_user(session: AsyncSession, org_id: UUID, email: str, role_id: UUID) -> Invitation:
         """
@@ -89,6 +121,9 @@ class IdentityService:
 
         if not invitation:
             raise EntityNotFoundError(entity="invitation")
+
+        if invitation.deleted_at is not None:
+            raise ConflictError(message_key="invitation.revoked")
 
         if invitation.is_accepted:
             raise ConflictError(message_key="invitation.already_accepted")
@@ -169,11 +204,145 @@ class IdentityService:
         await session.commit()
 
     @staticmethod
-    async def get_roles(session: AsyncSession) -> Sequence[Role]:
+    async def get_roles(session: AsyncSession) -> list[RoleResponse]:
         """
         Retrieves all roles available for the current tenant.
         RLS automatically handles the organization filtering.
         """
-        statement = select(Role).order_by(asc(Role.name))
+        RoleModel = cast(Any, Role)
+        statement = (
+            select(Role)
+            .where(RoleModel.deleted_at.is_(None))
+            .order_by(asc(Role.name))
+        )
         result = await session.execute(statement)
-        return result.scalars().all()
+        return [IdentityService._to_role_response(role) for role in result.scalars().all()]
+
+    @staticmethod
+    async def create_role(session: AsyncSession, org_id: UUID, data: RoleCreate) -> RoleResponse:
+        IdentityService._validate_custom_role_name(data.name)
+        IdentityService._validate_scopes(data.scopes)
+
+        RoleModel = cast(Any, Role)
+        stmt = select(Role).where(
+            RoleModel.name == data.name,
+            RoleModel.organization_id == org_id,
+            RoleModel.deleted_at.is_(None),
+        )
+        if (await session.execute(stmt)).scalar_one_or_none():
+            raise ConflictError(message_key="role.name_conflict", name=data.name)
+
+        role = Role(
+            name=data.name,
+            description=data.description,
+            scopes=data.scopes,
+            organization_id=org_id,
+        )
+        session.add(role)
+        await session.flush()
+        await session.commit()
+        return IdentityService._to_role_response(role)
+
+    @staticmethod
+    async def update_role(session: AsyncSession, role_id: UUID, data: RoleUpdate) -> RoleResponse:
+        RoleModel = cast(Any, Role)
+        stmt = select(Role).where(RoleModel.id == role_id, RoleModel.deleted_at.is_(None))
+        role = IdentityService._ensure_custom_role((await session.execute(stmt)).scalar_one_or_none())
+
+        if data.name is not None and data.name != role.name:
+            IdentityService._validate_custom_role_name(data.name)
+            duplicate_stmt = select(Role).where(
+                RoleModel.name == data.name,
+                RoleModel.organization_id == role.organization_id,
+                RoleModel.id != role_id,
+                RoleModel.deleted_at.is_(None),
+            )
+            if (await session.execute(duplicate_stmt)).scalar_one_or_none():
+                raise ConflictError(message_key="role.name_conflict", name=data.name)
+            role.name = data.name
+
+        if data.description is not None:
+            role.description = data.description
+
+        if data.scopes is not None:
+            IdentityService._validate_scopes(data.scopes)
+            role.scopes = data.scopes
+
+        await session.commit()
+        return IdentityService._to_role_response(role)
+
+    @staticmethod
+    async def delete_role(session: AsyncSession, role_id: UUID) -> None:
+        RoleModel = cast(Any, Role)
+        MemberModel = cast(Any, Member)
+
+        stmt = select(Role).where(RoleModel.id == role_id, RoleModel.deleted_at.is_(None))
+        role = IdentityService._ensure_custom_role((await session.execute(stmt)).scalar_one_or_none())
+
+        member_count_stmt = select(func.count()).select_from(Member).where(
+            MemberModel.role_id == role_id,
+            MemberModel.deleted_at.is_(None),
+        )
+        member_count = (await session.execute(member_count_stmt)).scalar_one()
+        if member_count > 0:
+            raise ConflictError(message_key="role.in_use")
+
+        role.deleted_at = datetime.now(timezone.utc)
+        await session.commit()
+
+    @staticmethod
+    async def list_invitations(
+        session: AsyncSession,
+        filters: InvitationFilter,
+    ) -> list[InvitationResponse]:
+        InvitationModel = cast(Any, Invitation)
+        RoleModel = cast(Any, Role)
+
+        stmt = (
+            select(Invitation, Role.name)
+            .join(Role, RoleModel.id == InvitationModel.role_id)
+            .where(
+                InvitationModel.deleted_at.is_(None),
+                RoleModel.deleted_at.is_(None),
+            )
+        )
+
+        if filters.is_accepted is not None:
+            stmt = stmt.where(InvitationModel.is_accepted.is_(filters.is_accepted))
+
+        if filters.email__contains:
+            stmt = stmt.where(InvitationModel.email.ilike(f"%{filters.email__contains}%"))
+
+        stmt = stmt.order_by(asc(Invitation.created_at))
+        rows = (await session.execute(stmt)).all()
+
+        return [
+            InvitationResponse(
+                id=invitation.id,
+                email=invitation.email,
+                role_id=invitation.role_id,
+                role_name=role_name,
+                expires_at=invitation.expires_at,
+                is_accepted=invitation.is_accepted,
+            )
+            for invitation, role_name in rows
+        ]
+
+    @staticmethod
+    async def revoke_invitation(session: AsyncSession, invitation_id: UUID) -> None:
+        InvitationModel = cast(Any, Invitation)
+
+        stmt = select(Invitation).where(
+            InvitationModel.id == invitation_id,
+            InvitationModel.deleted_at.is_(None),
+        )
+        invitation = (await session.execute(stmt)).scalar_one_or_none()
+
+        if not invitation:
+            raise EntityNotFoundError(entity="invitation")
+
+        if invitation.is_accepted:
+            raise ConflictError(message_key="invitation.already_accepted")
+
+        invitation.deleted_at = datetime.now(timezone.utc)
+        await session.commit()

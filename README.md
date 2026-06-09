@@ -78,7 +78,7 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 - [x] ADR 050: Multi-Organization Session Strategy.
 
 #### **Phase 10: IAM Completion**
-- [ ] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.
+- [x] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.
 
 #### **Phase 11: Observability & Audit**
 - [ ] Structured logging · `audit_log` table.

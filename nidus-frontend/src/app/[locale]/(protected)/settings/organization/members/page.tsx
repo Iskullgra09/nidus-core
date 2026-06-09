@@ -5,7 +5,9 @@ import {
   getOrganizationMembers,
   getAvailableRoles,
 } from "@/modules/organization/actions/members";
+import { getPendingInvitations } from "@/modules/identity/actions/invitations";
 import { MembersTable } from "@/modules/organization/components/members-table";
+import { PendingInvitationsTable } from "@/modules/organization/components/pending-invitations-table";
 import { InviteMemberButton } from "@/modules/organization/components/invite-member-button";
 
 export default async function MembersPage() {
@@ -14,9 +16,10 @@ export default async function MembersPage() {
 
   if (!user) return null;
 
-  const [members, roles] = await Promise.all([
+  const [members, roles, invitations] = await Promise.all([
     getOrganizationMembers(),
     getAvailableRoles(),
+    getPendingInvitations(),
   ]);
 
   return (
@@ -30,8 +33,12 @@ export default async function MembersPage() {
         <InviteMemberButton roles={roles} />
       </div>
 
-      <div className="border rounded-md bg-card shadow-sm">
-        <MembersTable members={members} roles={roles} currentUserId={user.id} />
+      <div className="space-y-8">
+        <PendingInvitationsTable invitations={invitations} />
+
+        <div className="border rounded-md bg-card shadow-sm">
+          <MembersTable members={members} roles={roles} currentUserId={user.id} />
+        </div>
       </div>
     </div>
   );

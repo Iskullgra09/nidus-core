@@ -7,6 +7,61 @@ import { fetchClient } from "@/core/api/client";
 import { InvitationPayload, InvitationResponse } from "../types/invitation";
 import { AuthActionResponse } from "../types/auth";
 
+export async function getPendingInvitations(): Promise<InvitationResponse[]> {
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("nidus_session")?.value;
+    if (!session) return [];
+
+    const response = await fetchClient<InvitationResponse[]>(
+      "/identity/invitations",
+      {
+        headers: { Authorization: `Bearer ${session}` },
+      },
+    );
+
+    return response.status === "success" && response.data ? response.data : [];
+  } catch (error) {
+    console.error("Fetch invitations error:", error);
+    return [];
+  }
+}
+
+export async function revokeInvitationAction(
+  invitationId: string,
+): Promise<AuthActionResponse> {
+  const tCommon = await getTranslations("Common");
+
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("nidus_session")?.value;
+    if (!session) {
+      return { status: "error", message: tCommon("connectionError") };
+    }
+
+    const response = await fetchClient(
+      `/identity/invitations/${invitationId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session}` },
+      },
+    );
+
+    if (response.status === "success") {
+      revalidatePath("/settings/organization/members");
+      return { status: "success", message: response.message || tCommon("success") };
+    }
+
+    return {
+      status: "error",
+      message: response.message || tCommon("unknownError"),
+    };
+  } catch (error) {
+    console.error("Revoke invitation error:", error);
+    return { status: "error", message: tCommon("connectionError") };
+  }
+}
+
 export async function inviteMemberAction(
   payload: InvitationPayload,
 ): Promise<AuthActionResponse> {

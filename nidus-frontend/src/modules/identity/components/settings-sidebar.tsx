@@ -15,7 +15,8 @@ type SettingsPath =
   | "/settings/profile"
   | "/settings/security"
   | "/settings/organization"
-  | "/settings/organization/members";
+  | "/settings/organization/members"
+  | "/settings/organization/roles";
 
 interface NavItem {
   title: string;
@@ -87,6 +88,16 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
                 href: "/settings/organization/members",
               }}
               isActive={pathname === "/settings/organization/members"}
+            />
+          </CanAccess>
+
+          <CanAccess scope={NidusScope.ROLE_READ}>
+            <SidebarNavItem
+              item={{
+                title: t("navRoles"),
+                href: "/settings/organization/roles",
+              }}
+              isActive={pathname === "/settings/organization/roles"}
             />
           </CanAccess>
         </div>

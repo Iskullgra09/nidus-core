@@ -16,3 +16,12 @@ class MemberFilter(BaseModel):
     is_active: Optional[bool] = None
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class InvitationFilter(BaseModel):
+    """Filter for listing organization invitations."""
+
+    is_accepted: Optional[bool] = Field(False, alias="accepted")
+    email__contains: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)

@@ -8,7 +8,8 @@ import { decodeJwt } from "jose";
 const intlMiddleware = createIntlMiddleware(routing);
 
 const ROUTE_PERMISSIONS: Record<string, NidusScope[]> = {
-  "/settings/organization/members": [NidusScope.MEMBER_READ],
+  "/settings/organization/roles": [NidusScope.ROLE_READ],
+  "/settings/organization/members": [NidusScope.ORG_READ],
   "/settings/organization": [NidusScope.ORG_UPDATE],
   "/org": [NidusScope.ORG_READ],
   "/dashboard": [],

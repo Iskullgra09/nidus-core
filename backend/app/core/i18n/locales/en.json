@@ -20,7 +20,15 @@
         "organization_updated": "Organization settings updated successfully.",
         "organization_deleted": "Organization has been scheduled for deletion.",
         "profile_updated": "Profile updated successfully.",
-        "organization_switched": "Active organization switched successfully."
+        "organization_switched": "Active organization switched successfully.",
+        "roles_retrieved": "Roles retrieved successfully.",
+        "role_created": "Custom role created successfully.",
+        "role_updated": "Role updated successfully.",
+        "role_deleted": "Role deleted successfully.",
+        "invitations_retrieved": "Invitations retrieved successfully.",
+        "invitation_revoked": "Invitation revoked successfully.",
+        "scopes_retrieved": "Permission scopes retrieved successfully.",
+        "valid_token": "Invitation token is valid."
     },
     "validation": {
         "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."
@@ -58,5 +66,12 @@
     },
     "organization": {
         "slug_already_exists": "The workspace URL (slug) is already taken."
+    },
+    "role": {
+        "name_conflict": "A role named '{name}' already exists in this organization.",
+        "reserved_name": "The name '{name}' is reserved for a system role.",
+        "system_role_protected": "System roles cannot be modified or deleted.",
+        "in_use": "This role is assigned to active members and cannot be deleted.",
+        "invalid_scopes": "Invalid permission scopes: {scopes}."
     }
 }
