@@ -916,3 +916,24 @@ Integration tests truncate and seed data before every test case. When `conftest.
 ### Consequences
 * **Positive:** Pragmatic DX for solo development; DB isolation preserved.
 * **Negative:** Full containerized stack not yet one command away (Phase 8 remaining item).
+
+---
+
+## ADR 050: Multi-Organization Session Strategy
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+A single User can belong to multiple Organizations via Member records. Login previously selected the first membership arbitrarily, making B2B multi-tenant usage incorrect for invited users.
+
+### Decision
+1. **Login Branching:** `POST /auth/login` returns a standard OAuth2 token when the user has one membership. When N>1, it returns `{ org_selection_required, organizations[], pre_auth_token }`.
+2. **Selection Token:** `pre_auth_token` is a 15-minute JWT with `"type": "org_selection"` containing only `sub` (user id).
+3. **Completion:** `POST /auth/select-org` exchanges `pre_auth_token` + `organization_id` for a full access JWT.
+4. **Switching:** Authenticated users call `POST /auth/switch-org` to re-issue JWT with new `org_id` and scopes without re-entering credentials.
+5. **Discovery:** `GET /users/me/organizations` lists all active memberships (RLS bypass via empty tenant context).
+
+### Consequences
+* **Positive:** Correct multi-tenant UX for invited users. Downstream repos inherit org switching.
+* **Negative:** Login response is a union type; frontend must handle org picker flow.

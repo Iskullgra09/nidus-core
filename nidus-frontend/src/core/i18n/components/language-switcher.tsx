@@ -10,14 +10,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { updateProfileAction } from "@/modules/identity/actions/user";
+
+type AppLocale = "es" | "en";
 
 export function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
 
-  function switchLocale(newLocale: "es" | "en") {
+  function switchLocale(newLocale: AppLocale) {
+    if (newLocale === locale) return;
+
     router.replace(pathname, { locale: newLocale });
+
+    void updateProfileAction({
+      preferences: { language: newLocale },
+    });
   }
 
   return (

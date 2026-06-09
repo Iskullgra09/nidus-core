@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Moon, Sun, Monitor } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/core/providers/theme-provider";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/shared/ui/button";

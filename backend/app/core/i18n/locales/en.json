@@ -19,7 +19,8 @@
         "password_changed": "Password successfully changed.",
         "organization_updated": "Organization settings updated successfully.",
         "organization_deleted": "Organization has been scheduled for deletion.",
-        "profile_updated": "Profile updated successfully."
+        "profile_updated": "Profile updated successfully.",
+        "organization_switched": "Active organization switched successfully."
     },
     "validation": {
         "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."

@@ -22,6 +22,12 @@
     "orgSettings": "Ajustes de Organización",
     "logout": "Cerrar Sesión"
   },
+  "OrganizationSwitcher": {
+    "title": "Cambiar espacio de trabajo",
+    "pickTitle": "Elige un espacio de trabajo",
+    "pickDescription": "Tu cuenta pertenece a varias organizaciones. Selecciona una para continuar.",
+    "switchSuccess": "Espacio de trabajo cambiado correctamente."
+  },
   "MainNav": {
     "dashboard": "Dashboard"
   },

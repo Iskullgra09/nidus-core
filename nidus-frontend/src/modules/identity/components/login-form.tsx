@@ -19,14 +19,18 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 
-import { LoginFormData } from "../types/auth";
+import { LoginFormData, OrgSelectionActionResponse } from "../types/auth";
 import { getLoginSchema, ValidationTranslator } from "../model/auth.schema";
 import { loginAction } from "../actions/auth";
+import { OrgSelectionStep } from "./org-selection-step";
 
 export function LoginForm() {
   const router = useRouter();
   const tAuth = useTranslations("Auth");
   const tVal = useTranslations("Validation");
+
+  const [orgSelection, setOrgSelection] =
+    React.useState<OrgSelectionActionResponse | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(getLoginSchema(tVal as ValidationTranslator)),
@@ -39,6 +43,11 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormData) {
     const result = await loginAction(values);
 
+    if (result.status === "org_selection") {
+      setOrgSelection(result);
+      return;
+    }
+
     if (result.status === "success") {
       toast.success(tAuth("successMessage"));
       router.push("/dashboard");
@@ -46,6 +55,21 @@ export function LoginForm() {
     } else {
       toast.error(result.message || tAuth("errorMessage"));
     }
+  }
+
+  if (orgSelection) {
+    return (
+      <OrgSelectionStep
+        organizations={orgSelection.organizations}
+        preAuthToken={orgSelection.preAuthToken}
+        onComplete={() => {
+          toast.success(tAuth("successMessage"));
+          router.push("/dashboard");
+          router.refresh();
+        }}
+        onError={(message) => toast.error(message || tAuth("errorMessage"))}
+      />
+    );
   }
 
   return (

@@ -9,11 +9,26 @@ import {
   LoginRequest,
   TokenResponse,
   AuthActionResponse,
+  LoginActionResult,
+  OrgSelectionActionResponse,
+  UserOrganizationSummary,
+  LoginOrgSelectionPayload,
   RegisterFormData,
   OnboardingPayload,
   ForgotPasswordFormData,
   ResetPasswordPayload,
 } from "../types/auth";
+
+async function setSessionCookie(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set("nidus_session", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+  });
+}
 
 export async function getCurrentUser(): Promise<UserProfileResponse | null> {
   const cookieStore = await cookies();
@@ -28,9 +43,23 @@ export async function getCurrentUser(): Promise<UserProfileResponse | null> {
   return response.status === "success" && response.data ? response.data : null;
 }
 
+export async function getUserOrganizations(): Promise<UserOrganizationSummary[]> {
+  const cookieStore = await cookies();
+  const session = cookieStore.get("nidus_session")?.value;
+
+  if (!session) return [];
+
+  const response = await fetchClient<UserOrganizationSummary[]>(
+    "/users/me/organizations",
+    { headers: { Authorization: `Bearer ${session}` } },
+  );
+
+  return response.status === "success" && response.data ? response.data : [];
+}
+
 export async function loginAction(
   credentials: LoginRequest,
-): Promise<AuthActionResponse> {
+): Promise<LoginActionResult> {
   const t = await getTranslations("Common");
   const tAuth = await getTranslations("Auth");
 
@@ -39,30 +68,109 @@ export async function loginAction(
   formData.append("password", credentials.password);
 
   try {
-    const response = await fetchClient<TokenResponse>("/auth/login", {
+    const response = await fetchClient<
+      TokenResponse | LoginOrgSelectionPayload
+    >("/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: formData.toString(),
     });
 
-    if (response.status === "success" && response.data) {
-      const cookieStore = await cookies();
-      cookieStore.set("nidus_session", response.data.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
-        path: "/",
-      });
+    if (response.status !== "success" || !response.data) {
+      return {
+        status: "error",
+        message: response.message || t("invalidCredentials"),
+      };
+    }
+
+    const data = response.data;
+
+    if (
+      "org_selection_required" in data &&
+      data.org_selection_required === true &&
+      Array.isArray(data.organizations) &&
+      data.organizations.length > 1
+    ) {
+      return {
+        status: "org_selection",
+        organizations: data.organizations,
+        preAuthToken: data.pre_auth_token,
+      } satisfies OrgSelectionActionResponse;
+    }
+
+    if ("access_token" in data) {
+      await setSessionCookie(data.access_token);
+      return { status: "success", message: tAuth("loginSuccess") };
+    }
+
+    return { status: "error", message: t("unknownError") };
+  } catch (error) {
+    console.error("Login Error:", error);
+    return { status: "error", message: t("connectionError") };
+  }
+}
+
+export async function selectOrganizationAction(
+  preAuthToken: string,
+  organizationId: string,
+): Promise<AuthActionResponse> {
+  const t = await getTranslations("Common");
+  const tAuth = await getTranslations("Auth");
+
+  try {
+    const response = await fetchClient<TokenResponse>("/auth/select-org", {
+      method: "POST",
+      body: JSON.stringify({
+        pre_auth_token: preAuthToken,
+        organization_id: organizationId,
+      }),
+    });
+
+    if (response.status === "success" && response.data?.access_token) {
+      await setSessionCookie(response.data.access_token);
       return { status: "success", message: tAuth("loginSuccess") };
     }
 
     return {
       status: "error",
-      message: response.message || t("invalidCredentials"),
+      message: response.message || t("unknownError"),
     };
   } catch (error) {
-    console.error("Login Error:", error);
+    console.error("Select Org Error:", error);
+    return { status: "error", message: t("connectionError") };
+  }
+}
+
+export async function switchOrganizationAction(
+  organizationId: string,
+): Promise<AuthActionResponse> {
+  const t = await getTranslations("Common");
+  const tOrg = await getTranslations("OrganizationSwitcher");
+  const cookieStore = await cookies();
+  const session = cookieStore.get("nidus_session")?.value;
+
+  if (!session) {
+    return { status: "error", message: t("unknownError") };
+  }
+
+  try {
+    const response = await fetchClient<TokenResponse>("/auth/switch-org", {
+      method: "POST",
+      body: JSON.stringify({ organization_id: organizationId }),
+      headers: { Authorization: `Bearer ${session}` },
+    });
+
+    if (response.status === "success" && response.data?.access_token) {
+      await setSessionCookie(response.data.access_token);
+      return { status: "success", message: tOrg("switchSuccess") };
+    }
+
+    return {
+      status: "error",
+      message: response.message || t("unknownError"),
+    };
+  } catch (error) {
+    console.error("Switch Org Error:", error);
     return { status: "error", message: t("connectionError") };
   }
 }

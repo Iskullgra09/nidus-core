@@ -72,8 +72,10 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 - [ ] ADR 049: Monorepo Container Strategy.
 
 #### **Phase 9: Multi-Organization Sessions** *(critical)*
-- [ ] `GET /users/me/organizations` · `POST /auth/switch-org` · org picker · TopBar switcher.
-- [ ] ADR 050: Multi-Organization Session Strategy.
+- [x] `GET /users/me/organizations` · `POST /auth/switch-org` · `POST /auth/select-org`.
+- [x] Org picker on login (multi-membership users).
+- [x] Org switcher in TopBar.
+- [x] ADR 050: Multi-Organization Session Strategy.
 
 #### **Phase 10: IAM Completion**
 - [ ] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.

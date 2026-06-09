@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -19,3 +21,16 @@ class ChangePasswordRequest(BaseModel):
 
     current_password: str = Field(..., min_length=1)
     new_password: str = Field(..., min_length=8)
+
+
+class SelectOrganizationRequest(BaseModel):
+    """Completes login after multi-organization selection."""
+
+    pre_auth_token: str = Field(..., min_length=1)
+    organization_id: UUID
+
+
+class SwitchOrganizationRequest(BaseModel):
+    """Switches the active tenant context for an authenticated session."""
+
+    organization_id: UUID

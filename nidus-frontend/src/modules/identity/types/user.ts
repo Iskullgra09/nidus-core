@@ -18,7 +18,7 @@ export interface UserProfileResponse {
 
 export interface UpdateProfilePayload {
   full_name?: string | null;
-  preferences?: UserPreferences;
+  preferences?: Partial<UserPreferences>;
 }
 
 export interface UpdateProfileFormData {

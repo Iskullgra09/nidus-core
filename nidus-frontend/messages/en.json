@@ -22,6 +22,12 @@
     "orgSettings": "Organization Settings",
     "logout": "Log Out"
   },
+  "OrganizationSwitcher": {
+    "title": "Switch workspace",
+    "pickTitle": "Choose a workspace",
+    "pickDescription": "Your account belongs to multiple organizations. Select one to continue.",
+    "switchSuccess": "Workspace switched successfully."
+  },
   "MainNav": {
     "dashboard": "Dashboard"
   },

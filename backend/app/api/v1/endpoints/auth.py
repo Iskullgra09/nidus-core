@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_jwt_payload, get_language
 from app.core.db import get_session
 from app.core.i18n.service import i18n
-from app.schemas.requests.auth import ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest
+from app.schemas.requests.auth import (
+    ChangePasswordRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    SelectOrganizationRequest,
+    SwitchOrganizationRequest,
+)
 from app.schemas.responses.base import GenericResponse
 from app.services.auth_service import AuthService
 from app.services.email_service import EmailService
@@ -22,11 +28,36 @@ async def login(
     session: AsyncSession = Depends(get_session),
 ):
     """
-    Standard OAuth2 compatible token login.
-    Returns the access token with organization context.
+    OAuth2-compatible login.
+    Single org: returns access_token. Multiple orgs: returns org list + pre_auth_token.
     """
-    token = await AuthService.authenticate(session, email=form_data.username, password=form_data.password)
-    return {"access_token": token, "token_type": "bearer"}
+    return await AuthService.login(session, email=form_data.username, password=form_data.password)
+
+
+@router.post("/select-org", response_model=GenericResponse[dict[str, str]], status_code=status.HTTP_200_OK)
+async def select_organization(
+    data: SelectOrganizationRequest,
+    session: AsyncSession = Depends(get_session),
+    lang: str = Depends(get_language),
+) -> GenericResponse[dict[str, str]]:
+    """Completes login after the user picks an organization."""
+    token = await AuthService.select_organization(session, data.pre_auth_token, data.organization_id)
+    success_msg = i18n.t("auth.login_success", lang=lang)
+    return GenericResponse(data={"access_token": token, "token_type": "bearer"}, message=success_msg)
+
+
+@router.post("/switch-org", response_model=GenericResponse[dict[str, str]], status_code=status.HTTP_200_OK)
+async def switch_organization(
+    data: SwitchOrganizationRequest,
+    session: AsyncSession = Depends(get_session),
+    payload: dict[str, Any] = Depends(get_jwt_payload),
+    lang: str = Depends(get_language),
+) -> GenericResponse[dict[str, str]]:
+    """Re-issues a JWT for a different organization the user belongs to."""
+    user_id = UUID(str(payload["sub"]))
+    token = await AuthService.switch_organization(session, user_id, data.organization_id)
+    success_msg = i18n.t("success.organization_switched", lang=lang)
+    return GenericResponse(data={"access_token": token, "token_type": "bearer"}, message=success_msg)
 
 
 @router.post("/forgot-password", response_model=GenericResponse[Any], status_code=status.HTTP_200_OK)

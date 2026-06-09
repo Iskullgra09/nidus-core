@@ -17,7 +17,11 @@ export function AuthProvider({
   children: React.ReactNode;
   initialUser: UserProfileResponse | null;
 }) {
-  const [user] = React.useState<UserProfileResponse | null>(initialUser);
+  const [user, setUser] = React.useState<UserProfileResponse | null>(initialUser);
+
+  React.useEffect(() => {
+    setUser(initialUser);
+  }, [initialUser]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading: false }}>

@@ -5,14 +5,28 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
+from app.core.db import get_session
 from app.core.i18n.service import i18n
 from app.models.identity.scopes import NidusScope
 from app.schemas.requests.user import UpdateProfileRequest
+from app.schemas.responses.auth import UserOrganizationSummary
 from app.schemas.responses.base import GenericResponse
 from app.schemas.responses.user import UserProfileResponse
+from app.services.auth_service import AuthService
 from app.services.user_service import UserService
 
 router = APIRouter()
+
+
+@router.get("/me/organizations", response_model=GenericResponse[list[UserOrganizationSummary]])
+async def list_my_organizations(
+    session: AsyncSession = Depends(get_session),
+    payload: dict[str, Any] = Depends(get_jwt_payload),
+) -> GenericResponse[list[UserOrganizationSummary]]:
+    """Lists every organization the authenticated user belongs to."""
+    user_id = UUID(str(payload["sub"]))
+    organizations = await AuthService.list_user_organizations(session, user_id)
+    return GenericResponse(data=organizations)
 
 
 @router.get("/me", response_model=GenericResponse[UserProfileResponse], dependencies=[Depends(ScopeGuard(NidusScope.ORG_READ))])
