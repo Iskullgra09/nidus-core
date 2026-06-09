@@ -877,3 +877,42 @@ Modern SaaS platforms require high collaboration. Users must be able to share UR
 ### Consequences
 * **Positive:** Free "Deep Linking" capability out of the box. Highly shareable application state.
 * **Negative:** Requires disciplined use of Next.js native router push mechanisms to constantly update the URL without triggering full page reloads.
+
+---
+
+## ADR 048: Test Database Isolation Strategy
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+Integration tests truncate and seed data before every test case. When `conftest.py` pointed the application engine at `DATABASE_URL` (the development database `nidus_core`), pytest polluted real dev data with `test-*@nidus.com` users and phantom organizations.
+
+### Decision
+1. **Dual Database URLs:** Introduced `TEST_APP_DATABASE_URL` (`nidus_app_user` → `POSTGRES_TEST_DB`) and retained `TEST_DATABASE_URL` (`nidus_admin` → `POSTGRES_TEST_DB`).
+2. **Strict Test Engines:** `conftest.py` binds both pytest engines exclusively to the test database. A startup guard raises if the app engine does not target `POSTGRES_TEST_DB`.
+3. **Dual Migration Path:** Development migrations use `DATABASE_ADMIN_URL`. Test schema is applied via `scripts/migrate_test_db.py` (sets `ALEMBIC_DATABASE_URL`).
+4. **Runtime Unchanged:** FastAPI in local dev continues using `nidus_core` via `DATABASE_URL`. RLS dual-role semantics (`nidus_admin` vs `nidus_app_user`) apply identically on both databases.
+
+### Consequences
+* **Positive:** Dev and test are fully isolated. pytest can truncate aggressively without touching Mailtrap/onboarding data.
+* **Negative:** Developers must migrate both databases after schema changes.
+
+---
+
+## ADR 049: Monorepo Container Strategy
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+`docker-compose.yml` references a missing root `Dockerfile` and incorrect API volume paths. Local development currently runs PostgreSQL in Docker while FastAPI executes via `uv` on the host.
+
+### Decision
+1. **Default Dev Flow:** `docker compose up -d db` + `uv run fastapi dev` remains the primary workflow.
+2. **Future Dockerfile:** A root-level Dockerfile will target `backend/` with `uv` for production-parity API containers.
+3. **Compose Profiles:** Planned separation of `db`, `api`, and `full` profiles once the Dockerfile lands.
+
+### Consequences
+* **Positive:** Pragmatic DX for solo development; DB isolation preserved.
+* **Negative:** Full containerized stack not yet one command away (Phase 8 remaining item).

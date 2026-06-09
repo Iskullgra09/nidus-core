@@ -12,8 +12,18 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
+# Tests MUST never touch the development database (POSTGRES_DB).
+# - admin_engine  → nidus_admin @ POSTGRES_TEST_DB (bypass RLS for truncate/seed)
+# - app_engine    → nidus_app_user @ POSTGRES_TEST_DB (RLS enforced, same as production)
 ADMIN_DB_URL = settings.TEST_DATABASE_URL
-APP_DB_URL = settings.DATABASE_URL
+APP_DB_URL = settings.TEST_APP_DATABASE_URL
+
+if not APP_DB_URL.rstrip("/").endswith(f"/{settings.POSTGRES_TEST_DB}"):
+    raise RuntimeError(
+        f"Test isolation breach: app engine must target '{settings.POSTGRES_TEST_DB}', "
+        f"got '{APP_DB_URL}'. Tests must only run against the test database."
+    )
+
 os.environ["DATABASE_URL"] = APP_DB_URL
 
 from app.main import app
@@ -31,7 +41,7 @@ admin_session_maker = async_sessionmaker(admin_engine, class_=AsyncSession, expi
 def override_db_setup(monkeypatch: MonkeyPatch) -> None:
     """
     Globally overrides the production database engine with the test engine.
-    Ensures no accidental writes to production-like environments occur during testing.
+    Ensures no accidental writes to the development database during testing.
     """
     import app.core.db
 
@@ -42,7 +52,7 @@ def override_db_setup(monkeypatch: MonkeyPatch) -> None:
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Provides an AsyncSession with 'nidus_app_user' privileges.
+    Provides an AsyncSession with 'nidus_app_user' privileges on the TEST database.
     RLS policies are strictly enforced for this session.
     """
     async with app_session_maker() as session:
@@ -52,7 +62,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def admin_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Provides an AsyncSession with 'nidus_admin' privileges.
+    Provides an AsyncSession with 'nidus_admin' privileges on the TEST database.
     Bypasses RLS policies. To be used exclusively for setup and verification.
     """
     async with admin_session_maker() as session:
@@ -72,7 +82,7 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
 @pytest.fixture(autouse=True)
 async def cleanup_and_seed() -> None:
     """
-    Synchronizes the database state before each test execution.
+    Synchronizes the TEST database state before each test execution.
     Utilizes administrative privileges to bypass RLS for data seeding.
     """
     async with admin_session_maker() as session:

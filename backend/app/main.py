@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.api import api_router
@@ -16,6 +17,14 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
     description="NIDUS Core Multitenant API",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[str(settings.FRONTEND_URL), "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.add_exception_handler(NidusException, nidus_exception_handler)  # type: ignore

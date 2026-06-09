@@ -32,7 +32,10 @@ if config.config_file_name is not None:
 
 target_metadata = SQLModel.metadata
 
-config.set_main_option("sqlalchemy.url", str(settings.DATABASE_ADMIN_URL))  # type: ignore
+# Override with ALEMBIC_DATABASE_URL to migrate the test database:
+#   ALEMBIC_DATABASE_URL=<TEST_DATABASE_URL> uv run alembic upgrade head
+migration_url = os.environ.get("ALEMBIC_DATABASE_URL", str(settings.DATABASE_ADMIN_URL))
+config.set_main_option("sqlalchemy.url", migration_url)  # type: ignore
 
 
 def run_migrations_offline() -> None:

@@ -44,21 +44,29 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def DATABASE_URL(self) -> str:
-        """Assembles the restricted app user URL."""
+        """Assembles the restricted app user URL for development/runtime."""
         return f"postgresql+asyncpg://{self.APP_USER}:{self.APP_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     @computed_field
     @property
     def DATABASE_ADMIN_URL(self) -> str:
-        """Assembles the superuser URL for migrations."""
+        """Assembles the superuser URL for migrations against the development database."""
         return (
             f"postgresql+asyncpg://{self.ADMIN_USER}:{self.ADMIN_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
     @computed_field
     @property
+    def TEST_APP_DATABASE_URL(self) -> str:
+        """Restricted app user URL scoped exclusively to the test database."""
+        return (
+            f"postgresql+asyncpg://{self.APP_USER}:{self.APP_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_TEST_DB}"
+        )
+
+    @computed_field
+    @property
     def TEST_DATABASE_URL(self) -> str:
-        """Assembles the URL for the test database."""
+        """Admin URL scoped exclusively to the test database (migrations, truncate, seed)."""
         return f"postgresql+asyncpg://{self.ADMIN_USER}:{self.ADMIN_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_TEST_DB}"
 
 
