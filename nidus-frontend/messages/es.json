@@ -143,7 +143,9 @@
     "removeConfirm": "¿Estás seguro de que deseas eliminar a este miembro?",
     "removeSuccess": "Miembro eliminado correctamente.",
     "roleUpdateSuccess": "Rol actualizado correctamente.",
-    "noMembersFound": "No se encontraron miembros en esta organización."
+    "noMembersFound": "No se encontraron miembros en esta organización.",
+    "searchPlaceholder": "Buscar por correo...",
+    "paginationInfo": "Mostrando {start} a {end} de {total} entradas"
   },
   "Invitations": {
     "inviteMember": "Invitar Miembro",

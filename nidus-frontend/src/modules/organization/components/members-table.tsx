@@ -6,14 +6,6 @@ import { MoreHorizontal, ShieldCheck, UserMinus, UserCog } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,6 +24,7 @@ import { updateMemberRoleAction, removeMemberAction } from "../actions/members";
 import { RoleResponse } from "@/modules/identity/types/roles";
 import { CanAccess } from "@/shared/components/auth/can-access";
 import { NidusScope } from "@/modules/identity/types/scopes";
+import { DataTable, ColumnDef } from "@/shared/components/layout/data-table";
 
 interface MembersTableProps {
   members: MemberResponse[];
@@ -51,21 +44,9 @@ export function MembersTable({
     return roles.find((r) => r.name.toLowerCase() === name.toLowerCase())?.id;
   };
 
-  if (!Array.isArray(members) || members.length === 0) {
-    return (
-      <div className="p-8 text-center text-muted-foreground italic">
-        {t("noMembersFound") || "No members found in this organization."}
-      </div>
-    );
-  }
-
   const handleRoleChange = async (memberId: string, roleName: string) => {
     const roleId = getRoleIdByName(roleName);
-
-    if (!roleId) {
-      toast.error("Role UUID not found");
-      return;
-    }
+    if (!roleId) return toast.error("Role UUID not found");
 
     const res = await updateMemberRoleAction(memberId, roleId);
     if (res.status === "success") {
@@ -77,7 +58,6 @@ export function MembersTable({
 
   const handleRemove = async (memberId: string) => {
     if (!confirm(t("removeConfirm") || "Are you sure?")) return;
-
     const res = await removeMemberAction(memberId);
     if (res.status === "success") {
       toast.success(res.message);
@@ -86,101 +66,102 @@ export function MembersTable({
     }
   };
 
+  const columns: ColumnDef<MemberResponse>[] = [
+    {
+      header: t("tableHeaderName"),
+      cell: (member) => (
+        <div className="flex flex-col space-y-0.5">
+          <span className="font-semibold text-foreground tracking-tight">
+            {member.full_name || "---"}
+          </span>
+          <span className="text-xs text-muted-foreground">{member.email}</span>
+        </div>
+      ),
+    },
+    {
+      header: t("tableHeaderRole"),
+      cell: (member) => (
+        <Badge
+          variant={
+            member.role_name.toLowerCase() === "owner" ? "default" : "secondary"
+          }
+          className="capitalize font-medium shadow-none"
+        >
+          {t(
+            `role${member.role_name.charAt(0).toUpperCase() + member.role_name.slice(1)}`,
+          )}
+        </Badge>
+      ),
+    },
+    {
+      header: t("tableHeaderActions") || "Actions",
+      className: "text-right",
+      cell: (member) => (
+        <CanAccess scope={NidusScope.MEMBER_WRITE}>
+          {member.user_id !== currentUserId &&
+            member.role_name.toLowerCase() !== "owner" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0 rounded-md">
+                    <MoreHorizontal className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuLabel>
+                    {t("tableHeaderActions")}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <UserCog className="mr-2 h-4 w-4" />
+                      <span>{t("changeRole")}</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => handleRoleChange(member.id, "admin")}
+                      >
+                        <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                        <span>{t("roleAdmin")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleRoleChange(member.id, "member")}
+                      >
+                        <span className="ml-6">{t("roleMember")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleRoleChange(member.id, "viewer")}
+                      >
+                        <span className="ml-6">{t("roleViewer")}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                    onClick={() => handleRemove(member.id)}
+                  >
+                    <UserMinus className="mr-2 h-4 w-4" />
+                    <span className="font-medium">{t("removeMember")}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+        </CanAccess>
+      ),
+    },
+  ];
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{t("tableHeaderName")}</TableHead>
-          <TableHead>{t("tableHeaderRole")}</TableHead>
-          <TableHead className="text-right">
-            {t("tableHeaderActions") || "Actions"}
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {members.map((member) => (
-          <TableRow key={member.id}>
-            <TableCell>
-              <div className="flex flex-col">
-                <span className="font-medium">{member.full_name || "---"}</span>
-                <span className="text-xs text-muted-foreground">
-                  {member.email}
-                </span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge
-                variant={member.role_name === "owner" ? "default" : "secondary"}
-                className="capitalize"
-              >
-                {t(
-                  `role${member.role_name.charAt(0).toUpperCase() + member.role_name.slice(1)}`,
-                )}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
-              <CanAccess scope={NidusScope.MEMBER_WRITE}>
-                {member.user_id !== currentUserId &&
-                  member.role_name !== "owner" && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>
-                          {t("tableHeaderActions") || "Actions"}
-                        </DropdownMenuLabel>
-
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            <UserCog className="mr-2 h-4 w-4" />
-                            <span>{t("changeRole") || "Change Role"}</span>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleRoleChange(member.id, "admin")
-                              }
-                            >
-                              <ShieldCheck className="mr-2 h-4 w-4" />
-                              <span>{t("roleAdmin")}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleRoleChange(member.id, "member")
-                              }
-                            >
-                              <span>{t("roleMember")}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                handleRoleChange(member.id, "viewer")
-                              }
-                            >
-                              <span>{t("roleViewer")}</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-
-                        <DropdownMenuSeparator />
-
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => handleRemove(member.id)}
-                        >
-                          <UserMinus className="mr-2 h-4 w-4" />
-                          <span>{t("removeMember") || "Remove"}</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-              </CanAccess>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <DataTable
+      mode="client"
+      data={members}
+      columns={columns}
+      searchKey="email"
+      searchPlaceholder={t("searchPlaceholder")}
+      emptyMessage={t("noMembersFound")}
+      pageSize={5}
+      paginationText={(start, end, total) =>
+        t("paginationInfo", { start, end, total })
+      }
+    />
   );
 }

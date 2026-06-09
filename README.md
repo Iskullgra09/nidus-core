@@ -47,15 +47,15 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 - [x] **Tenant Onboarding:** Multilingual registration with automatic slugification.
 - [x] **Unified Feedback:** Global Sonner Toaster with Server-Side translation bindings.
 
-#### **Phase 5: The Security & Access Loop** (Up Next)
-- [ ] **Stateless Password Recovery:** Forgot Password (Email dispatch) and Reset Password (short-lived JWT) views.
-- [ ] **Profile Management:** User Settings view for name changes and avatar uploads.
-- [ ] **Preference Persistence:** Syncing UI Theme (Dark/Light) and Language (EN/ES) preferences to the DB.
+#### **Phase 5: The Security & Access Loop**
+- [x] **Stateless Password Recovery:** Forgot Password (Email dispatch) and Reset Password (short-lived JWT) views.
+- [x] **Profile Management:** User Settings view for name changes and avatar uploads.
+- [x] **Preference Persistence:** Syncing UI Theme (Dark/Light) and Language (EN/ES) preferences to the DB.
 
 #### **Phase 6: Tenant Collaboration (B2B Engine)**
-- [ ] **Organization Governance:** Org Settings view (Rename tenant, manage slug).
-- [ ] **Invitation Workflow:** Secure UI for dispatching invites and the "Accept Invitation" landing page.
-- [ ] **Member Management:** Data Tables for viewing tenant members and mutating their RBAC roles.
+- [x] **Organization Governance:** Org Settings view (Rename tenant, manage slug).
+- [x] **Invitation Workflow:** Secure UI for dispatching invites, verifying tokens, and the "Accept Invitation" modular landing page.
+- [x] **Member Management:** Dynamic Data Tables (Client/Server modes) with fixed-height UX, RBAC assignment, and conditional UI shielding.
 
 #### **Phase 7: Premium UX & Developer-First Navigation**
 - [ ] **Command Palette (Cmd+K):** Global search and command execution via Radix `cmdk`.

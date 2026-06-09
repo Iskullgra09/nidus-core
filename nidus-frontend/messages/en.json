@@ -143,7 +143,9 @@
     "removeConfirm": "Are you sure you want to remove this member?",
     "removeSuccess": "Member removed successfully.",
     "roleUpdateSuccess": "Role updated successfully.",
-    "noMembersFound": "No members found in this organization."
+    "noMembersFound": "No members found in this organization.",
+    "searchPlaceholder": "Search by mail...",
+    "paginationInfo": "Showing {start} to {end} of {total} entries"
   },
   "Invitations": {
     "inviteMember": "Invite Member",

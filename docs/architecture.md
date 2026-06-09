@@ -837,3 +837,43 @@ Confusion arose between `is_superuser` (System Creator/Developer) and the `Owner
 
 ### Consequences
 * **Positive:** Clear separation between "Platform Admin" and "Tenant Admin". Standardized permission logic that handles both explicit scopes and total authority.
+
+---
+
+## ADR 046: Hybrid Data Table Architecture (Client vs. Server Filtering)
+
+**Date:** 2026-04-14
+**Status:** Accepted
+
+### Context
+A unified UI standard requires consistent data tables. However, applying a single filtering strategy across all domains results in poor architecture. High-volume entities (Invoices, Logs) crash the browser if downloaded fully, while low-volume entities (Members, Roles) suffer from unnecessary network latency if filtered via the backend on every keystroke.
+
+### Decision
+1. **Visual Standardization:** Use a single, unified `DataTable` visual component across the entire application to maintain aesthetic consistency.
+2. **Hybrid Strategy (Design for the Domain):**
+   - **Client-Side Filtering:** Applied to low-volume domains (e.g., Members, Roles). Data is loaded once; pagination and search operate locally at 60 FPS.
+   - **Server-Side Filtering:** Applied to high-volume/transactional domains. Search and pagination modify URL parameters, which triggers backend cursor queries.
+3. **UX Constraint:** The UI container height must be fixed via `min-height` instead of injecting blank HTML rows, ensuring DOM efficiency while preventing layout shifts during pagination or when facing empty states.
+
+### Consequences
+* **Positive:** Optimizes for both UX (speed) and scalability (memory). Adheres to Enterprise SaaS standards. Eliminates DOM bloat from dummy rows.
+* **Negative:** Developers must analyze the data domain's growth potential before selecting the table implementation wrapper mode.
+
+---
+
+## ADR 047: URL-Driven State & Deep Linking
+
+**Date:** 2026-04-14
+**Status:** Accepted
+
+### Context
+Modern SaaS platforms require high collaboration. Users must be able to share URLs (e.g., via Slack or WhatsApp) that accurately reproduce the contextual view they were looking at (specific table pages, active filters, or open modal windows).
+
+### Decision
+1. **URL as the Single Source of Truth:** Application state related to view context (pagination index, search terms, active tabs, modal IDs) must be synchronized with the URL `searchParams`.
+2. **Stateless UI:** React components should default to reading initial state from the URL rather than isolated local `useState` hooks when the state represents a distinct "viewable" outcome.
+3. **Implicit Tenant Validation:** Shared links rely implicitly on the backend's RLS and JWT middleware. If User A shares a link with User B, User B will view the defined state *only* if they have proper scope access to that tenant's underlying data.
+
+### Consequences
+* **Positive:** Free "Deep Linking" capability out of the box. Highly shareable application state.
+* **Negative:** Requires disciplined use of Next.js native router push mechanisms to constantly update the URL without triggering full page reloads.
