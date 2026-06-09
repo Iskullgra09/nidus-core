@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any, Tuple, cast
+from typing import Any, Sequence, cast
 from uuid import UUID
 
-from sqlalchemy import Select, select, text
+from sqlalchemy import asc, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -51,13 +51,16 @@ class IdentityService:
         RoleModel = cast(Any, Role)
         UserModel = cast(Any, User)
 
-        stmt: Select[Tuple[Member]] = select(Member).join(MemberModel.user).join(MemberModel.role).where(MemberModel.deleted_at.is_(None))
+        stmt = select(Member).join(MemberModel.user).join(MemberModel.role).where(MemberModel.deleted_at.is_(None))
 
         if filters.email__contains:
             stmt = stmt.where(UserModel.email.ilike(f"%{filters.email__contains}%"))
 
         if filters.role_name:
             stmt = stmt.where(RoleModel.name == filters.role_name)
+
+        if filters.is_active is not None:
+            stmt = stmt.where(UserModel.is_active == filters.is_active)
 
         stmt = stmt.options(selectinload(MemberModel.user), selectinload(MemberModel.role))
 
@@ -164,3 +167,13 @@ class IdentityService:
 
         member.deleted_at = datetime.now(timezone.utc)
         await session.commit()
+
+    @staticmethod
+    async def get_roles(session: AsyncSession) -> Sequence[Role]:
+        """
+        Retrieves all roles available for the current tenant.
+        RLS automatically handles the organization filtering.
+        """
+        statement = select(Role).order_by(asc(Role.name))
+        result = await session.execute(statement)
+        return result.scalars().all()

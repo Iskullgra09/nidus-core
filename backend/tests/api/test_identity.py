@@ -15,7 +15,7 @@ async def test_me_endpoint_returns_full_profile(auth_client: Tuple[AsyncClient, 
     org_id = context["org_id"]
     user_id = context["user_id"]
 
-    response = await client.get("/api/v1/organizations/me")
+    response = await client.get("/api/v1/users/me")
 
     assert response.status_code == 200
     res_json = response.json()
@@ -59,5 +59,5 @@ async def test_delete_organization(auth_client: Tuple[AsyncClient, Dict[str, Any
     response = await client.delete(f"/api/v1/organizations/{org_id}")
     assert response.status_code == 200
 
-    me_response = await client.get("/api/v1/organizations/me")
+    me_response = await client.get("/api/v1/users/me")
     assert me_response.status_code in [401, 403, 404]

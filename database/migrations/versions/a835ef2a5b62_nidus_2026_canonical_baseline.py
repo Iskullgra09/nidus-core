@@ -25,6 +25,13 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("slug", sa.String(), nullable=False),
+        sa.Column("avatar_url", sa.String(), nullable=True),
+        sa.Column(
+            "settings",
+            postgresql.JSONB(astext_type=sa.Text()),
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
         sa.Column(
             "is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False
         ),
@@ -49,6 +56,14 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(), nullable=False),
+        sa.Column("full_name", sa.String(), nullable=True),
+        sa.Column("avatar_url", sa.String(), nullable=True),
+        sa.Column(
+            "preferences",
+            postgresql.JSONB(astext_type=sa.Text()),
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
         sa.Column(
             "is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False
         ),
@@ -185,10 +200,17 @@ def upgrade() -> None:
         unique=True,
         postgresql_where=sa.text("deleted_at IS NULL"),
     )
+    op.create_index("ix_invitation_token_unique", "invitation", ["token"], unique=True)
+
     op.execute(
         "CREATE INDEX ix_role_scopes_gin ON role USING GIN (scopes jsonb_path_ops)"
     )
-    op.create_index("ix_invitation_token_unique", "invitation", ["token"], unique=True)
+    op.execute(
+        'CREATE INDEX ix_user_preferences_gin ON "user" USING GIN (preferences jsonb_path_ops)'
+    )
+    op.execute(
+        "CREATE INDEX ix_organization_settings_gin ON organization USING GIN (settings jsonb_path_ops)"
+    )
 
     for table in ["organization", "user", "role", "member", "invitation"]:
         op.create_index(op.f(f"ix_{table}_id"), table, ["id"], unique=False)
@@ -239,6 +261,8 @@ def downgrade() -> None:
     for t_table in ["member", "role", "invitation"]:
         op.execute(f"DROP POLICY IF EXISTS {t_table}_isolation_policy ON {t_table};")
     op.execute("DROP INDEX IF EXISTS ix_role_scopes_gin;")
+    op.execute("DROP INDEX IF EXISTS ix_user_preferences_gin;")
+    op.execute("DROP INDEX IF EXISTS ix_organization_settings_gin;")
     op.drop_table("invitation")
     op.drop_table("member")
     op.drop_table("role")

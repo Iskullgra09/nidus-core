@@ -24,7 +24,7 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 
 ## Project Roadmap (Updated Q2 2026)
 
-### Completed Milestones
+### Completed Milestones (Backend)
 | Phase | Goal | Achievements |
 | :--- | :--- | :--- |
 | **1** | **Data Engine** | RLS Policies, Baseline Migration, Security Setup. |
@@ -34,35 +34,77 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **3.6**| **Lifecycle & Mail** | Asynchronous email dispatch (`aiosmtplib`), Secure Invitation Lifecycle, Password Recovery. |
 | **3.7**| **The Data Standard**| O(1) Keyset Pagination via UUIDv7, Dynamic Pydantic-to-SQL Filtering Engine, Cascading Soft-Deletes. |
 
-### In Progress / Upcoming
-#### **Phase 4: Frontend & Scaling** (Next.js 15)
-- [ ] **Edge Resolution:** Tenant detection via Next.js Middleware.
-- [ ] **PPR Dashboards:** Partial Prerendering for tenant shells.
-- [ ] **Connection Pooling:** PgBouncer integration for 100k+ scaling.
+---
+
+### In Progress / Upcoming (Frontend & Ecosystem)
+
+#### **Phase 4: Frontend Foundation & Auth Pipeline** (Next.js 15)
+- [x] **Gateway Proxy:** Edge routing and JWT session validation (`src/proxy.ts`).
+- [x] **Design System:** Shadcn "Nova" + Tailwind v4 + OKLCH for predictable, high-density SaaS UI.
+- [x] **Type-Safe Forms:** Zod (pinned to v3) + React Hook Form + Zero `any` policy.
+- [x] **Authentication Flow:** Login Server Actions with HttpOnly cookie generation & Logout.
+- [x] **Frontend i18n:** `next-intl` integration, Dynamic `[locale]` segments, and Zod Schema Factory.
+- [x] **Tenant Onboarding:** Multilingual registration with automatic slugification.
+- [x] **Unified Feedback:** Global Sonner Toaster with Server-Side translation bindings.
+
+#### **Phase 5: The Security & Access Loop**
+- [x] **Stateless Password Recovery:** Forgot Password (Email dispatch) and Reset Password (short-lived JWT) views.
+- [x] **Profile Management:** User Settings view for name changes and avatar uploads.
+- [x] **Preference Persistence:** Syncing UI Theme (Dark/Light) and Language (EN/ES) preferences to the DB.
+
+#### **Phase 6: Tenant Collaboration (B2B Engine)**
+- [x] **Organization Governance:** Org Settings view (Rename tenant, manage slug).
+- [x] **Invitation Workflow:** Secure UI for dispatching invites, verifying tokens, and the "Accept Invitation" modular landing page.
+- [x] **Member Management:** Dynamic Data Tables (Client/Server modes) with fixed-height UX, RBAC assignment, and conditional UI shielding.
+
+#### **Phase 7: Premium UX & Developer-First Navigation**
+- [ ] **Command Palette (Cmd+K):** Global search and command execution via Radix `cmdk`.
+- [ ] **Modular Navigation:** Implementation of contextual horizontal Sub-Tabs (No heavy sidebars).
+- [ ] **Optimized Data Fetching:** SWR or React 19 `use` cache for streaming tenant data seamlessly.
 
 ---
 
-## Quick Start
+## Operational Command Center
 
-1. **Synchronize Environment:**
-    ```powershell
-    uv sync
-    ```
+Use these commands from the project root. Ensure your `.env` is present at the root.
 
-2. **Orchestrate Infrastructure:**
-    ```powershell
-    docker compose up -d
-    ```
+### 🗄 Infrastructure (Docker)
+| Goal | Command |
+| :--- | :--- |
+| **Start Everything** | `docker compose up -d` |
+| **Start Only DB** | `docker compose up -d db` |
+| **Stop Everything** | `docker compose stop` |
+| **Full Wipe & Reset** | `docker compose down -v` |
+| **View DB Logs** | `docker logs -f nidus-postgres` |
+| **View API Logs** | `docker logs -f nidus-fastapi` |
 
-3. **Baseline Evolution:**
-    ```powershell
-    uv run alembic upgrade head
-    ```
+### 🚀 Backend Development (Python/uv)
+| Goal | Command |
+| :--- | :--- |
+| **Install Deps** | `uv sync` |
+| **Run Migrations** | `uv run alembic upgrade head` |
+| **Create Migration** | `uv run alembic revision --autogenerate -m "description"` |
+| **Run Seed Script** | `uv run seed.py` |
+| **Run Seed Script on Docker** | `docker exec -it nidus-fastapi python app/core/seed.py` |
+| **Run API Locally** | `uv run fastapi dev app/main.py` |
+| **Run Tests** | `uv run pytest` |
 
-4. **Verify Integrity (RLS & Logic):**
-    ```powershell
-    uv run pytest
-    ```
+### 💻 Frontend Development (pnpm)
+| Goal | Command |
+| :--- | :--- |
+| **Install Deps** | `pnpm install` |
+| **Dev Mode** | `pnpm --filter nidus-frontend dev` |
+| **Build Prod** | `pnpm --filter nidus-frontend build` |
+| **Strict Typecheck** | `pnpm --filter nidus-frontend tsc --noEmit` |
+| **Run Linter** | `pnpm --filter nidus-frontend lint` |
+| **Add UI Component** | `pnpm --filter nidus-frontend dlx shadcn@latest add <component>` |
+| **Clean cache** | `pnpm store prune` |
+
+### 🧹 Maintenance & Cleanup
+| Goal | Command |
+| :--- | :--- |
+| **Fix Line Endings** | `dos2unix infrastructure/db-init/*.sh` (If utility is installed) |
+| **Prune Volumes** | `docker volume prune -f` |
 
 ---
 *Developed by Isaac Granados Quesada — Principal Engineer & Computer Architect.*

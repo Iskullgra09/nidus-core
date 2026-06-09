@@ -1,9 +1,10 @@
-from typing import Any, cast
+from typing import Any, Dict, List, cast
 from uuid import UUID
 
 import jwt
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.exceptions.base import AuthenticationError, ConflictError, EntityNotFoundError, NidusException
@@ -34,17 +35,22 @@ class AuthService:
         if not user or not verify_password(password, user.hashed_password):
             raise AuthenticationError(message_key="auth.invalid_credentials")
 
-        member_stmt = select(Member).where(
-            MemberModel.user_id == user.id,
-            MemberModel.deleted_at.is_(None),
+        member_stmt = (
+            select(Member)
+            .where(
+                MemberModel.user_id == user.id,
+                MemberModel.deleted_at.is_(None),
+            )
+            .options(selectinload(MemberModel.role))
         )
         member_result = await session.execute(member_stmt)
         membership = member_result.scalar_one_or_none()
 
-        if not membership:
+        if not membership or not membership.role:
             raise NidusException(code="NO_ACTIVE_ORG", message_key="common.forbidden", status_code=403)
+        user_scopes: List[str] = ["*"] if user.is_superuser else membership.role.scopes
+        token_data: Dict[str, Any] = {"sub": str(user.id), "org_id": str(membership.organization_id), "scopes": user_scopes}
 
-        token_data = {"sub": str(user.id), "org_id": str(membership.organization_id)}
         return create_access_token(token_data)
 
     @staticmethod
@@ -75,7 +81,7 @@ class AuthService:
 
         except jwt.ExpiredSignatureError:
             raise AuthenticationError(message_key="auth.token_expired")
-        except jwt.InvalidTokenError:
+        except (jwt.InvalidTokenError, Exception):
             raise AuthenticationError(message_key="auth.invalid_token")
 
         UserModel = cast(Any, User)

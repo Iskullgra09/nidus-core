@@ -21,7 +21,7 @@ async def get_jwt_payload(token: Annotated[str, Depends(oauth2_scheme)]) -> dict
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if not payload.get("sub") or not payload.get("org_id"):
-            raise ValueError("Missing critical claims")
+            raise AuthenticationError(message_key="auth.invalid_token")
         return payload
     except Exception:
         raise AuthenticationError(message_key="auth.token_expired")

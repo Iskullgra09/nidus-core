@@ -534,3 +534,346 @@ During the creation of new tenant-scoped records (e.g., Invitations), we encount
 ### Consequences
 * **Positive:** Eliminates "Instance not found" errors caused by premature transaction closures. Maintains strict multitenant isolation.
 * **Negative:** Requires developers to deeply understand the difference between `flush` (sends SQL, keeps transaction/RLS open) and `commit` (saves data, destroys transaction/RLS).
+
+---
+
+## ADR 029: Frontend Foundation & Package Management (pnpm)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+The Nidus frontend requires a high-performance, strict, and monorepo-ready package manager that avoids the "phantom dependency" issues common in npm/yarn.
+
+### Decision
+Adopted **`pnpm`** using Node Corepack. 
+1. **Efficiency:** Uses a content-addressable store to save disk space and speed up installations.
+2. **Strictness:** Prevents code from accessing dependencies not explicitly declared in `package.json`.
+
+### Consequences
+* **Positive:** Faster CI/CD pipelines and a cleaner `node_modules` structure.
+* **Negative:** Requires slightly different commands (`pnpm` instead of `npm`).
+
+---
+
+## ADR 030: Next.js 15 & React 19 Adoption
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Nidus Core requires a frontend framework that supports high-scale multitenancy, edge computing, and optimized data streaming.
+
+### Decision
+Selected **Next.js 15 (App Router)** and **React 19**.
+1. **Partial Prerendering (PPR):** To deliver static shells instantly while streaming dynamic tenant data.
+2. **Server Components (RSC):** To reduce client-side JavaScript bundles and improve SEO/Performance.
+
+### Consequences
+* **Positive:** State-of-the-art performance and native support for the new React "Actions" API.
+
+---
+
+## ADR 031: Native Fetch API over Axios
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Next.js 15 patches the global `fetch` API to provide advanced caching, request deduplication, and revalidation features that libraries like Axios cannot natively access.
+
+### Decision
+We will utilize the **Native Fetch API** wrapped in a custom TypeScript `FetchClient`. 
+
+### Consequences
+* **Positive:** Seamless integration with Next.js Data Cache and Tag-based revalidation.
+* **Negative:** Requires manual implementation of interceptor-like logic for JWT injection.
+
+---
+
+## ADR 032: Edge Middleware for Tenant Routing
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+In a multitenant SaaS, we must verify user sessions and tenant access before any page rendering occurs to ensure security and prevent "flicker" during redirects.
+
+### Decision
+Implemented **Next.js Middleware (`middleware.ts`)** to handle route protection at the Edge. The middleware inspects the JWT cookie and validates the `organization_id` context before allowing the request to proceed to the application routes.
+
+---
+
+## ADR 033: Headless UI Strategy (Radix & Shadcn Nova)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Nidus requires a UI system that is 100% accessible (WAI-ARIA) but allows complete brand ownership without the bloat of traditional component libraries.
+
+### Decision
+1. **Engine:** Adopted **Radix UI** as the headless primitive layer.
+2. **Preset:** Selected the **Shadcn "Nova"** preset, utilizing **Geist** for typography and **Lucide** for iconography to maintain a high-density, technical SaaS aesthetic.
+
+### Consequences
+* **Positive:** Zero styling lock-in. Full control over the component source code.
+* **Negative:** Requires manual installation of Radix primitives when scaffolding complex components.
+
+---
+
+## ADR 034: Modern Design Tokens (Tailwind v4 & OKLCH)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Standard HSL/RGB color spaces are perceptually non-uniform, leading to inconsistent brand colors across different lightness levels.
+
+### Decision
+Adopted **Tailwind CSS v4** utilizing the **OKLCH** color space for all design tokens. 
+1. **Primary Brand:** Defined "Nidus Electric Indigo" as `oklch(0.6 0.18 255)`.
+2. **Configuration:** Shifted to a "CSS-first" configuration via `@theme` blocks in `globals.css`, eliminating the need for a heavy `tailwind.config.ts`.
+
+### Consequences
+* **Positive:** Superior color vibrancy and accessibility. P3 wide-gamut support for high-end displays.
+* **Negative:** Requires VS Code workspace adjustments to silence "Unknown at-rule" warnings for Tailwind v4.
+
+---
+
+## ADR 035: Next.js 16 Gateway Transition (Proxy)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Next.js 16.2+ deprecated the `middleware.ts` convention in favor of a more powerful Edge Proxy architecture to handle advanced request buffering and rewrites.
+
+### Decision
+Migrated from `src/middleware.ts` to **`src/proxy.ts`**. Isolation logic is now handled by a default `proxy` function export, maintaining full compatibility with the existing Nidus multitenant redirection logic.
+
+---
+
+## ADR 036: Modular Directory Aliases for Enterprise Scale
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+The default Shadcn structure (`/components/ui`) is insufficient for a modular monorepo. It mixes generic UI parts with business-logic components.
+
+### Decision
+Reconfigured `components.json` and TypeScript aliases:
+1. **`@/shared/ui`**: Strictly for "Dumb" components (Buttons, Inputs).
+2. **`@/core/lib/utils`**: For infrastructure utilities (CN helper).
+3. **`@/modules/{domain}/components`**: For "Smart" components containing business logic.
+
+### Consequences
+* **Positive:** Clean architecture. High reusability across future micro-frontends or modules.
+
+---
+
+## ADR 037: Dependency Pinning for Ecosystem Stability (Zod v3)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Upgrading to Zod v4 introduced breaking changes to internal type definitions (`_def`, `typeName`), causing severe TypeScript incompatibilities (`TS2769`) with `@hookform/resolvers`. Using `as any` to bypass this breaks our Strict Typing mandate.
+
+### Decision
+1. **Downgrade & Pin:** Pinned Zod explicitly to version `3.23.8`.
+2. **Schema Encapsulation:** Export schemas using the generic `z.ZodType<T>` interface when necessary to hide internal metadata from external libraries.
+
+### Consequences
+* **Positive:** Restored 100% strict typing without ESLint warnings. Guaranteed compatibility with the React Hook Form ecosystem.
+* **Negative:** Temporarily blocks adoption of Zod v4 features until the resolver ecosystem fully catches up.
+
+---
+
+## ADR 038: Command-Driven Minimalist UI Architecture (Updated)
+
+**Date:** 2026-04-10
+**Status:** Accepted
+
+### Context
+Traditional SaaS dashboards rely on heavy, permanent sidebars that consume valuable horizontal viewport space. Nidus requires a data-dense, highly focused interface for managing complex multitenant resources. However, administrative configuration pages (Settings) inherently require deep categorization (Profile, Security, Organization, Members, Billing) which causes horizontal Tab layouts to overflow and degrade UX.
+
+### Decision
+1. **Top-Bar Only (Primary Routes):** Adopted a minimalist top navigation bar structure for primary application routes (e.g., `/dashboard`).
+2. **Viewport Optimization:** Dedicates >90% of the screen strictly to tenant data and tables.
+3. **Exception (Administrative Routes):** For deeply nested administrative views (`/settings/*`), a localized left-sidebar (Nested Layout) is permitted. This hybrid approach handles categorized navigation infinitely without causing horizontal tab overflow, while respecting the top-bar architecture everywhere else.
+
+### Consequences
+* **Positive:** Clean aesthetic for core work. Highly scalable and organized navigation for administrative settings.
+* **Negative:** Requires maintaining a secondary navigation component specifically for the settings domain.
+
+---
+
+## ADR 039: Multilingual Routing and i18n Strategy
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Nidus requires a global-first approach where the URL is the source of truth for the user's language, ensuring SEO compatibility and shareable localized links.
+
+### Decision
+1. **Engine:** Adopted `next-intl` with the **Dynamic [locale] Segment** strategy.
+2. **Routing:** All application routes moved inside `src/app/[locale]/`.
+3. **Middleware:** Implemented a composite proxy in `src/proxy.ts` that merges authentication guarding with automatic language detection and redirection.
+
+### Consequences
+* **Positive:** Consistent UX across different regions. Native support for localized metadata.
+* **Negative:** Requires wrapping all routes in a dynamic segment, increasing file depth by one level.
+
+---
+
+## ADR 040: Localized Form Validation (Zod Factory Pattern)
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Zod schemas are static, but validation messages must be dynamic based on the user's locale. Using `any` to bypass type checks for translators is unacceptable and violates our strict typing mandate.
+
+### Decision
+1. **Pattern:** Adopted the **Schema Factory Pattern**. Validation schemas are now functions that accept a strictly typed `ValidationTranslator`.
+2. **Type Safety:** Leveraged the `IntlMessages` global interface to ensure that only existing JSON keys can be used for error messages, maintaining **Zero `any`** in the domain logic.
+
+### Consequences
+* **Positive:** 100% type-safe translations. VS Code provides autocompletion for dictionary keys within Zod schemas.
+* **Negative:** Adds a layer of functional wrapping to schema definitions.
+
+---
+
+## ADR 041: Unified UI Feedback and Global Toast System
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Users require immediate, non-intrusive feedback for background operations (Server Actions) to understand the outcome of their interactions.
+
+### Decision
+1. **Library:** Integrated **Sonner** as the primary notification engine.
+2. **Implementation:** Placed a single `<Toaster />` in the `RootLayout` with `richColors` enabled.
+3. **Contract:** Server Actions now return a standardized `{ status, message }` object where the message is pre-translated on the server, allowing the frontend to remain "dumb" regarding localized strings.
+
+### Consequences
+* **Positive:** Centralized feedback management. "Success" and "Error" states are visually distinguishable and accessible.
+
+---
+
+## ADR 042: Automatic Tenant Slugification
+
+**Date:** 2026-04-06
+**Status:** Accepted
+
+### Context
+Tenants require a unique URL identifier (`slug`), but asking for it manually during onboarding increases friction and often leads to invalid formats.
+
+### Decision
+1. **UX:** Implemented automatic slugification on the frontend/server-action layer.
+2. **Logic:** The `organization_name` is transformed into a URL-safe string (lowercase, alphanumeric, hyphenated) before being sent to the FastAPI `OnboardingCreate` schema.
+3. **Consistency:** The transformation uses a deterministic regex pattern to ensure parity with the backend's Pydantic `slug_format` validator.
+
+### Consequences
+* **Positive:** Reduced onboarding friction. Guaranteed valid slugs for new tenants.
+* **Negative:** If two organizations share a very similar name, the slug might conflict (to be handled by backend unique constraints).
+
+---
+
+## ADR 043: JWT-Embedded Scopes for Atomic Authorization
+
+**Date:** 2026-04-11
+**Status:** Accepted
+
+### Context
+Initially, the frontend was "blind" to user permissions, requiring secondary API calls or unsafe cookies to determine UI visibility. This caused a synchronization lag between the user's actual permissions (Backend) and the rendered UI (Frontend).
+
+### Decision
+1. **JWT Injection:** Modified `AuthService.authenticate` (Backend) to inject the user's `scopes` directly into the JWT payload.
+2. **Stateless UI Check:** The Next.js Proxy now decodes the JWT at the Edge using `jose`, allowing for instantaneous authorization checks without hitting the database.
+3. **Implicit Permissions:** Implemented a hierarchical check where `:write` and `:update` scopes automatically grant `:read` access to the same resource.
+
+### Consequences
+* **Positive:** Atomic updates (permissions change as soon as the token is refreshed). zero-latency authorization at the Edge.
+* **Negative:** Slightly increases the JWT size, but remains well within the cookie header limits.
+
+---
+
+## ADR 044: Client-Side Authorization Shielding (CanAccess Pattern)
+
+**Date:** 2026-04-11
+**Status:** Accepted
+
+### Context
+Protecting routes at the Proxy level (ADR 035) prevents unauthorized URL access, but does not prevent the rendering of forbidden UI elements (buttons, links). This leads to a poor UX where users see actions they cannot execute.
+
+### Decision
+1. **Global Auth Context:** Implemented an `AuthProvider` at the `ProtectedLayout` level to provide a single source of truth for the current user and their scopes.
+2. **Headless Shielding:** Created a `<CanAccess />` component that wraps sensitive UI elements. It uses the `hasScope` utility to conditionally render children based on the user's active permissions.
+3. **UX Policy:** Adopted the "Invisible Shield" policy: if a user lacks the permission for an action, the UI element is completely omitted rather than disabled.
+
+### Consequences
+* **Positive:** Clean, permission-aware UI. Zero "prop-drilling" of the user object.
+* **Negative:** Requires developers to wrap sensitive components manually, but provides absolute control over visibility.
+
+---
+
+## ADR 045: Organization Hierarchy and Owner Privileges
+
+**Date:** 2026-04-11
+**Status:** Accepted
+
+### Context
+Confusion arose between `is_superuser` (System Creator/Developer) and the `Owner` role (Organization Authority).
+
+### Decision
+1. **Distinction:** `is_superuser` remains a global database flag for internal infrastructure management.
+2. **Wildcard Scopes:** The `Owner` role is assigned the `*` scope within their organization, granting them the `NidusScope.SUPERADMIN` privilege. 
+3. **Code Safety:** Updated `hasScope` to treat the `*` scope as a universal bypass for any organization-level permission check.
+
+### Consequences
+* **Positive:** Clear separation between "Platform Admin" and "Tenant Admin". Standardized permission logic that handles both explicit scopes and total authority.
+
+---
+
+## ADR 046: Hybrid Data Table Architecture (Client vs. Server Filtering)
+
+**Date:** 2026-04-14
+**Status:** Accepted
+
+### Context
+A unified UI standard requires consistent data tables. However, applying a single filtering strategy across all domains results in poor architecture. High-volume entities (Invoices, Logs) crash the browser if downloaded fully, while low-volume entities (Members, Roles) suffer from unnecessary network latency if filtered via the backend on every keystroke.
+
+### Decision
+1. **Visual Standardization:** Use a single, unified `DataTable` visual component across the entire application to maintain aesthetic consistency.
+2. **Hybrid Strategy (Design for the Domain):**
+   - **Client-Side Filtering:** Applied to low-volume domains (e.g., Members, Roles). Data is loaded once; pagination and search operate locally at 60 FPS.
+   - **Server-Side Filtering:** Applied to high-volume/transactional domains. Search and pagination modify URL parameters, which triggers backend cursor queries.
+3. **UX Constraint:** The UI container height must be fixed via `min-height` instead of injecting blank HTML rows, ensuring DOM efficiency while preventing layout shifts during pagination or when facing empty states.
+
+### Consequences
+* **Positive:** Optimizes for both UX (speed) and scalability (memory). Adheres to Enterprise SaaS standards. Eliminates DOM bloat from dummy rows.
+* **Negative:** Developers must analyze the data domain's growth potential before selecting the table implementation wrapper mode.
+
+---
+
+## ADR 047: URL-Driven State & Deep Linking
+
+**Date:** 2026-04-14
+**Status:** Accepted
+
+### Context
+Modern SaaS platforms require high collaboration. Users must be able to share URLs (e.g., via Slack or WhatsApp) that accurately reproduce the contextual view they were looking at (specific table pages, active filters, or open modal windows).
+
+### Decision
+1. **URL as the Single Source of Truth:** Application state related to view context (pagination index, search terms, active tabs, modal IDs) must be synchronized with the URL `searchParams`.
+2. **Stateless UI:** React components should default to reading initial state from the URL rather than isolated local `useState` hooks when the state represents a distinct "viewable" outcome.
+3. **Implicit Tenant Validation:** Shared links rely implicitly on the backend's RLS and JWT middleware. If User A shares a link with User B, User B will view the defined state *only* if they have proper scope access to that tenant's underlying data.
+
+### Consequences
+* **Positive:** Free "Deep Linking" capability out of the box. Highly shareable application state.
+* **Negative:** Requires disciplined use of Next.js native router push mechanisms to constantly update the URL without triggering full page reloads.

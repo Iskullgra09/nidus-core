@@ -31,3 +31,7 @@ class Member(UUIDMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, table=True
     @property
     def joined_at(self) -> datetime:
         return self.created_at
+
+    @property
+    def full_name(self) -> Optional[str]:
+        return self.user.full_name if self.user else None

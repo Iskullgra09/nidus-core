@@ -1,23 +1,22 @@
 from datetime import datetime
-from typing import List
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
-
-from app.schemas.responses.organization import OrganizationResponse
 
 
 class InvitationResponse(BaseModel):
     id: UUID
     email: EmailStr
     role_id: UUID
-    token: str
     expires_at: datetime
     is_accepted: bool
 
 
 class MemberResponse(BaseModel):
     id: UUID
+    user_id: UUID
+    full_name: Optional[str] = None
     email: EmailStr
     role_name: str
     joined_at: datetime
@@ -33,14 +32,12 @@ class InvitationAcceptedResponse(BaseModel):
     role_id: UUID
 
 
-class UserProfileResponse(BaseModel):
-    """Complete profile of the authenticated user within the current tenant context."""
+class RoleResponse(BaseModel):
+    """Schema for returning role details to the frontend."""
 
     id: UUID
-    email: EmailStr
-    is_superuser: bool
-    role_name: str
-    scopes: List[str]
-    organization: OrganizationResponse
+    name: str
+    description: str | None = None
+    scopes: list[str]
 
     model_config = ConfigDict(from_attributes=True)
