@@ -1,5 +1,6 @@
 import * as React from "react";
-import { redirect } from "next/navigation";
+import { getLocale } from "next-intl/server";
+import { redirectTo } from "@/core/i18n/routing";
 import {
   getCurrentUser,
   getUserOrganizations,
@@ -16,7 +17,7 @@ export default async function ProtectedLayout({
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect("/login");
+    redirectTo("/login", await getLocale());
   }
 
   const organizations = await getUserOrganizations();

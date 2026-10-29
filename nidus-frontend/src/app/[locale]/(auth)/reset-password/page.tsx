@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
+import { redirectTo } from "@/core/i18n/routing";
 import { ResetPasswordForm } from "@/modules/identity/components/reset-password-form";
 import { AuthCard } from "@/shared/components/layout/auth-card";
 
@@ -14,7 +14,7 @@ export default async function ResetPasswordPage({
     typeof resolvedParams.token === "string" ? resolvedParams.token : null;
 
   if (!token) {
-    redirect("/login");
+    redirectTo("/login", await getLocale());
   }
 
   return (

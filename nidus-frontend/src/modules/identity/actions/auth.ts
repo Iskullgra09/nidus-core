@@ -1,8 +1,8 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
+import { redirectTo } from "@/core/i18n/routing";
 import { fetchClient } from "@/core/api/client";
 import { UserProfileResponse } from "../types/user";
 import {
@@ -221,7 +221,7 @@ export async function registerAction(
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("nidus_session");
-  redirect("/login");
+  redirectTo("/login", await getLocale());
 }
 
 export async function forgotPasswordAction(
