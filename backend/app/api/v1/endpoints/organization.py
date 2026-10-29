@@ -39,7 +39,6 @@ async def update_organization(
     org_id: UUID = Depends(get_current_org_id),
     lang: str = Depends(get_language),
 ):
-    """Updates the settings (name, slug) of the active organization."""
     org = await OrganizationService.update_organization(session, org_id, data)
     success_msg = i18n.t("success.organization_updated", lang=lang)
     return GenericResponse(data=org, message=success_msg)
@@ -56,7 +55,6 @@ async def delete_organization(
     org_id: UUID = Depends(get_current_org_id),
     lang: str = Depends(get_language),
 ) -> GenericResponse[Any]:
-    """Soft-deletes the active organization. Danger zone action."""
     await OrganizationService.delete_organization(session, org_id)
     success_msg = i18n.t("success.organization_deleted", lang=lang)
     return GenericResponse[Any](data=None, message=success_msg)

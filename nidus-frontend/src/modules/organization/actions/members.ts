@@ -13,9 +13,6 @@ export type MembersQuery = {
   limit?: number;
 };
 
-/**
- * Fetch a cursor page of members — GET /identity/members
- */
 export async function getOrganizationMembersPage(
   query: MembersQuery = {},
 ): Promise<CursorPage<MemberResponse>> {
@@ -50,15 +47,11 @@ export async function getOrganizationMembersPage(
   }
 }
 
-/** Convenience: all items on the first page (dashboard / legacy callers). */
 export async function getOrganizationMembers(): Promise<MemberResponse[]> {
   const page = await getOrganizationMembersPage({ limit: 100 });
   return page.items;
 }
 
-/**
- * Update Role - Matches: PATCH /members/{member_id}/role
- */
 export async function updateMemberRoleAction(
   memberId: string,
   roleId: string,
@@ -87,9 +80,6 @@ export async function updateMemberRoleAction(
   }
 }
 
-/**
- * Remove Member - Matches: DELETE /members/{member_id}
- */
 export async function removeMemberAction(
   memberId: string,
 ): Promise<ActionResponse> {

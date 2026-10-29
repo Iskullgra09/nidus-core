@@ -23,7 +23,6 @@ async def list_my_organizations(
     session: AsyncSession = Depends(get_session),
     payload: dict[str, Any] = Depends(get_jwt_payload),
 ) -> GenericResponse[list[UserOrganizationSummary]]:
-    """Lists every organization the authenticated user belongs to."""
     user_id = UUID(str(payload["sub"]))
     organizations = await AuthService.list_user_organizations(session, user_id)
     return GenericResponse(data=organizations)
@@ -34,7 +33,6 @@ async def get_my_profile(
     session: AsyncSession = Depends(get_current_tenant_session),
     payload: dict[str, Any] = Depends(get_jwt_payload),
 ) -> GenericResponse[UserProfileResponse]:
-    """Returns the complete profile and context for the authenticated user."""
     user_id = UUID(str(payload["sub"]))
     profile_data = await UserService.get_my_profile(session, user_id)
     return GenericResponse(data=profile_data)
@@ -47,7 +45,6 @@ async def update_my_profile(
     payload: dict[str, Any] = Depends(get_jwt_payload),
     lang: str = Depends(get_language),
 ) -> GenericResponse[Any]:
-    """Updates the authenticated user's personal profile and preferences."""
     user_id = UUID(str(payload["sub"]))
 
     await UserService.update_profile(session, user_id, data)

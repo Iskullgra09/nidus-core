@@ -1,5 +1,6 @@
-# Nidus Core 
-**The high-performance backbone for 2026+ Multitenant SaaS ecosystems.**
+# Nidus Core
+
+**The high-performance backbone for multitenant SaaS ecosystems.**
 
 ![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)
@@ -19,6 +20,7 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **Persistence** | Async SQLModel + UUIDv7 Sequential Indexing |
 | **Security** | Dual-Role Database Strategy (Migration Admin vs. App User) |
 | **Reliability** | Global Soft-Delete & Timezone-Aware Temporal Mixins |
+| **Observability** | Structured JSON request logs + append-only `audit_log` (RLS) |
 
 ### What belongs in Nidus Core (vs product forks)
 
@@ -31,79 +33,129 @@ Nidus Core is the **clone-ready platform**. Product domains (inventory, transact
 | `modules/identity` | Auth session, login/org switch, profile, password |
 | `modules/access` | Roles, invitations, `CanAccess` |
 | `modules/organization` | Tenant settings, members, org switcher, danger zone |
-| `modules/shell` | Authenticated chrome (`TopBar`) composing identity + organization |
+| `modules/shell` | Authenticated chrome (`TopBar`, Command Palette) |
 
-See **ADR 053** in `docs/architecture.md` for the full decision.
-
----
-
-## Project Roadmap (Updated Q2 2026)
-
-### Completed Milestones (Backend)
-| Phase | Goal | Achievements |
-| :--- | :--- | :--- |
-| **1** | **Data Engine** | RLS Policies, Baseline Migration, Security Setup. |
-| **2** | **Identity Base** | JWT stateless auth, BCrypt, Atomic Tenant Onboarding. |
-| **3** | **RBAC & Governance** | Hierarchical Scopes, GIN-indexed Role Scopes, UUIDv7. |
-| **3.5**| **Reliability Layer**| Global Exception Handlers, 100% i18n support, Pydantic 422 Translation. |
-| **3.6**| **Lifecycle & Mail** | Asynchronous email dispatch (`aiosmtplib`), Secure Invitation Lifecycle, Password Recovery. |
-| **3.7**| **The Data Standard**| O(1) Keyset Pagination via UUIDv7, Dynamic Pydantic-to-SQL Filtering Engine, Cascading Soft-Deletes. |
+Architecture decisions: `docs/architecture.md` (ADRs 049–055 for recent Core completion).
 
 ---
 
-### In Progress / Upcoming (Frontend & Ecosystem)
+## Roadmap Status
 
-#### **Phase 4: Frontend Foundation & Auth Pipeline** (Next.js 15)
-- [x] **Gateway Proxy:** Edge routing and JWT session validation (`src/proxy.ts`).
-- [x] **Design System:** Shadcn "Nova" + Tailwind v4 + OKLCH for predictable, high-density SaaS UI.
-- [x] **Type-Safe Forms:** Zod (pinned to v3) + React Hook Form + Zero `any` policy.
-- [x] **Authentication Flow:** Login Server Actions with HttpOnly cookie generation & Logout.
-- [x] **Frontend i18n:** `next-intl` integration, Dynamic `[locale]` segments, and Zod Schema Factory.
-- [x] **Tenant Onboarding:** Multilingual registration with automatic slugification.
-- [x] **Unified Feedback:** Global Sonner Toaster with Server-Side translation bindings.
+| Phase | Focus | Status |
+| :---: | :--- | :--- |
+| 1 | Data Engine (RLS, baseline migration, security setup) | Done |
+| 2 | Identity Base (JWT, BCrypt, atomic onboarding) | Done |
+| 3 | RBAC & Governance (hierarchical scopes, GIN JSONB) | Done |
+| 3.5 | Reliability (exception handlers, i18n, Pydantic 422) | Done |
+| 3.6 | Lifecycle & Mail (async email, invitations, password recovery) | Done |
+| 3.7 | Data Standard (UUIDv7 keyset pagination, soft-deletes) | Done |
+| 4 | Frontend Foundation & Auth Pipeline (Next.js) | Done |
+| 5 | Security & Access Loop (password reset, profile, preferences) | Done |
+| 6 | Tenant Collaboration (org settings, invites, members UI) | Done |
+| 7 | *(renumbered — see Phase 12)* | Moved |
+| 8 | Infrastructure & DevOps (CORS, health, test DB isolation) | Done* |
+| 9 | Multi-Organization Sessions | Done |
+| 10 | IAM Completion & Frontend Module Boundaries | Done |
+| 11 | Observability & Audit | Done |
+| 12 | Premium UX (Cmd+K, live dashboard, URL-driven members) | Done |
+| 13 | DevEx & Containers | Pending |
+| 14 | Security Hardening | Pending |
+| 15 | Avatars & Media | Pending |
+| 16 | CI Frontend & Quality Gates | Pending |
 
-#### **Phase 5: The Security & Access Loop**
-- [x] **Stateless Password Recovery:** Forgot Password (Email dispatch) and Reset Password (short-lived JWT) views.
-- [x] **Profile Management:** User Settings view for name changes and avatar uploads.
-- [x] **Preference Persistence:** Syncing UI Theme (Dark/Light) and Language (EN/ES) preferences to the DB.
-
-#### **Phase 6: Tenant Collaboration (B2B Engine)**
-- [x] **Organization Governance:** Org Settings view (Rename tenant, manage slug).
-- [x] **Invitation Workflow:** Secure UI for dispatching invites, verifying tokens, and the "Accept Invitation" modular landing page.
-- [x] **Member Management:** Dynamic Data Tables (Client/Server modes) with fixed-height UX, RBAC assignment, and conditional UI shielding.
-
-#### **Phase 7: Premium UX & Developer-First Navigation** *(moved to Phase 12 below)*
+\*Phase 8 remaining optional items: FastAPI Dockerfile and compose API service wiring (local `uv`/`pnpm` remains the supported path per ADR 049).
 
 ---
 
-### 🚧 In Progress — Core Platform Completion (`feat/core_completion`)
+## Completed Phases (detail)
 
-#### **Phase 8: Infrastructure & DevOps**
-- [x] **CORS:** Explicit middleware for frontend origin + localhost.
-- [x] **Health Check:** DB connectivity probe with environment-aware status.
-- [x] **Test DB Isolation:** pytest uses `nidus_core_test` exclusively (never `nidus_core`).
-- [x] **ADR 049:** Monorepo container strategy (DB in Docker + `uv`/`pnpm` on host; Dockerfile API still optional).
-- [ ] **Dockerfile** for FastAPI backend (optional while using `uv` locally).
-- [ ] **Fix docker-compose.yml** API service volumes/context (blocked on Dockerfile).
+### Phases 1–3.7 — Backend foundation
 
-#### **Phase 9: Multi-Organization Sessions** *(critical)*
-- [x] `GET /users/me/organizations` · `POST /auth/switch-org` · `POST /auth/select-org`.
-- [x] Org picker on login (multi-membership users).
-- [x] Org switcher in TopBar.
-- [x] ADR 050: Multi-Organization Session Strategy.
+- RLS policies, dual DB roles (`nidus_admin` / `nidus_app_user`), baseline Alembic migration.
+- JWT auth, BCrypt, atomic tenant onboarding.
+- Hierarchical `NidusScope`, role scopes in JSONB with GIN indexes, UUIDv7.
+- Global exception handlers, EN/ES i18n, translated validation errors.
+- Async email (`aiosmtplib`), invitation lifecycle, password recovery tokens.
+- Cursor/keyset pagination, cascading soft-deletes.
 
-#### **Phase 10: IAM Completion**
-- [x] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.
-- [x] Backend hardening: IAM service split · `GenericResponse` on all endpoints · JWT scope fast path · org path guard · ADR 052.
-- [x] Frontend foundation: locale-safe routing, unified `grantsAccess`, `/organizations/me` + danger zone, module boundaries (`identity` / `access` / `organization`) · ADR 053.
+### Phase 4 — Frontend foundation & auth
 
-#### **Phase 11: Observability & Audit**
-- [x] Structured JSON logging (`RequestContextMiddleware`) · append-only `audit_log` + RLS · `AuditService` · `GET /audit-logs` (`audit:read`) · ADR 054.
+- Edge proxy JWT session validation (`src/proxy.ts`).
+- Design system (Shadcn + Tailwind v4), Zod + React Hook Form.
+- Login/logout Server Actions with HttpOnly cookies.
+- `next-intl`, locale segments, tenant onboarding UI, Sonner toasts.
 
-#### **Phase 12: Premium UX** *(original Phase 7)*
-- [x] Command Palette (Cmd+K) · members/invitations URL tabs · dashboard with real Core data · cursor URL-driven members table · ADR 055.
+### Phase 5 — Security & access loop
 
-#### **Phase 13–16:** DevEx · Security hardening · Avatars · CI frontend/tests *(last)*.
+- Forgot / reset password flows.
+- Profile settings; theme and language preference persistence.
+
+### Phase 6 — Tenant collaboration
+
+- Organization settings (name/slug).
+- Invitation dispatch, verify, and accept landing.
+- Members data tables with RBAC-aware actions.
+
+### Phase 8 — Infrastructure & DevOps
+
+- [x] CORS for frontend origin + localhost.
+- [x] Health check with DB connectivity probe.
+- [x] pytest isolated on `nidus_core_test` (never `nidus_core`).
+- [x] ADR 049: DB in Docker; API/FE on host via `uv` / `pnpm`.
+- [ ] Dockerfile for FastAPI (optional).
+- [ ] Fix `docker-compose.yml` API service volumes/context (blocked on Dockerfile).
+
+### Phase 9 — Multi-organization sessions
+
+- [x] `GET /users/me/organizations`, `POST /auth/switch-org`, `POST /auth/select-org`.
+- [x] Org picker on login; TopBar org switcher.
+- [x] ADR 050.
+
+### Phase 10 — IAM completion & module boundaries
+
+- [x] Custom roles CRUD; invitations list/revoke; `NidusScope` FE/BE sync; roles UI.
+- [x] Backend: IAM service split, `GenericResponse` everywhere, JWT scope fast path, org path guard (ADR 052).
+- [x] Frontend: locale-safe routing, unified `grantsAccess`, `/organizations/me` + danger zone, modules `identity` / `access` / `organization` / `shell` (ADR 053).
+
+### Phase 11 — Observability & audit
+
+- [x] Structured JSON logging (`RequestContextMiddleware`, `X-Request-ID`).
+- [x] Append-only `audit_log` + RLS; `AuditService`; event wiring for auth/IAM/org.
+- [x] `GET /api/v1/audit-logs` gated by `audit:read` (ADR 054).
+
+### Phase 12 — Premium UX
+
+- [x] Command Palette (Cmd/Ctrl+K) in shell.
+- [x] Dashboard with real Core data (members, orgs, health, recent audit when scoped).
+- [x] Members URL tabs (`?tab=`) and cursor/search table (`?q=`, `?cursor=`).
+- [x] ADR 055.
+
+---
+
+## Upcoming Phases
+
+### Phase 13 — DevEx & containers
+
+- [ ] FastAPI Dockerfile (production-parity image).
+- [ ] Compose profiles / API service volumes once Dockerfile exists.
+- [ ] Seed and local-run docs polish for clone-ready onboarding.
+
+### Phase 14 — Security hardening
+
+- [ ] Rate limiting on auth and invitation endpoints.
+- [ ] Session/cookie hardening review (SameSite, CSRF strategy as needed).
+- [ ] Secrets and environment checklist for deployments.
+
+### Phase 15 — Avatars & media
+
+- [ ] User and organization avatar upload/storage.
+- [ ] Safe content-type limits and URL serving strategy.
+
+### Phase 16 — CI frontend & quality gates
+
+- [ ] Frontend lint/typecheck (and tests when present) in GitHub Actions.
+- [ ] Keep backend pytest on PR to `main`.
+- [ ] Optional audit UI in settings (API already exists).
 
 ---
 
@@ -122,7 +174,8 @@ See **ADR 053** in `docs/architecture.md` for the full decision.
 
 Use these commands from the project root. Ensure your `.env` is present at the root.
 
-### 🗄 Infrastructure (Docker)
+### Infrastructure (Docker)
+
 | Goal | Command |
 | :--- | :--- |
 | **Start Everything** | `docker compose up -d` |
@@ -132,7 +185,8 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | **View DB Logs** | `docker logs -f nidus-postgres` |
 | **View API Logs** | `docker logs -f nidus-fastapi` |
 
-### 🚀 Backend Development (Python/uv)
+### Backend Development (Python / uv)
+
 | Goal | Command |
 | :--- | :--- |
 | **Install Deps** | `uv sync` |
@@ -144,7 +198,8 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | **Run API Locally** | `uv run fastapi dev app/main.py` |
 | **Run Tests** | `uv run pytest` |
 
-### 💻 Frontend Development (pnpm)
+### Frontend Development (pnpm)
+
 | Goal | Command |
 | :--- | :--- |
 | **Install Deps** | `pnpm install` |
@@ -155,11 +210,13 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | **Add UI Component** | `pnpm --filter nidus-frontend dlx shadcn@latest add <component>` |
 | **Clean cache** | `pnpm store prune` |
 
-### 🧹 Maintenance & Cleanup
+### Maintenance & Cleanup
+
 | Goal | Command |
 | :--- | :--- |
 | **Fix Line Endings** | `dos2unix infrastructure/db-init/*.sh` (If utility is installed) |
 | **Prune Volumes** | `docker volume prune -f` |
 
 ---
+
 *Developed by Isaac Granados Quesada — Principal Engineer & Computer Architect.*

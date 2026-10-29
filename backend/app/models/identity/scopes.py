@@ -35,7 +35,6 @@ class NidusScope(StrEnum):
 
     @classmethod
     def grants_access(cls, user_scopes: Iterable[str], required: str) -> bool:
-        """Returns True when any held scope satisfies the required scope."""
         scope_set = set(user_scopes)
 
         if cls.SUPERADMIN in scope_set:

@@ -10,14 +10,10 @@ class InvitationCreate(BaseModel):
 
 
 class MemberUpdateRole(BaseModel):
-    """Payload for updating a member's role."""
-
     role_id: UUID
 
 
 class InvitationAccept(BaseModel):
-    """Payload for accepting an invitation and setting a password."""
-
     token: str = Field(..., min_length=10)
     password: str = Field(..., min_length=8)
 

@@ -51,14 +51,12 @@ async def get_current_tenant_session(
 
 
 def get_language(request: Request) -> str:
-    """Extracts preferred language from the request."""
     return get_request_language(request)
 
 
 async def get_current_org_id(
     payload: Annotated[dict[str, Any], Depends(get_jwt_payload)],
 ) -> UUID:
-    """Returns the active organization id from the JWT (tenant context)."""
     return UUID(str(payload["org_id"]))
 
 
