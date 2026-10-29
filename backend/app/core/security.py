@@ -42,3 +42,10 @@ def create_password_reset_token(user_id: str) -> str:
     to_encode: dict[str, Any] = {"sub": user_id, "type": "reset_password", "exp": expire}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+
+def create_org_selection_token(user_id: str) -> str:
+    """Short-lived token to complete login after the user picks an organization."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode: dict[str, Any] = {"sub": user_id, "type": "org_selection", "exp": expire}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)

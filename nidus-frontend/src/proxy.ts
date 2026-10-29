@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/core/i18n/routing";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { NidusScope } from "@/shared/access/scopes";
+import { grantsAccess } from "@/shared/access/permissions";
 import { decodeJwt } from "jose";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
 const ROUTE_PERMISSIONS: Record<string, NidusScope[]> = {
+  "/settings/organization/roles": [NidusScope.ROLE_READ],
   "/settings/organization/members": [NidusScope.MEMBER_READ],
   "/settings/organization": [NidusScope.ORG_UPDATE],
   "/org": [NidusScope.ORG_READ],
@@ -85,15 +87,10 @@ function checkUserAccess(
   userScopes: string[],
   requiredScopes: NidusScope[],
 ): boolean {
-  if (userScopes.includes(NidusScope.SUPERADMIN)) return true;
   if (requiredScopes.length === 0) return true;
-  return requiredScopes.every((required) => {
-    if (userScopes.includes(required)) return true;
-    const baseResource = required.split(":").slice(0, -1).join(":");
-    return userScopes.some(
-      (s) => s.startsWith(baseResource) && s.endsWith(":write"),
-    );
-  });
+  return requiredScopes.every((required) =>
+    grantsAccess(userScopes, required),
+  );
 }
 
 export const config = {

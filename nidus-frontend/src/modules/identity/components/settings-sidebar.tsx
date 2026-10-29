@@ -1,13 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
-import { Link } from "@/core/i18n/routing";
+import { Link, usePathname } from "@/core/i18n/routing";
 import { useTranslations } from "next-intl";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 
 type SidebarNavProps = React.HTMLAttributes<HTMLElement>;
 
@@ -15,7 +14,8 @@ type SettingsPath =
   | "/settings/profile"
   | "/settings/security"
   | "/settings/organization"
-  | "/settings/organization/members";
+  | "/settings/organization/members"
+  | "/settings/organization/roles";
 
 interface NavItem {
   title: string;
@@ -51,7 +51,7 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
     <nav className={cn("flex flex-col space-y-8", className)} {...props}>
       <div className="flex flex-col space-y-2">
         <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-          Personal
+          {t("sectionPersonal")}
         </h4>
         <div className="flex flex-col space-y-1">
           <SidebarNavItem
@@ -67,7 +67,7 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
 
       <div className="flex flex-col space-y-2">
         <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-          Workspace
+          {t("sectionWorkspace")}
         </h4>
         <div className="flex flex-col space-y-1">
           <CanAccess scope={NidusScope.ORG_UPDATE}>
@@ -87,6 +87,16 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
                 href: "/settings/organization/members",
               }}
               isActive={pathname === "/settings/organization/members"}
+            />
+          </CanAccess>
+
+          <CanAccess scope={NidusScope.ROLE_READ}>
+            <SidebarNavItem
+              item={{
+                title: t("navRoles"),
+                href: "/settings/organization/roles",
+              }}
+              isActive={pathname === "/settings/organization/roles"}
             />
           </CanAccess>
         </div>

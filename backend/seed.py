@@ -1,9 +1,10 @@
 import asyncio
 from typing import Any, cast
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 
 from app.core.db import async_session_maker
+from app.core.rls import clear_rls_context
 from app.core.security import hash_password
 from app.models import Member, Organization, User
 from app.models.identity.role import Role
@@ -16,8 +17,7 @@ async def seed_data() -> None:
     Specifically assigns the 'Member' role to ensure data variety.
     """
     async with async_session_maker() as session:
-        await session.execute(text("SET LOCAL app.current_organization_id = ''"))
-        await session.execute(text("SET LOCAL app.current_user_id = ''"))
+        await clear_rls_context(session)
 
         RoleModel = cast(Any, Role)
 

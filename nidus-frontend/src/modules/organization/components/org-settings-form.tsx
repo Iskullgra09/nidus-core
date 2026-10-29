@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/core/i18n/routing";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -21,7 +21,7 @@ import {
 
 import { OrganizationFormData } from "../types";
 import { getOrganizationUpdateSchema } from "../model/org.schema";
-import { ValidationTranslator } from "@/modules/identity/model/auth.schema";
+import type { ValidationTranslator } from "@/shared/validation/types";
 import { updateOrganizationAction } from "../actions/org";
 import { OrganizationResponse } from "@/modules/organization/types/organization";
 
@@ -56,7 +56,7 @@ export function OrganizationSettingsForm({
       return;
     }
 
-    const result = await updateOrganizationAction(organization.id, payload);
+    const result = await updateOrganizationAction(payload);
 
     if (result.status === "success") {
       toast.success(result.message || tOrg("successMessage"));

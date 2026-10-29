@@ -54,6 +54,15 @@ class UserService:
 
         UserModel = cast(Any, User)
 
+        if "preferences" in update_data and update_data["preferences"] is not None:
+            stmt = select(User).where(UserModel.id == user_id, UserModel.deleted_at.is_(None))
+            user = (await session.execute(stmt)).scalar_one_or_none()
+            if not user:
+                raise EntityNotFoundError(entity="user")
+
+            merged_preferences = {**(user.preferences or {}), **update_data["preferences"]}
+            update_data["preferences"] = merged_preferences
+
         stmt = update(User).where(UserModel.id == user_id).values(**update_data)
         await session.execute(stmt)
         await session.commit()

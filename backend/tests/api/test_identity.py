@@ -31,8 +31,7 @@ async def test_me_endpoint_returns_full_profile(auth_client: Tuple[AsyncClient, 
 @pytest.mark.asyncio
 async def test_update_organization_slug_conflict(auth_client: Tuple[AsyncClient, Dict[str, Any]], async_client: AsyncClient) -> None:
     """Sad Path: Attempting to update a slug to one that is already taken."""
-    client, context = auth_client
-    org_id = context["org_id"]
+    client, _ = auth_client
 
     await async_client.post(
         "/api/v1/organizations/onboarding",
@@ -45,7 +44,7 @@ async def test_update_organization_slug_conflict(auth_client: Tuple[AsyncClient,
     )
 
     payload = {"slug": "stolen-slug"}
-    response = await client.patch(f"/api/v1/organizations/{org_id}", json=payload)
+    response = await client.patch("/api/v1/organizations/me", json=payload)
 
     assert response.status_code == 409
 
@@ -53,10 +52,9 @@ async def test_update_organization_slug_conflict(auth_client: Tuple[AsyncClient,
 @pytest.mark.asyncio
 async def test_delete_organization(auth_client: Tuple[AsyncClient, Dict[str, Any]]) -> None:
     """Happy Path: Soft delete the organization."""
-    client, context = auth_client
-    org_id = context["org_id"]
+    client, _ = auth_client
 
-    response = await client.delete(f"/api/v1/organizations/{org_id}")
+    response = await client.delete("/api/v1/organizations/me")
     assert response.status_code == 200
 
     me_response = await client.get("/api/v1/users/me")

@@ -20,6 +20,21 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **Security** | Dual-Role Database Strategy (Migration Admin vs. App User) |
 | **Reliability** | Global Soft-Delete & Timezone-Aware Temporal Mixins |
 
+### What belongs in Nidus Core (vs product forks)
+
+Nidus Core is the **clone-ready platform**. Product domains (inventory, transactions, office/ops) live in **downstream repos**, not here.
+
+| Layer (frontend) | Responsibility |
+| :--- | :--- |
+| `core/` | API client, i18n routing, theme — no feature imports |
+| `shared/access` | `NidusScope`, `grantsAccess` / `hasScope` (mirrors backend) |
+| `modules/identity` | Auth session, login/org switch, profile, password |
+| `modules/access` | Roles, invitations, `CanAccess` |
+| `modules/organization` | Tenant settings, members, org switcher, danger zone |
+| `modules/shell` | Authenticated chrome (`TopBar`) composing identity + organization |
+
+See **ADR 053** in `docs/architecture.md` for the full decision.
+
 ---
 
 ## Project Roadmap (Updated Q2 2026)
@@ -57,10 +72,49 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 - [x] **Invitation Workflow:** Secure UI for dispatching invites, verifying tokens, and the "Accept Invitation" modular landing page.
 - [x] **Member Management:** Dynamic Data Tables (Client/Server modes) with fixed-height UX, RBAC assignment, and conditional UI shielding.
 
-#### **Phase 7: Premium UX & Developer-First Navigation**
-- [ ] **Command Palette (Cmd+K):** Global search and command execution via Radix `cmdk`.
-- [ ] **Modular Navigation:** Implementation of contextual horizontal Sub-Tabs (No heavy sidebars).
-- [ ] **Optimized Data Fetching:** SWR or React 19 `use` cache for streaming tenant data seamlessly.
+#### **Phase 7: Premium UX & Developer-First Navigation** *(moved to Phase 12 below)*
+
+---
+
+### 🚧 In Progress — Core Platform Completion (`feat/core_completion`)
+
+#### **Phase 8: Infrastructure & DevOps**
+- [x] **CORS:** Explicit middleware for frontend origin + localhost.
+- [x] **Health Check:** DB connectivity probe with environment-aware status.
+- [x] **Test DB Isolation:** pytest uses `nidus_core_test` exclusively (never `nidus_core`).
+- [x] **ADR 049:** Monorepo container strategy (DB in Docker + `uv`/`pnpm` on host; Dockerfile API still optional).
+- [ ] **Dockerfile** for FastAPI backend (optional while using `uv` locally).
+- [ ] **Fix docker-compose.yml** API service volumes/context (blocked on Dockerfile).
+
+#### **Phase 9: Multi-Organization Sessions** *(critical)*
+- [x] `GET /users/me/organizations` · `POST /auth/switch-org` · `POST /auth/select-org`.
+- [x] Org picker on login (multi-membership users).
+- [x] Org switcher in TopBar.
+- [x] ADR 050: Multi-Organization Session Strategy.
+
+#### **Phase 10: IAM Completion**
+- [x] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.
+- [x] Backend hardening: IAM service split · `GenericResponse` on all endpoints · JWT scope fast path · org path guard · ADR 052.
+- [x] Frontend foundation: locale-safe routing, unified `grantsAccess`, `/organizations/me` + danger zone, module boundaries (`identity` / `access` / `organization`) · ADR 053.
+
+#### **Phase 11: Observability & Audit**
+- [ ] Structured logging · `audit_log` table.
+
+#### **Phase 12: Premium UX** *(original Phase 7)*
+- [ ] Command Palette (Cmd+K) · modular sub-tabs · dashboard with real data · URL-driven server tables.
+
+#### **Phase 13–16:** DevEx · Security hardening · Avatars · CI frontend/tests *(last)*.
+
+---
+
+## Database Strategy (Dual DB + Dual Role)
+
+| Database | Purpose | App user | Admin user |
+| :--- | :--- | :--- | :--- |
+| **`nidus_core`** | Development & manual usage (login, invites, Mailtrap) | `nidus_app_user` (RLS enforced) | `nidus_admin` (migrations only) |
+| **`nidus_core_test`** | pytest & CI only — truncated before each test | `nidus_app_user` (RLS enforced) | `nidus_admin` (truncate/seed) |
+
+**Never run pytest against `nidus_core`.** The test suite uses `TEST_APP_DATABASE_URL` and `TEST_DATABASE_URL` automatically.
 
 ---
 
@@ -82,7 +136,8 @@ Use these commands from the project root. Ensure your `.env` is present at the r
 | Goal | Command |
 | :--- | :--- |
 | **Install Deps** | `uv sync` |
-| **Run Migrations** | `uv run alembic upgrade head` |
+| **Run Migrations (dev DB)** | `uv run alembic upgrade head` |
+| **Run Migrations (test DB)** | `uv run python scripts/migrate_test_db.py` |
 | **Create Migration** | `uv run alembic revision --autogenerate -m "description"` |
 | **Run Seed Script** | `uv run seed.py` |
 | **Run Seed Script on Docker** | `docker exec -it nidus-fastapi python app/core/seed.py` |

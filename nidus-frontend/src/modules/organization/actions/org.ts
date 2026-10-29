@@ -2,18 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { getTranslations } from "next-intl/server";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { getLocale, getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
+import { redirectTo } from "@/core/i18n/routing";
+import { ActionResponse } from "@/core/types/api";
 import { OrganizationUpdatePayload } from "../types";
-import { AuthActionResponse } from "@/modules/identity/types/auth";
 
 /**
  * Updates the current organization settings.
  */
 export async function updateOrganizationAction(
-  orgId: string,
   payload: OrganizationUpdatePayload,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
   const tOrg = await getTranslations("SettingsOrg");
 
@@ -24,7 +25,7 @@ export async function updateOrganizationAction(
       return { status: "error", message: tCommon("connectionError") };
     }
 
-    const response = await fetchClient(`/organizations/${orgId}`, {
+    const response = await fetchClient("/organizations/me", {
       method: "PATCH",
       headers: { Authorization: `Bearer ${session}` },
       body: JSON.stringify(payload),
@@ -45,5 +46,41 @@ export async function updateOrganizationAction(
   } catch (error) {
     console.error("Update Organization Error:", error);
     return { status: "error", message: tCommon("connectionError") };
+  }
+}
+
+/**
+ * Soft-deletes the active organization, clears the session, and sends the user to login.
+ */
+export async function deleteOrganizationAction(): Promise<ActionResponse> {
+  const tCommon = await getTranslations("Common");
+  const tOrg = await getTranslations("SettingsOrg");
+
+  try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get("nidus_session")?.value;
+
+    if (!session) {
+      return { status: "error", message: tCommon("connectionError") };
+    }
+
+    const response = await fetchClient("/organizations/me", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${session}` },
+    });
+
+    if (response.status === "success") {
+      cookieStore.delete("nidus_session");
+      redirectTo("/login", await getLocale());
+    }
+
+    return {
+      status: "error",
+      message: response.message || tCommon("unknownError"),
+    };
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    console.error("Delete Organization Error:", error);
+    return { status: "error", message: tOrg("deleteError") };
   }
 }

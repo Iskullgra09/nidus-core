@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ValidationTranslator } from "@/modules/identity/model/auth.schema";
+import type { ValidationTranslator } from "@/shared/validation/types";
 
 export const getOrganizationUpdateSchema = (t: ValidationTranslator) =>
   z.object({

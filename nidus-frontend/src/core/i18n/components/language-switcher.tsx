@@ -11,13 +11,23 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
-export function LanguageSwitcher() {
+type AppLocale = "es" | "en";
+
+interface LanguageSwitcherProps {
+  /** Optional persistence hook (e.g. profile update). Injected by shell — keeps core free of module imports. */
+  onLocaleChange?: (locale: AppLocale) => void | Promise<unknown>;
+}
+
+export function LanguageSwitcher({ onLocaleChange }: LanguageSwitcherProps) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
 
-  function switchLocale(newLocale: "es" | "en") {
+  function switchLocale(newLocale: AppLocale) {
+    if (newLocale === locale) return;
+
     router.replace(pathname, { locale: newLocale });
+    void onLocaleChange?.(newLocale);
   }
 
   return (

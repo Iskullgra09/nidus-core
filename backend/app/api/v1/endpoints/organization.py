@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ScopeGuard, get_current_tenant_session, get_language
+from app.api.deps import ScopeGuard, get_current_org_id, get_current_tenant_session, get_language
 from app.core.db import get_session
 from app.core.i18n.service import i18n
 from app.models.identity.scopes import NidusScope
@@ -28,35 +28,35 @@ async def onboard_tenant(data: OnboardingCreate, session: AsyncSession = Depends
 
 
 @router.patch(
-    "/{org_id}",
+    "/me",
     response_model=GenericResponse[OrganizationResponse],
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(ScopeGuard(NidusScope.ORG_UPDATE))],
 )
 async def update_organization(
-    org_id: UUID,
     data: OrganizationUpdate,
     session: AsyncSession = Depends(get_current_tenant_session),
+    org_id: UUID = Depends(get_current_org_id),
     lang: str = Depends(get_language),
 ):
-    """Updates the settings (name, slug) of the organization."""
+    """Updates the settings (name, slug) of the active organization."""
     org = await OrganizationService.update_organization(session, org_id, data)
     success_msg = i18n.t("success.organization_updated", lang=lang)
     return GenericResponse(data=org, message=success_msg)
 
 
 @router.delete(
-    "/{org_id}",
+    "/me",
     response_model=GenericResponse[Any],
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(ScopeGuard(NidusScope.ORG_DELETE))],
 )
 async def delete_organization(
-    org_id: UUID,
     session: AsyncSession = Depends(get_current_tenant_session),
+    org_id: UUID = Depends(get_current_org_id),
     lang: str = Depends(get_language),
 ) -> GenericResponse[Any]:
-    """Soft-deletes the organization. Danger zone action."""
+    """Soft-deletes the active organization. Danger zone action."""
     await OrganizationService.delete_organization(session, org_id)
     success_msg = i18n.t("success.organization_deleted", lang=lang)
     return GenericResponse[Any](data=None, message=success_msg)

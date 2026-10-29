@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/core/providers/theme-provider";
 import { Link } from "@/core/i18n/routing";
 import { toast } from "sonner";
 import { Moon, Sun, Monitor, LogOut, Settings, Building } from "lucide-react";
@@ -26,8 +26,8 @@ import {
 import { UserProfileResponse } from "../types/user";
 import { logoutAction } from "../actions/auth";
 import { updateProfileAction } from "../actions/user";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "../types/scopes";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 
 interface UserDropdownProps {
   user: UserProfileResponse;

@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       POSTGRES_DB: "nidus_core_test"
+      POSTGRES_TEST_DB: "nidus_core_test"
       POSTGRES_USER: "nidus_admin"
       POSTGRES_PASSWORD: "fake_admin_pass"
       POSTGRES_SERVER: "localhost"

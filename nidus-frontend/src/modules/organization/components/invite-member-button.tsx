@@ -5,11 +5,11 @@ import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/shared/ui/button";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "@/modules/identity/types/scopes";
-import { RoleResponse } from "@/modules/identity/types/roles";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
+import { RoleResponse } from "@/modules/access/types/roles";
 
-import { InviteMemberModal } from "../../identity/components/invite-member-modal";
+import { InviteMemberModal } from "@/modules/access/components/invite-member-modal";
 
 interface InviteMemberButtonProps {
   roles: RoleResponse[];

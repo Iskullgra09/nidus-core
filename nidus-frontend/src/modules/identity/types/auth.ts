@@ -1,4 +1,4 @@
-import { ApiStatus } from "@/core/types/api";
+import { ActionResponse } from "@/core/types/api";
 
 export interface LoginRequest {
   email: string;
@@ -12,10 +12,29 @@ export interface TokenResponse {
   token_type: string;
 }
 
-export interface AuthActionResponse {
-  status: ApiStatus;
-  message: string | null;
+export interface UserOrganizationSummary {
+  organization_id: string;
+  name: string;
+  slug: string;
+  role_name: string;
 }
+
+export interface LoginOrgSelectionPayload {
+  org_selection_required: true;
+  pre_auth_token: string;
+  organizations: UserOrganizationSummary[];
+}
+
+/** @deprecated Prefer ActionResponse from @/core/types/api */
+export type AuthActionResponse = ActionResponse;
+
+export interface OrgSelectionActionResponse {
+  status: "org_selection";
+  organizations: UserOrganizationSummary[];
+  preAuthToken: string;
+}
+
+export type LoginActionResult = ActionResponse | OrgSelectionActionResponse;
 
 export interface RegisterFormData {
   organization_name: string;
@@ -30,11 +49,6 @@ export interface OnboardingPayload {
   password: string;
 }
 
-export interface AuthActionResponse {
-  status: ApiStatus;
-  message: string | null;
-}
-
 export interface ForgotPasswordFormData {
   email: string;
 }
@@ -47,14 +61,4 @@ export interface ResetPasswordFormData {
 export interface ResetPasswordPayload {
   token: string;
   new_password: string;
-}
-
-export interface AuthActionResponse {
-  status: ApiStatus;
-  message: string | null;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
 }

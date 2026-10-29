@@ -1,6 +1,2 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+/** Re-export so shared UI and layout share one cn() implementation. */
+export { cn } from "@/core/lib/utils";

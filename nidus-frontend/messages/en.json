@@ -22,6 +22,12 @@
     "orgSettings": "Organization Settings",
     "logout": "Log Out"
   },
+  "OrganizationSwitcher": {
+    "title": "Switch workspace",
+    "pickTitle": "Choose a workspace",
+    "pickDescription": "Your account belongs to multiple organizations. Select one to continue.",
+    "switchSuccess": "Workspace switched successfully."
+  },
   "MainNav": {
     "dashboard": "Dashboard"
   },
@@ -83,10 +89,13 @@
   "SettingsLayout": {
     "title": "Settings",
     "description": "Manage your account, preferences, and workspace.",
+    "sectionPersonal": "Personal",
+    "sectionWorkspace": "Workspace",
     "navProfile": "General Profile",
     "navSecurity": "Security",
     "navOrganization": "Organization",
-    "navMembers": "Team Members"
+    "navMembers": "Team Members",
+    "navRoles": "Roles & Permissions"
   },
   "SettingsProfile": {
     "title": "General Profile",
@@ -122,7 +131,17 @@
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
     "noChangesDetected": "No changes to save.",
-    "successMessage": "Organization updated successfully."
+    "successMessage": "Organization updated successfully.",
+    "dangerZoneTitle": "Danger zone",
+    "dangerZoneDescription": "Permanently soft-delete this organization and revoke access for all members.",
+    "deleteButton": "Delete organization",
+    "deleteDialogTitle": "Delete organization?",
+    "deleteDialogDescription": "This will soft-delete {name}. Members will lose access immediately.",
+    "deleteConfirmHint": "Type the slug \"{slug}\" to confirm.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete permanently",
+    "deleting": "Deleting...",
+    "deleteError": "Could not delete the organization."
   },
   "SettingsMembers": {
     "title": "Members",
@@ -145,7 +164,34 @@
     "roleUpdateSuccess": "Role updated successfully.",
     "noMembersFound": "No members found in this organization.",
     "searchPlaceholder": "Search by mail...",
-    "paginationInfo": "Showing {start} to {end} of {total} entries"
+    "paginationInfo": "Showing {start} to {end} of {total} entries",
+    "pendingTitle": "Pending invitations",
+    "pendingDescription": "People invited who have not joined yet.",
+    "revokeInvite": "Revoke",
+    "revokeConfirm": "Revoke this invitation?",
+    "noPendingInvites": "No pending invitations."
+  },
+  "SettingsRoles": {
+    "title": "Roles & Permissions",
+    "description": "Manage custom roles and their permission scopes for this workspace.",
+    "createRole": "Create role",
+    "createRoleButton": "New role",
+    "editRole": "Edit role",
+    "deleteRole": "Delete role",
+    "saveRole": "Save role",
+    "formDescription": "Define a role name and select the permissions it grants.",
+    "nameLabel": "Role name",
+    "namePlaceholder": "e.g. Billing Manager",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional summary of this role",
+    "permissionsLabel": "Permissions",
+    "systemBadge": "System",
+    "tableName": "Role",
+    "tablePermissions": "Permissions",
+    "tableActions": "Actions",
+    "searchPlaceholder": "Search roles...",
+    "noRolesFound": "No roles found.",
+    "deleteConfirm": "Delete the role \"{name}\"?"
   },
   "Invitations": {
     "inviteMember": "Invite Member",

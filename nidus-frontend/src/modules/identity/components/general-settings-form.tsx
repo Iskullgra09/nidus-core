@@ -3,9 +3,10 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useTheme } from "@/core/providers/theme-provider";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "@/core/i18n/routing";
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -36,6 +37,9 @@ interface GeneralSettingsFormProps {
 
 export function GeneralSettingsForm({ user }: GeneralSettingsFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = useLocale();
+  const { setTheme } = useTheme();
   const tSet = useTranslations("SettingsProfile");
   const tVal = useTranslations("Validation");
 
@@ -58,7 +62,14 @@ export function GeneralSettingsForm({ user }: GeneralSettingsFormProps) {
     });
 
     if (result.status === "success") {
+      setTheme(values.theme);
       toast.success(result.message || tSet("profileSuccess"));
+
+      if (values.language !== locale) {
+        router.replace(pathname, { locale: values.language });
+        return;
+      }
+
       router.refresh();
     } else {
       toast.error(result.message);

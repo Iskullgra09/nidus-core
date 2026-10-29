@@ -1,15 +1,18 @@
-from typing import Annotated, Any, Set, cast
+from typing import Annotated, Any, cast
+from uuid import UUID
 
 import jwt
 from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
 from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError, NidusException
+from app.core.i18n.request import get_request_language
+from app.core.rls import set_rls_context
 from app.models.identity.member import Member
 from app.models.identity.scopes import NidusScope
 
@@ -38,21 +41,27 @@ async def get_current_tenant_session(
     user_id = payload.get("sub")
     org_id = payload.get("org_id")
 
-    await session.execute(text(f"SET LOCAL app.current_organization_id = '{org_id}'"))
-    await session.execute(text(f"SET LOCAL app.current_user_id = '{user_id}'"))
+    await set_rls_context(session, org_id, user_id)
     return session
 
 
 def get_language(request: Request) -> str:
     """Extracts preferred language from the request."""
-    accept_lang = request.headers.get("accept-language", "en")
-    return accept_lang.split(",")[0].split("-")[0].lower()
+    return get_request_language(request)
+
+
+async def get_current_org_id(
+    payload: Annotated[dict[str, Any], Depends(get_jwt_payload)],
+) -> UUID:
+    """Returns the active organization id from the JWT (tenant context)."""
+    return UUID(str(payload["org_id"]))
 
 
 class ScopeGuard:
     """
-    Dependency for evaluating Hierarchical JSONB Scopes.
-    Uses the Dynamic Model Alias pattern to ensure Pylance strict compatibility.
+    Evaluates hierarchical JSONB scopes.
+    Fast path: JWT embedded scopes (issued at login/switch-org).
+    Fallback: DB role lookup for legacy tokens missing scopes.
     """
 
     def __init__(self, required_scope: str):
@@ -63,6 +72,11 @@ class ScopeGuard:
         session: Annotated[AsyncSession, Depends(get_current_tenant_session)],
         payload: Annotated[dict[str, Any], Depends(get_jwt_payload)],
     ) -> bool:
+        jwt_scopes = payload.get("scopes")
+        if isinstance(jwt_scopes, list) and jwt_scopes:
+            if NidusScope.grants_access(jwt_scopes, self.required_scope):
+                return True
+
         user_id = payload.get("sub")
         MemberModel = cast(Any, Member)
 
@@ -82,24 +96,12 @@ class ScopeGuard:
         if not member or not role or role.deleted_at is not None:
             raise NidusException(code="NO_ACTIVE_ROLE", message_key="common.forbidden", status_code=403)
 
-        user_scopes: Set[str] = set(role.scopes)
+        if not NidusScope.grants_access(role.scopes, self.required_scope):
+            raise NidusException(
+                code="MISSING_SCOPE",
+                message_key="common.unauthorized",
+                status_code=403,
+                scope=self.required_scope,
+            )
 
-        if NidusScope.SUPERADMIN in user_scopes:
-            return True
-
-        if self.required_scope in user_scopes:
-            return True
-
-        allowed_scopes = self._get_implied_scopes(self.required_scope)
-        if user_scopes.intersection(allowed_scopes):
-            return True
-
-        raise NidusException(code="MISSING_SCOPE", message_key="common.unauthorized", status_code=403, scope=self.required_scope)
-
-    def _get_implied_scopes(self, required_scope: str) -> Set[str]:
-        """Calculates superset scopes."""
-        allowed = {required_scope}
-        if required_scope.endswith(":read"):
-            allowed.add(required_scope.replace(":read", ":write"))
-            allowed.add(required_scope.replace(":read", ":manage"))
-        return allowed
+        return True

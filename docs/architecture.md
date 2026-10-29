@@ -877,3 +877,133 @@ Modern SaaS platforms require high collaboration. Users must be able to share UR
 ### Consequences
 * **Positive:** Free "Deep Linking" capability out of the box. Highly shareable application state.
 * **Negative:** Requires disciplined use of Next.js native router push mechanisms to constantly update the URL without triggering full page reloads.
+
+---
+
+## ADR 048: Test Database Isolation Strategy
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+Integration tests truncate and seed data before every test case. When `conftest.py` pointed the application engine at `DATABASE_URL` (the development database `nidus_core`), pytest polluted real dev data with `test-*@nidus.com` users and phantom organizations.
+
+### Decision
+1. **Dual Database URLs:** Introduced `TEST_APP_DATABASE_URL` (`nidus_app_user` → `POSTGRES_TEST_DB`) and retained `TEST_DATABASE_URL` (`nidus_admin` → `POSTGRES_TEST_DB`).
+2. **Strict Test Engines:** `conftest.py` binds both pytest engines exclusively to the test database. A startup guard raises if the app engine does not target `POSTGRES_TEST_DB`.
+3. **Dual Migration Path:** Development migrations use `DATABASE_ADMIN_URL`. Test schema is applied via `scripts/migrate_test_db.py` (sets `ALEMBIC_DATABASE_URL`).
+4. **Runtime Unchanged:** FastAPI in local dev continues using `nidus_core` via `DATABASE_URL`. RLS dual-role semantics (`nidus_admin` vs `nidus_app_user`) apply identically on both databases.
+
+### Consequences
+* **Positive:** Dev and test are fully isolated. pytest can truncate aggressively without touching Mailtrap/onboarding data.
+* **Negative:** Developers must migrate both databases after schema changes.
+
+---
+
+## ADR 049: Monorepo Container Strategy
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+`docker-compose.yml` references a missing root `Dockerfile` and incorrect API volume paths. Local development currently runs PostgreSQL in Docker while FastAPI executes via `uv` on the host.
+
+### Decision
+1. **Default Dev Flow:** `docker compose up -d db` + `uv run fastapi dev` remains the primary workflow.
+2. **Future Dockerfile:** A root-level Dockerfile will target `backend/` with `uv` for production-parity API containers.
+3. **Compose Profiles:** Planned separation of `db`, `api`, and `full` profiles once the Dockerfile lands.
+
+### Consequences
+* **Positive:** Pragmatic DX for solo development; DB isolation preserved.
+* **Negative:** Full containerized stack not yet one command away (Phase 8 remaining item).
+
+---
+
+## ADR 050: Multi-Organization Session Strategy
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+A single User can belong to multiple Organizations via Member records. Login previously selected the first membership arbitrarily, making B2B multi-tenant usage incorrect for invited users.
+
+### Decision
+1. **Login Branching:** `POST /auth/login` returns a standard OAuth2 token when the user has one membership. When N>1, it returns `{ org_selection_required, organizations[], pre_auth_token }`. All auth endpoints wrap payloads in `GenericResponse` (`{ status, data, message }`).
+2. **Selection Token:** `pre_auth_token` is a 15-minute JWT with `"type": "org_selection"` containing only `sub` (user id).
+3. **Completion:** `POST /auth/select-org` exchanges `pre_auth_token` + `organization_id` for a full access JWT.
+4. **Switching:** Authenticated users call `POST /auth/switch-org` to re-issue JWT with new `org_id` and scopes without re-entering credentials.
+5. **Discovery:** `GET /users/me/organizations` lists all active memberships (RLS bypass via empty tenant context).
+
+### Consequences
+* **Positive:** Correct multi-tenant UX for invited users. Downstream repos inherit org switching.
+* **Negative:** Login response is a union type; frontend must handle org picker flow.
+
+---
+
+## ADR 051: IAM Completion — Custom Roles & Invitation Governance
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+Phase 6 delivered member listing and invite-send, but roles were read-only bootstrap records. Admins could not define custom roles, revoke pending invitations, or discover assignable scopes from a single source of truth.
+
+### Decision
+1. **Custom Roles CRUD:** `POST/PATCH/DELETE /identity/roles` with `ROLE_WRITE`; system roles (`Owner`, `Admin`, `Member`, `Viewer`) are protected from mutation/deletion.
+2. **Scope Catalog:** `GET /identity/scopes` returns assignable scopes (excludes `*`); frontend mirrors `NidusScope` and consumes the catalog for role editors.
+3. **Invitation Governance:** `GET /identity/invitations` lists pending invites; `DELETE /identity/invitations/{id}` soft-revokes them. Create uses `MEMBER_INVITE` scope.
+4. **UI:** Settings → Roles & Permissions page; Members page shows pending invitations with revoke action; member role picker uses dynamic roles from API.
+
+### Consequences
+* **Positive:** Full IAM loop for tenant admins without DB access. Scope drift reduced via catalog endpoint.
+* **Negative:** Custom roles assigned to members block deletion until reassigned.
+
+---
+
+## ADR 052: Backend IAM Architecture Hardening
+
+**Date:** 2026-06-09
+**Status:** Accepted
+
+### Context
+After Phase 10 IAM endpoints landed, a backend review surfaced authorization inconsistencies, a monolithic `IdentityService`, dead code, and mixed API response shapes (some endpoints returned raw JSON while others used `GenericResponse`).
+
+### Decision
+1. **Service split:** Replace `IdentityService` with focused modules under `app/services/identity/` — `InvitationService`, `MemberService`, `RoleService`, plus shared validators in `role_policy.py`.
+2. **Unified API envelope:** All v1 endpoints return `GenericResponse[T]` (`status`, `data`, `message`). Login/multi-org payloads live under `data` (breaking change for clients that read top-level tokens).
+3. **Authorization (`ScopeGuard`):** Single evaluation via `NidusScope.grants_access()`. Fast path uses scopes embedded in the JWT at login/switch-org; DB role lookup remains as fallback for legacy tokens without `scopes`.
+4. **Tenant context:** Organization mutations use `PATCH/DELETE /organizations/me`; the active tenant comes from the JWT via `get_current_org_id` (aligned with `/identity/*` routes).
+5. **RLS context:** `set_rls_context()` / `clear_rls_context()` use parameterized `set_config()` — no string interpolation in SQL.
+6. **Dead code removal:** Delete unused `FilterEngine` (`core/filters.py`) and duplicate `api/pagination.py` (use `schemas/requests/pagination.py`).
+7. **Test coverage:** Unit tests for scope hierarchy; API tests for password reset/change, invitation accept, org path mismatch, and unauthenticated access.
+
+### Consequences
+* **Positive:** Consistent API contract, safer RLS injection, clearer IAM boundaries, faster authorization on the JWT fast path.
+* **Negative:** Login response shape change requires clients/tests to read `response.data`. Legacy tokens without embedded scopes incur a DB lookup per guarded request until re-login.
+
+---
+
+## ADR 053: Frontend Foundation Module Boundaries (Clone-Ready Core)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+Nidus Core is not a product that accumulates vertical domains (inventory, payroll, office). It is the **reusable foundation** for product forks (e.g. Nidus Inventario, Nidus Transacciones, Nidus Office). The frontend had blurred `identity` vs `organization` boundaries (roles/invites living under identity while org settings consumed them), a monolithic `auth.ts` action file, and no lint enforcement — risky when cloning the repo.
+
+### Decision
+1. **Layer map (frontend):**
+   - `core/` — API client, i18n routing, theme, generic types (no feature imports).
+   - `shared/` — design system + platform primitives (`shared/access` for `NidusScope`, `grantsAccess`, `hasScope`; `shared/validation` for Zod translator type).
+   - `modules/identity/` — auth session, login/select-org/switch-org, onboarding, password flows, user profile/preferences, settings shell nav.
+   - `modules/access/` — IAM feature: roles CRUD UI/actions, invitations, `CanAccess`.
+   - `modules/organization/` — tenant settings, members table, org switcher, danger zone (`DELETE /organizations/me`).
+   - `modules/shell/` — authenticated chrome that composes identity + organization (e.g. `TopBar`). Not a business domain.
+2. **Auth action split:** `identity/actions/{session,login,onboarding,password}.ts` with `auth.ts` as a barrel re-export for compatibility.
+3. **Authorization single source:** Edge `proxy.ts` and UI `hasScope` both use `shared/access` helpers mirroring backend `NidusScope.grants_access()`.
+4. **ESLint boundaries:** `no-restricted-imports` blocks `core → modules`, `shared → modules`, and `organization → identity/components` (org must use `modules/access` for IAM UI).
+5. **Product forks:** New business domains (inventory, transactions, etc.) belong in **downstream repos**, not in Nidus Core. Core only grows platform capabilities (auth, IAM, tenancy, shell, observability).
+
+### Consequences
+* **Positive:** Clear place for new platform code; clones inherit enforceable boundaries; IAM is a first-class module.
+* **Negative:** Slightly more import paths; contributors must learn the layer map (documented in README + this ADR).

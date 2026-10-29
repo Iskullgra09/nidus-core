@@ -1,5 +1,10 @@
-import { redirect } from "next/navigation";
+import { redirectTo } from "@/core/i18n/routing";
 
-export default function Home() {
-  redirect("/en/login");
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  redirectTo("/login", locale);
 }

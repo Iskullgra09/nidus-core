@@ -38,16 +38,34 @@ export const fetchClient = async <T>(
     });
 
     const text = await response.text();
-    const data = text ? JSON.parse(text) : {};
+    let payload: Record<string, unknown> = {};
+    if (text) {
+      try {
+        payload = JSON.parse(text) as Record<string, unknown>;
+      } catch {
+        return {
+          status: "error",
+          data: null,
+          message: "Invalid JSON response from API",
+          errors: [{ field: "parse", message: text.slice(0, 200) }],
+        };
+      }
+    }
 
-    if (!response.ok || data.status === "error") {
-      let errorMessage = data.message || "Request failed";
+    const status = payload.status as string | undefined;
+    const message =
+      typeof payload.message === "string" ? payload.message : null;
 
-      if (!data.message && data.detail) {
-        if (typeof data.detail === "string") {
-          errorMessage = data.detail;
-        } else if (Array.isArray(data.detail) && data.detail.length > 0) {
-          errorMessage = data.detail[0].msg;
+    if (!response.ok || status === "error") {
+      let errorMessage = message || "Request failed";
+
+      if (!message && payload.detail !== undefined) {
+        const detail = payload.detail;
+        if (typeof detail === "string") {
+          errorMessage = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          const first = detail[0] as { msg?: string };
+          errorMessage = first.msg || errorMessage;
         }
       }
 
@@ -55,21 +73,21 @@ export const fetchClient = async <T>(
         status: "error",
         data: null,
         message: errorMessage,
-        errors: data.errors || [],
-      } as GenericResponse<T>;
+        errors: (payload.errors as GenericResponse<T>["errors"]) || [],
+      };
     }
 
     return {
       status: "success",
-      data: data.data !== undefined ? data.data : data,
-      message: data.message || "Success",
-    } as GenericResponse<T>;
+      data: (payload.data as T | null | undefined) ?? null,
+      message: message || "Success",
+    };
   } catch (error) {
     return {
       status: "error",
-      data: null as unknown as T,
+      data: null,
       message: "Internal Connection Error",
       errors: [{ field: "network", message: String(error) }],
-    } as GenericResponse<T>;
+    };
   }
 };

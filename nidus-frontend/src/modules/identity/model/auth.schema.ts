@@ -1,8 +1,7 @@
 import { z } from "zod";
+import type { ValidationTranslator } from "@/shared/validation/types";
 
-export type ValidationTranslator = (
-  key: keyof IntlMessages["Validation"],
-) => string;
+export type { ValidationTranslator };
 
 export const getLoginSchema = (t: ValidationTranslator) =>
   z.object({
