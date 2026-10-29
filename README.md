@@ -101,7 +101,7 @@ See **ADR 053** in `docs/architecture.md` for the full decision.
 - [x] Structured JSON logging (`RequestContextMiddleware`) · append-only `audit_log` + RLS · `AuditService` · `GET /audit-logs` (`audit:read`) · ADR 054.
 
 #### **Phase 12: Premium UX** *(original Phase 7)*
-- [ ] Command Palette (Cmd+K) · modular sub-tabs · dashboard with real data · URL-driven server tables.
+- [x] Command Palette (Cmd+K) · members/invitations URL tabs · dashboard with real Core data · cursor URL-driven members table · ADR 055.
 
 #### **Phase 13–16:** DevEx · Security hardening · Avatars · CI frontend/tests *(last)*.
 

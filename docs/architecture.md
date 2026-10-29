@@ -1022,9 +1022,30 @@ Nidus Core needs platform-grade traceability for clones (who did what, in which 
 2. **`audit_log` table (append-only):** `UUIDMixin` + `TenantMixin` + `created_at` only (no soft-delete, no `updated_at`). App role grants are **SELECT + INSERT only** (no UPDATE/DELETE). RLS isolates by `organization_id` (empty setting bypass for auth/onboarding writers).
 3. **`AuditService.record`:** Single write API used from domain services (same transaction as the mutation). Auth login/select/switch may `commit=True` when no other mutation exists.
 4. **Events in Core:** `auth.login` (single-org only), `auth.select_org`, `auth.switch_org`, `organization.create|update|delete`, invitation create/accept/revoke, role CRUD, member role change/remove. Multi-org login picker is audited at `select_org`, not at password validation. Failed login and password reset/change stay in structured logs only (no durable audit row without a clear tenant).
-5. **Scope `audit:read`:** New `NidusScope.AUDIT_READ`. Granted to default **Admin** (+ Owner via `*`). Not implied by `org:read` — audit trails are more sensitive than org metadata. Viewer/Member do not get it by default.
+5. **Scope `audit:read`:** New `NidusScope.AUDIT_READ`. Granted to default **Admin** (+ Owner via `*`). Not implied by `org:read` - audit trails are more sensitive than org metadata. Viewer/Member do not get it by default.
 6. **API:** `GET /api/v1/audit-logs` with cursor pagination + filters (`action`, `actor_user_id`, `resource_type`), guarded by `ScopeGuard(AUDIT_READ)`. UI deferred to a later phase.
 
 ### Consequences
 * **Positive:** Forensic trail survives soft-deletes; clones inherit a clear audit module; RLS + grant hardening reduces tampering.
 * **Negative:** Existing Admin roles created before this ADR do not auto-receive `audit:read` (Owner still can via `*`); password security events are log-only until a dedicated non-tenant store exists.
+
+---
+
+## ADR 055: Premium UX Shell Patterns (Command Palette, URL Tables, Live Dashboard)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+Phase 12 upgrades Core from foundation chrome to a usable operator UX without introducing product domains. Settings already used path-based sidebar navigation; tables were client-paginated; the dashboard was placeholder copy.
+
+### Decision
+1. **Command palette lives in `modules/shell`** (`cmdk` + Dialog). It composes navigation into identity/access/organization routes and is scope-aware via `hasScope`. Shortcut: Ctrl/Cmd+K.
+2. **URL is the source of truth for server/cursor tables.** Members uses `?q=&cursor=&tab=` with `DataTable` `mode="cursor"` (Next + First page). Keyset pagination matches backend `CursorPage`; offset `mode="server"` remains for future APIs.
+3. **Modular sub-views:** Members vs invitations are URL tabs (`?tab=members|invitations`), not a second sidebar. Settings content width widened to `lg:max-w-4xl` for tables.
+4. **Dashboard composes existing Core APIs** (members page, user organizations, `/health`, recent `/audit-logs` when `audit:read`). No dedicated `/stats` endpoint in this phase.
+5. **Audit UI:** Full audit settings page remains deferred; dashboard shows a recent-activity strip for users with `audit:read`.
+
+### Consequences
+* **Positive:** Clones inherit Cmd+K, URL-driven list patterns, and a non-fake dashboard.
+* **Negative:** Cursor `Previous` only resets to the first page (no full backward stack); member count on the dashboard is first-page sized (limit 100) unless a count endpoint is added later.

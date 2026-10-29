@@ -33,7 +33,37 @@
   },
   "Dashboard": {
     "title": "Control Center",
-    "description": "Welcome to your organization's control center."
+    "description": "Welcome to your organization's control center.",
+    "membersCard": "Members",
+    "membersCardHint": "People in this workspace",
+    "membersCardHintMore": "Showing first page (more exist)",
+    "manageMembers": "Manage members",
+    "orgsCard": "Your organizations",
+    "orgsCardHint": "Workspaces you can switch into",
+    "healthCard": "API health",
+    "healthOk": "Operational",
+    "healthDown": "Degraded",
+    "healthCardHint": "Backend + database check",
+    "activityTitle": "Recent activity",
+    "activityDescription": "Latest audit events in this organization.",
+    "activityEmpty": "No audit events yet.",
+    "activityNoResource": "No resource"
+  },
+  "CommandPalette": {
+    "trigger": "Search…",
+    "title": "Command palette",
+    "description": "Jump to a page or run an action",
+    "placeholder": "Try: Roles, Members, Dashboard…",
+    "empty": "No results. Type a command name (e.g. Roles), not a URL.",
+    "groupNavigate": "Navigate",
+    "groupAccount": "Account",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "security": "Security",
+    "organization": "Organization",
+    "members": "Members",
+    "roles": "Roles",
+    "logout": "Log out"
   },
   "Validation": {
     "emailRequired": "Email is required.",
@@ -169,7 +199,10 @@
     "pendingDescription": "People invited who have not joined yet.",
     "revokeInvite": "Revoke",
     "revokeConfirm": "Revoke this invitation?",
-    "noPendingInvites": "No pending invitations."
+    "noPendingInvites": "No pending invitations.",
+    "tabMembers": "Members",
+    "tabInvitations": "Invitations",
+    "pageRowCount": "{count} on this page"
   },
   "SettingsRoles": {
     "title": "Roles & Permissions",
