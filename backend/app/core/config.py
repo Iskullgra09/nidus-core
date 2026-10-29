@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str
 
     FRONTEND_URL: AnyHttpUrl
+    PUBLIC_API_URL: AnyHttpUrl = "http://localhost:8000"  # type: ignore[assignment]
+
+    MEDIA_ROOT: str = str(ROOT_DIR / "media")
+    MEDIA_URL_PATH: str = "/media"
+    AVATAR_MAX_BYTES: int = 2 * 1024 * 1024
 
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_WINDOW_SECONDS: int = 60

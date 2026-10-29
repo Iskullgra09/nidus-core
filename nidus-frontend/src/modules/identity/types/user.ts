@@ -9,6 +9,7 @@ export interface UserProfileResponse {
   id: string;
   email: string;
   full_name: string | null;
+  avatar_url: string | null;
   preferences: UserPreferences;
   is_superuser: boolean;
   role_name: string;

@@ -30,7 +30,14 @@
         "invitation_revoked": "Invitación revocada exitosamente.",
         "scopes_retrieved": "Permisos obtenidos exitosamente.",
         "valid_token": "El token de invitación es válido.",
-        "audit_logs_retrieved": "Registros de auditoría obtenidos exitosamente."
+        "audit_logs_retrieved": "Registros de auditoría obtenidos exitosamente.",
+        "avatar_updated": "Avatar actualizado exitosamente.",
+        "avatar_removed": "Avatar eliminado exitosamente."
+    },
+    "media": {
+        "invalid_type": "El avatar debe ser una imagen JPEG, PNG o WebP.",
+        "empty_file": "El archivo subido está vacío.",
+        "too_large": "El avatar debe pesar 2MB o menos."
     },
     "validation": {
         "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."

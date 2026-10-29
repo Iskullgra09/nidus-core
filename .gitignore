@@ -41,6 +41,10 @@ yarn-error.log*
 .docker-data/
 *.log
 docker-compose.override.yml
+/media/
+
+# --- Uploaded media (local / compose volume mirror) ---
+media/
 
 # --- OS & Editors ---
 .DS_Store

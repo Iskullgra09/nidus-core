@@ -30,7 +30,14 @@
         "invitation_revoked": "Invitation revoked successfully.",
         "scopes_retrieved": "Permission scopes retrieved successfully.",
         "valid_token": "Invitation token is valid.",
-        "audit_logs_retrieved": "Audit logs retrieved successfully."
+        "audit_logs_retrieved": "Audit logs retrieved successfully.",
+        "avatar_updated": "Avatar updated successfully.",
+        "avatar_removed": "Avatar removed successfully."
+    },
+    "media": {
+        "invalid_type": "Avatar must be a JPEG, PNG, or WebP image.",
+        "empty_file": "Uploaded file is empty.",
+        "too_large": "Avatar must be 2MB or smaller."
     },
     "validation": {
         "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."

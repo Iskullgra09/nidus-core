@@ -19,10 +19,15 @@ import {
   FormMessage,
 } from "@/shared/ui/form";
 
+import { AvatarUpload } from "@/shared/components/avatar-upload";
 import { OrganizationFormData } from "../types";
 import { getOrganizationUpdateSchema } from "../model/org.schema";
 import type { ValidationTranslator } from "@/shared/validation/types";
-import { updateOrganizationAction } from "../actions/org";
+import {
+  removeOrganizationAvatarAction,
+  updateOrganizationAction,
+  uploadOrganizationAvatarAction,
+} from "../actions/org";
 import { OrganizationResponse } from "@/modules/organization/types/organization";
 
 interface OrgSettingsFormProps {
@@ -66,7 +71,28 @@ export function OrganizationSettingsForm({
     }
   }
 
+  const initials = organization.name.substring(0, 2).toUpperCase();
+
   return (
+    <div className="space-y-6">
+      <AvatarUpload
+        imageUrl={organization.avatar_url}
+        fallback={initials}
+        labels={{
+          title: tOrg("avatarTitle"),
+          hint: tOrg("avatarHint"),
+          upload: tOrg("avatarUpload"),
+          remove: tOrg("avatarRemove"),
+          uploading: tOrg("avatarUploading"),
+        }}
+        onUpload={async (file) => {
+          const fd = new FormData();
+          fd.set("file", file);
+          return uploadOrganizationAvatarAction(fd);
+        }}
+        onRemove={() => removeOrganizationAvatarAction()}
+      />
+
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
@@ -116,5 +142,6 @@ export function OrganizationSettingsForm({
         </Button>
       </form>
     </Form>
+    </div>
   );
 }

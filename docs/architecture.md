@@ -1091,3 +1091,24 @@ Auth, onboarding, and invitation endpoints had no request throttling. The sessio
 ### Consequences
 * **Positive:** Abuse paths are throttled without new infrastructure; cookie set/clear stays consistent; deployers have a concrete env checklist.
 * **Negative:** In-memory counters reset on process restart and do not coordinate across replicas; CSRF remains a documented non-requirement only while the cookie stays same-site / Server-Action gated.
+
+---
+
+## ADR 058: Local Avatar Media Storage (Phase 15)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+User and Organization already had nullable `avatar_url` columns, but no upload path, validation, or static serving. Clones needed a simple media strategy without object storage.
+
+### Decision
+1. **Local filesystem** under `MEDIA_ROOT` (default repo `media/`; Docker `/app/media` + `media_data` volume).
+2. **Serve** via FastAPI `StaticFiles` at `MEDIA_URL_PATH` (`/media`). Public URLs use `PUBLIC_API_URL`.
+3. **Upload** `POST /users/me/avatar` and `POST /organizations/me/avatar` (multipart `file`); DELETE clears DB + file. Org upload requires `ORG_UPDATE`.
+4. **Safety:** allowlist `image/jpeg|png|webp`, magic-byte check, max `AVATAR_MAX_BYTES` (2MB). No Pillow dependency in Phase 15.
+5. **UI:** profile and org settings upload controls; top-bar avatar shows `AvatarImage` when set.
+
+### Consequences
+* **Positive:** Zero extra infra for clones; avatars work in Docker and host API.
+* **Negative:** Not multi-node safe without shared volume/object store; replace `MEDIA_ROOT` strategy when deploying horizontally.

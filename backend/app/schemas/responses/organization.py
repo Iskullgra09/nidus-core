@@ -10,6 +10,7 @@ class OrganizationResponse(BaseModel):
     id: UUID
     name: str
     slug: str
+    avatar_url: str | None = None
     is_active: bool
     created_at: datetime
 

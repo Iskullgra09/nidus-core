@@ -1,12 +1,13 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload, get_language
 from app.core.db import get_session
 from app.core.i18n.service import i18n
+from app.core.rate_limit import RateLimit
 from app.models.identity.scopes import NidusScope
 from app.schemas.requests.user import UpdateProfileRequest
 from app.schemas.responses.auth import UserOrganizationSummary
@@ -51,3 +52,38 @@ async def update_my_profile(
 
     success_msg = i18n.t("success.profile_updated", lang=lang)
     return GenericResponse[Any](data=None, message=success_msg)
+
+
+@router.post(
+    "/me/avatar",
+    response_model=GenericResponse[dict[str, str]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("users.avatar", tier="moderate"))],
+)
+async def upload_my_avatar(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_current_tenant_session),
+    payload: dict[str, Any] = Depends(get_jwt_payload),
+    lang: str = Depends(get_language),
+) -> GenericResponse[dict[str, str]]:
+    user_id = UUID(str(payload["sub"]))
+    url = await UserService.set_avatar(session, user_id, file)
+    return GenericResponse(
+        data={"avatar_url": url},
+        message=i18n.t("success.avatar_updated", lang=lang),
+    )
+
+
+@router.delete(
+    "/me/avatar",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+)
+async def delete_my_avatar(
+    session: AsyncSession = Depends(get_current_tenant_session),
+    payload: dict[str, Any] = Depends(get_jwt_payload),
+    lang: str = Depends(get_language),
+) -> GenericResponse[Any]:
+    user_id = UUID(str(payload["sub"]))
+    await UserService.clear_avatar(session, user_id)
+    return GenericResponse[Any](data=None, message=i18n.t("success.avatar_removed", lang=lang))

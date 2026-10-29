@@ -140,7 +140,12 @@
     "themeSystem": "Sistema",
     "saveChanges": "Guardar Cambios",
     "savingChanges": "Guardando...",
-    "successMessage": "Tu perfil ha sido actualizado correctamente."
+    "successMessage": "Tu perfil ha sido actualizado correctamente.",
+    "avatarTitle": "Foto de perfil",
+    "avatarHint": "JPEG, PNG o WebP hasta 2MB.",
+    "avatarUpload": "Subir foto",
+    "avatarRemove": "Quitar",
+    "avatarUploading": "Subiendo..."
   },
   "SettingsSecurity": {
     "title": "Seguridad",
@@ -158,6 +163,11 @@
     "orgNameLabel": "Nombre de la Organización",
     "orgSlugLabel": "Slug de la URL",
     "orgSlugDescription": "Identificador único usado en las rutas (ej: mi-empresa).",
+    "avatarTitle": "Logo de la organización",
+    "avatarHint": "JPEG, PNG o WebP hasta 2MB.",
+    "avatarUpload": "Subir logo",
+    "avatarRemove": "Quitar",
+    "avatarUploading": "Subiendo...",
     "saveChanges": "Guardar Cambios",
     "savingChanges": "Guardando...",
     "noChangesDetected": "No hay cambios para guardar.",

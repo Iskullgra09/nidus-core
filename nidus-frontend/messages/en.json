@@ -140,7 +140,12 @@
     "themeSystem": "System",
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
-    "successMessage": "Your profile has been updated successfully."
+    "successMessage": "Your profile has been updated successfully.",
+    "avatarTitle": "Profile photo",
+    "avatarHint": "JPEG, PNG, or WebP up to 2MB.",
+    "avatarUpload": "Upload photo",
+    "avatarRemove": "Remove",
+    "avatarUploading": "Uploading..."
   },
   "SettingsSecurity": {
     "title": "Security",
@@ -158,6 +163,11 @@
     "orgNameLabel": "Organization Name",
     "orgSlugLabel": "URL Slug",
     "orgSlugDescription": "Unique identifier used in URLs (e.g., my-company).",
+    "avatarTitle": "Organization logo",
+    "avatarHint": "JPEG, PNG, or WebP up to 2MB.",
+    "avatarUpload": "Upload logo",
+    "avatarRemove": "Remove",
+    "avatarUploading": "Uploading...",
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
     "noChangesDetected": "No changes to save.",

@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ScopeGuard, get_current_org_id, get_current_tenant_session, get_language
@@ -48,6 +48,43 @@ async def update_organization(
     org = await OrganizationService.update_organization(session, org_id, data)
     success_msg = i18n.t("success.organization_updated", lang=lang)
     return GenericResponse(data=org, message=success_msg)
+
+
+@router.post(
+    "/me/avatar",
+    response_model=GenericResponse[dict[str, str]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[
+        Depends(RateLimit("org.avatar", tier="moderate")),
+        Depends(ScopeGuard(NidusScope.ORG_UPDATE)),
+    ],
+)
+async def upload_organization_avatar(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_current_tenant_session),
+    org_id: UUID = Depends(get_current_org_id),
+    lang: str = Depends(get_language),
+) -> GenericResponse[dict[str, str]]:
+    url = await OrganizationService.set_avatar(session, org_id, file)
+    return GenericResponse(
+        data={"avatar_url": url},
+        message=i18n.t("success.avatar_updated", lang=lang),
+    )
+
+
+@router.delete(
+    "/me/avatar",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(ScopeGuard(NidusScope.ORG_UPDATE))],
+)
+async def delete_organization_avatar(
+    session: AsyncSession = Depends(get_current_tenant_session),
+    org_id: UUID = Depends(get_current_org_id),
+    lang: str = Depends(get_language),
+) -> GenericResponse[Any]:
+    await OrganizationService.clear_avatar(session, org_id)
+    return GenericResponse[Any](data=None, message=i18n.t("success.avatar_removed", lang=lang))
 
 
 @router.delete(

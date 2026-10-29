@@ -19,6 +19,7 @@ class MemberResponse(BaseModel):
     user_id: UUID
     full_name: Optional[str] = None
     email: str
+    avatar_url: Optional[str] = None
     role_name: str
     joined_at: datetime
 

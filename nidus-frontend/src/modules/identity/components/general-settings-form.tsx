@@ -26,10 +26,15 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 
+import { AvatarUpload } from "@/shared/components/avatar-upload";
 import { UpdateProfileFormData, UserProfileResponse } from "../types/user";
 import { getUpdateProfileSchema } from "../model/settings.schema";
 import { ValidationTranslator } from "../model/auth.schema";
-import { updateProfileAction } from "../actions/user";
+import {
+  removeAvatarAction,
+  updateProfileAction,
+  uploadAvatarAction,
+} from "../actions/user";
 
 interface GeneralSettingsFormProps {
   user: UserProfileResponse;
@@ -76,12 +81,34 @@ export function GeneralSettingsForm({ user }: GeneralSettingsFormProps) {
     }
   }
 
+  const initials = user.full_name
+    ? user.full_name.substring(0, 2).toUpperCase()
+    : user.email.substring(0, 2).toUpperCase();
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium">{tSet("title")}</h3>
         <p className="text-sm text-muted-foreground">{tSet("description")}</p>
       </div>
+
+      <AvatarUpload
+        imageUrl={user.avatar_url}
+        fallback={initials}
+        labels={{
+          title: tSet("avatarTitle"),
+          hint: tSet("avatarHint"),
+          upload: tSet("avatarUpload"),
+          remove: tSet("avatarRemove"),
+          uploading: tSet("avatarUploading"),
+        }}
+        onUpload={async (file) => {
+          const fd = new FormData();
+          fd.set("file", file);
+          return uploadAvatarAction(fd);
+        }}
+        onRemove={() => removeAvatarAction()}
+      />
 
       <Form {...form}>
         <form

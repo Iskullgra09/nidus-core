@@ -34,7 +34,11 @@ services:
       POSTGRES_SERVER: db
       POSTGRES_PORT: "5432"
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
+      MEDIA_ROOT: /app/media
       SEED_DEMO: ${SEED_DEMO:-false}
+    volumes:
+      - media_data:/app/media
     depends_on:
       db:
         condition: service_healthy
@@ -53,3 +57,4 @@ services:
 
 volumes:
   postgres_data:
+  media_data:

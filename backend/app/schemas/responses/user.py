@@ -17,6 +17,7 @@ class UserProfileResponse(BaseModel):
     id: UUID
     email: str
     full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
     preferences: UserPreferencesSchema = UserPreferencesSchema()
     is_superuser: bool
     role_name: str

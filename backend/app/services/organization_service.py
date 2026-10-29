@@ -2,11 +2,13 @@ from datetime import datetime, timezone
 from typing import Any, Dict, cast
 from uuid import UUID
 
+from fastapi import UploadFile
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions.base import ConflictError, EntityNotFoundError
+from app.core.media import delete_avatar_file, save_avatar
 from app.core.rls import clear_rls_context
 from app.core.security import hash_password
 from app.models import Member, Organization, User
@@ -128,6 +130,32 @@ class OrganizationService:
             raise ConflictError(message_key="organization.slug_already_exists", slug=data.slug)
 
         return org
+
+    @staticmethod
+    async def set_avatar(session: AsyncSession, org_id: UUID, file: UploadFile) -> str:
+        OrgModel = cast(Any, Organization)
+        stmt = select(Organization).where(OrgModel.id == org_id, OrgModel.deleted_at.is_(None))
+        org = (await session.execute(stmt)).scalar_one_or_none()
+        if not org:
+            raise EntityNotFoundError(entity="organization")
+
+        delete_avatar_file(org.avatar_url)
+        url = await save_avatar(file, kind="orgs", entity_id=org_id)
+        org.avatar_url = url
+        await session.commit()
+        return url
+
+    @staticmethod
+    async def clear_avatar(session: AsyncSession, org_id: UUID) -> None:
+        OrgModel = cast(Any, Organization)
+        stmt = select(Organization).where(OrgModel.id == org_id, OrgModel.deleted_at.is_(None))
+        org = (await session.execute(stmt)).scalar_one_or_none()
+        if not org:
+            raise EntityNotFoundError(entity="organization")
+
+        delete_avatar_file(org.avatar_url)
+        org.avatar_url = None
+        await session.commit()
 
     @staticmethod
     async def delete_organization(session: AsyncSession, org_id: UUID) -> None:

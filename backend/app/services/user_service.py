@@ -1,11 +1,13 @@
 from typing import Any, cast
 from uuid import UUID
 
+from fastapi import UploadFile
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions.base import EntityNotFoundError
+from app.core.media import delete_avatar_file, save_avatar
 from app.models import Member, User
 from app.schemas.requests.user import UpdateProfileRequest
 from app.schemas.responses.user import UserProfileResponse
@@ -14,10 +16,6 @@ from app.schemas.responses.user import UserProfileResponse
 class UserService:
     @staticmethod
     async def get_my_profile(session: AsyncSession, user_id: UUID) -> UserProfileResponse:
-        """
-        Retrieves the complete profile for the authenticated user,
-        including their current organization and role context.
-        """
         MemberModel = cast(Any, Member)
 
         stmt = (
@@ -37,12 +35,39 @@ class UserService:
             id=m.user.id,
             email=m.user.email,
             full_name=m.user.full_name,
+            avatar_url=m.user.avatar_url,
             preferences=m.user.preferences,
             is_superuser=m.user.is_superuser,
             role_name=m.role.name,
             scopes=m.role.scopes,
             organization=m.organization,
         )
+
+    @staticmethod
+    async def set_avatar(session: AsyncSession, user_id: UUID, file: UploadFile) -> str:
+        UserModel = cast(Any, User)
+        stmt = select(User).where(UserModel.id == user_id, UserModel.deleted_at.is_(None))
+        user = (await session.execute(stmt)).scalar_one_or_none()
+        if not user:
+            raise EntityNotFoundError(entity="user")
+
+        delete_avatar_file(user.avatar_url)
+        url = await save_avatar(file, kind="users", entity_id=user_id)
+        user.avatar_url = url
+        await session.commit()
+        return url
+
+    @staticmethod
+    async def clear_avatar(session: AsyncSession, user_id: UUID) -> None:
+        UserModel = cast(Any, User)
+        stmt = select(User).where(UserModel.id == user_id, UserModel.deleted_at.is_(None))
+        user = (await session.execute(stmt)).scalar_one_or_none()
+        if not user:
+            raise EntityNotFoundError(entity="user")
+
+        delete_avatar_file(user.avatar_url)
+        user.avatar_url = None
+        await session.commit()
 
     @staticmethod
     async def update_profile(session: AsyncSession, user_id: UUID, data: UpdateProfileRequest) -> None:

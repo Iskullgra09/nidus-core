@@ -7,7 +7,7 @@ import { Link } from "@/core/i18n/routing";
 import { toast } from "sonner";
 import { Moon, Sun, Monitor, LogOut, Settings, Building } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu,
@@ -62,6 +62,9 @@ export function UserDropdown({ user }: UserDropdownProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative size-8 rounded-full">
           <Avatar className="size-8 border border-border/50">
+            {user.avatar_url ? (
+              <AvatarImage src={user.avatar_url} alt="" />
+            ) : null}
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {initials}
             </AvatarFallback>

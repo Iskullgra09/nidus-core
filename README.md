@@ -60,7 +60,7 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 | 12 | Premium UX (Cmd+K, live dashboard, URL-driven members) | Done |
 | 13 | DevEx & Containers (API image + compose) | Done |
 | 14 | Security Hardening | Done |
-| 15 | Avatars & Media | Pending |
+| 15 | Avatars & Media | Done |
 | 16 | CI Frontend & Quality Gates | Pending |
 
 ---
@@ -142,12 +142,14 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 
 ---
 
-## Upcoming Phases
-
 ### Phase 15 â€” Avatars & media
 
-- [ ] User and organization avatar upload/storage.
-- [ ] Safe content-type limits and URL serving strategy.
+- [x] User and organization avatar upload/storage (local `media/`, compose volume).
+- [x] Safe content-type limits (JPEG/PNG/WebP, 2MB) and `/media` URL serving; ADR 058.
+
+---
+
+## Upcoming Phases
 
 ### Phase 16 â€” CI frontend & quality gates
 

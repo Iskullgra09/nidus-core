@@ -99,3 +99,56 @@ export async function updateProfileAction(
     return { status: "error", message: tCommon("connectionError") };
   }
 }
+
+export async function uploadAvatarAction(formData: FormData): Promise<ActionResponse> {
+  const tCommon = await getTranslations("Common");
+
+  try {
+    const session = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+    if (!session) {
+      return { status: "error", message: tCommon("connectionError") };
+    }
+
+    const response = await fetchClient<{ avatar_url: string }>("/users/me/avatar", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session}` },
+      body: formData,
+    });
+
+    if (response.status === "success") {
+      revalidatePath("/", "layout");
+      return { status: "success", message: response.message || tCommon("success") };
+    }
+
+    return { status: "error", message: response.message || tCommon("unknownError") };
+  } catch (error) {
+    console.error("Upload avatar Error:", error);
+    return { status: "error", message: tCommon("connectionError") };
+  }
+}
+
+export async function removeAvatarAction(): Promise<ActionResponse> {
+  const tCommon = await getTranslations("Common");
+
+  try {
+    const session = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+    if (!session) {
+      return { status: "error", message: tCommon("connectionError") };
+    }
+
+    const response = await fetchClient("/users/me/avatar", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${session}` },
+    });
+
+    if (response.status === "success") {
+      revalidatePath("/", "layout");
+      return { status: "success", message: response.message || tCommon("success") };
+    }
+
+    return { status: "error", message: response.message || tCommon("unknownError") };
+  } catch (error) {
+    console.error("Remove avatar Error:", error);
+    return { status: "error", message: tCommon("connectionError") };
+  }
+}

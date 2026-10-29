@@ -35,3 +35,7 @@ class Member(UUIDMixin, TimestampMixin, SoftDeleteMixin, TenantMixin, table=True
     @property
     def full_name(self) -> Optional[str]:
         return self.user.full_name if self.user else None
+
+    @property
+    def avatar_url(self) -> Optional[str]:
+        return self.user.avatar_url if self.user else None

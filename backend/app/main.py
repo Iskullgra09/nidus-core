@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1.api import api_router
@@ -22,6 +25,10 @@ app = FastAPI(
     version="1.0.0",
     description="NIDUS Core Multitenant API",
 )
+
+_media_root = Path(settings.MEDIA_ROOT)
+_media_root.mkdir(parents=True, exist_ok=True)
+app.mount(settings.MEDIA_URL_PATH, StaticFiles(directory=str(_media_root)), name="media")
 
 # RequestContextMiddleware outermost so it wraps CORS + all handlers.
 app.add_middleware(RequestContextMiddleware)

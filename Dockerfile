@@ -24,9 +24,12 @@ WORKDIR /app
 
 COPY --from=builder --chown=nidus:nidus /app /app
 
+RUN mkdir -p /app/media && chown nidus:nidus /app/media
+
 ENV PATH="/app/backend/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    MEDIA_ROOT=/app/media
 
 WORKDIR /app/backend
 
