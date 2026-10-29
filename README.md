@@ -5,7 +5,7 @@
 ![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)
 ![PostgreSQL 17/18](https://img.shields.io/badge/PostgreSQL-17/18-336791.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)
 
 Nidus is an enterprise-grade monorepo designed for massive scale. It implements **Pragmatic Modular Monolith** patterns with hardware-level data isolation using **PostgreSQL Row-Level Security (RLS)** and **JSONB Granular Authorization**.
 
@@ -261,6 +261,16 @@ Or set `SEED_DEMO=true` in `.env` so the API container seeds automatically on st
 | :--- | :--- |
 | **Fix Line Endings** | `dos2unix infrastructure/db-init/*.sh` (If utility is installed) |
 | **Prune Volumes** | `docker volume prune -f` |
+
+---
+
+## License
+
+Copyright (c) 2026 Isaac Granados Quesada.
+
+Nidus Core is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+See [`LICENSE`](LICENSE). If you run a modified version as a network service (SaaS), you must
+offer the corresponding source to users of that service under the same license.
 
 ---
 
