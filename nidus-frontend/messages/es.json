@@ -33,7 +33,37 @@
   },
   "Dashboard": {
     "title": "Centro de Control",
-    "description": "Bienvenido al centro de control de tu organización."
+    "description": "Bienvenido al centro de control de tu organización.",
+    "membersCard": "Miembros",
+    "membersCardHint": "Personas en este workspace",
+    "membersCardHintMore": "Mostrando la primera página (hay más)",
+    "manageMembers": "Gestionar miembros",
+    "orgsCard": "Tus organizaciones",
+    "orgsCardHint": "Workspaces a los que puedes cambiar",
+    "healthCard": "Salud de la API",
+    "healthOk": "Operativo",
+    "healthDown": "Degradado",
+    "healthCardHint": "Chequeo de backend + base de datos",
+    "activityTitle": "Actividad reciente",
+    "activityDescription": "Últimos eventos de auditoría en esta organización.",
+    "activityEmpty": "Aún no hay eventos de auditoría.",
+    "activityNoResource": "Sin recurso"
+  },
+  "CommandPalette": {
+    "trigger": "Buscar…",
+    "title": "Paleta de comandos",
+    "description": "Ir a una página o ejecutar una acción",
+    "placeholder": "Prueba: Roles, Miembros, Dashboard…",
+    "empty": "Sin resultados. Escribe un nombre (ej. Roles), no una URL.",
+    "groupNavigate": "Navegar",
+    "groupAccount": "Cuenta",
+    "dashboard": "Dashboard",
+    "profile": "Perfil",
+    "security": "Seguridad",
+    "organization": "Organización",
+    "members": "Miembros",
+    "roles": "Roles",
+    "logout": "Cerrar sesión"
   },
   "Validation": {
     "emailRequired": "El correo es requerido.",
@@ -169,7 +199,10 @@
     "pendingDescription": "Personas invitadas que aún no han ingresado.",
     "revokeInvite": "Revocar",
     "revokeConfirm": "¿Revocar esta invitación?",
-    "noPendingInvites": "No hay invitaciones pendientes."
+    "noPendingInvites": "No hay invitaciones pendientes.",
+    "tabMembers": "Miembros",
+    "tabInvitations": "Invitaciones",
+    "pageRowCount": "{count} en esta página"
   },
   "SettingsRoles": {
     "title": "Roles y Permisos",

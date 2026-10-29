@@ -4,7 +4,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/core/i18n/routing";
 import { toast } from "sonner";
-import { Building2, Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import {
@@ -17,15 +17,18 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { UserOrganizationSummary } from "@/modules/identity/types/auth";
 import { switchOrganizationAction } from "@/modules/identity/actions/auth";
+import { cn } from "@/core/lib/utils";
 
 interface OrgSwitcherProps {
   organizations: UserOrganizationSummary[];
   currentOrganizationId: string;
+  fallbackName?: string;
 }
 
 export function OrgSwitcher({
   organizations,
   currentOrganizationId,
+  fallbackName,
 }: OrgSwitcherProps) {
   const t = useTranslations("OrganizationSwitcher");
   const router = useRouter();
@@ -34,9 +37,18 @@ export function OrgSwitcher({
   const currentOrg = organizations.find(
     (org) => org.organization_id === currentOrganizationId,
   );
+  const displayName = currentOrg?.name ?? fallbackName;
 
-  if (organizations.length <= 1 || !currentOrg) {
+  if (!displayName) {
     return null;
+  }
+
+  if (organizations.length <= 1) {
+    return (
+      <span className="truncate text-sm font-medium text-foreground/90 max-w-40">
+        {displayName}
+      </span>
+    );
   }
 
   async function handleSwitch(organizationId: string) {
@@ -57,14 +69,17 @@ export function OrgSwitcher({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-8 gap-1.5 border-border/60 bg-background/50 px-2.5 text-xs font-medium"
+          className={cn(
+            "h-8 max-w-48 gap-1 px-2 text-sm font-medium text-foreground/90",
+            "hover:bg-muted/50 hover:text-foreground",
+            "focus-visible:ring-1",
+          )}
           disabled={isPending}
         >
-          <Building2 className="size-3.5 text-muted-foreground" />
-          <span className="max-w-28 truncate">{currentOrg.name}</span>
-          <ChevronsUpDown className="size-3 text-muted-foreground" />
+          <span className="truncate">{currentOrg!.name}</span>
+          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">

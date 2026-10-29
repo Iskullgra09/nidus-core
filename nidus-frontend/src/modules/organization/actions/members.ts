@@ -7,29 +7,53 @@ import { fetchClient } from "@/core/api/client";
 import { MemberResponse } from "@/modules/organization/types/members";
 import { ActionResponse, CursorPage } from "@/core/types/api";
 
+export type MembersQuery = {
+  cursor?: string | null;
+  q?: string | null;
+  limit?: number;
+};
+
 /**
- * Fetch members - Matches: GET /members
+ * Fetch a cursor page of members — GET /identity/members
  */
-export async function getOrganizationMembers(): Promise<MemberResponse[]> {
+export async function getOrganizationMembersPage(
+  query: MembersQuery = {},
+): Promise<CursorPage<MemberResponse>> {
+  const empty: CursorPage<MemberResponse> = {
+    items: [],
+    page_info: { has_next_page: false, end_cursor: null },
+  };
+
   try {
     const session = (await cookies()).get("nidus_session")?.value;
-    if (!session) return [];
+    if (!session) return empty;
 
     const response = await fetchClient<CursorPage<MemberResponse>>(
       "/identity/members",
       {
         headers: { Authorization: `Bearer ${session}` },
+        params: {
+          limit: query.limit ?? 10,
+          cursor: query.cursor || undefined,
+          email__contains: query.q || undefined,
+        },
       },
     );
 
-    if (response.status === "success" && response.data?.items) {
-      return response.data.items;
+    if (response.status === "success" && response.data) {
+      return response.data;
     }
-    return [];
+    return empty;
   } catch (error) {
     console.error("Fetch Members Error:", error);
-    return [];
+    return empty;
   }
+}
+
+/** Convenience: all items on the first page (dashboard / legacy callers). */
+export async function getOrganizationMembers(): Promise<MemberResponse[]> {
+  const page = await getOrganizationMembersPage({ limit: 100 });
+  return page.items;
 }
 
 /**

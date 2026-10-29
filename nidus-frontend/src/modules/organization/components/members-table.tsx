@@ -4,6 +4,8 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { MoreHorizontal, UserMinus, UserCog } from "lucide-react";
 import { toast } from "sonner";
+import { usePathname, useRouter } from "@/core/i18n/routing";
+import { useSearchParams } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -25,22 +27,42 @@ import { RoleResponse } from "@/modules/access/types/roles";
 import { CanAccess } from "@/modules/access/components/can-access";
 import { NidusScope } from "@/shared/access/scopes";
 import { DataTable, ColumnDef } from "@/shared/components/layout/data-table";
+import { PageInfo } from "@/core/types/api";
 
 interface MembersTableProps {
   members: MemberResponse[];
   roles: RoleResponse[];
   currentUserId: string;
+  pageInfo: PageInfo;
+  searchQuery: string;
+  pageSize?: number;
 }
 
 export function MembersTable({
   members = [],
   roles = [],
   currentUserId,
+  pageInfo,
+  searchQuery,
+  pageSize = 10,
 }: MembersTableProps) {
   const t = useTranslations("SettingsMembers");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const assignableRoles = roles.filter(
     (role) => role.name.toLowerCase() !== "owner",
+  );
+
+  const replaceParams = React.useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [pathname, router, searchParams],
   );
 
   const getRoleLabel = (roleName: string) => {
@@ -124,7 +146,9 @@ export function MembersTable({
                           key={role.id}
                           onClick={() => handleRoleChange(member.id, role.id)}
                         >
-                          <span className="capitalize">{getRoleLabel(role.name)}</span>
+                          <span className="capitalize">
+                            {getRoleLabel(role.name)}
+                          </span>
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuSubContent>
@@ -147,16 +171,36 @@ export function MembersTable({
 
   return (
     <DataTable
-      mode="client"
+      mode="cursor"
       data={members}
       columns={columns}
-      searchKey="email"
+      pageSize={pageSize}
       searchPlaceholder={t("searchPlaceholder")}
       emptyMessage={t("noMembersFound")}
-      pageSize={5}
-      paginationText={(start, end, total) =>
-        t("paginationInfo", { start, end, total })
-      }
+      initialSearch={searchQuery}
+      hasNextPage={pageInfo.has_next_page}
+      isFirstPage={!searchParams.get("cursor")}
+      rowCountLabel={t("pageRowCount", { count: members.length })}
+      onSearchChange={(query) => {
+        const next = query.trim();
+        if (next === searchQuery) return;
+        replaceParams((params) => {
+          if (next) params.set("q", next);
+          else params.delete("q");
+          params.delete("cursor");
+        });
+      }}
+      onNextPage={() => {
+        if (!pageInfo.end_cursor) return;
+        replaceParams((params) => {
+          params.set("cursor", pageInfo.end_cursor!);
+        });
+      }}
+      onFirstPage={() => {
+        replaceParams((params) => {
+          params.delete("cursor");
+        });
+      }}
     />
   );
 }

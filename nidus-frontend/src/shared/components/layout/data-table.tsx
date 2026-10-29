@@ -45,9 +45,22 @@ interface ServerDataTableProps<TData> extends BaseDataTableProps<TData> {
   onSearchChange?: (query: string) => void;
 }
 
+/** Cursor / keyset pagination driven by URL or parent state (Phase 12). */
+interface CursorDataTableProps<TData> extends BaseDataTableProps<TData> {
+  mode: "cursor";
+  hasNextPage: boolean;
+  isFirstPage: boolean;
+  onNextPage: () => void;
+  onFirstPage: () => void;
+  onSearchChange?: (query: string) => void;
+  initialSearch?: string;
+  rowCountLabel?: string;
+}
+
 type DataTableProps<TData> =
   | ClientDataTableProps<TData>
-  | ServerDataTableProps<TData>;
+  | ServerDataTableProps<TData>
+  | CursorDataTableProps<TData>;
 
 export function DataTable<TData>(props: DataTableProps<TData>) {
   const {
@@ -61,19 +74,34 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
   } = props;
 
   const isServer = mode === "server";
+  const isCursor = mode === "cursor";
 
-  const [localSearchQuery, setLocalSearchQuery] = React.useState("");
+  const initialSearch =
+    isCursor && "initialSearch" in props ? (props.initialSearch ?? "") : "";
+  const [localSearchQuery, setLocalSearchQuery] = React.useState(initialSearch);
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300);
   const [clientCurrentPage, setClientCurrentPage] = React.useState(1);
 
   React.useEffect(() => {
-    if (isServer && "onSearchChange" in props && props.onSearchChange) {
+    if (isCursor) {
+      setLocalSearchQuery(initialSearch);
+    }
+  }, [initialSearch, isCursor]);
+
+  React.useEffect(() => {
+    if (
+      (isServer || isCursor) &&
+      "onSearchChange" in props &&
+      props.onSearchChange
+    ) {
       props.onSearchChange(debouncedSearchQuery);
     }
-  }, [debouncedSearchQuery, isServer, props]);
+    // Intentionally depend on debounced value only — parent callbacks are unstable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, isServer, isCursor]);
 
   const processedData = React.useMemo(() => {
-    if (isServer) return data;
+    if (isServer || isCursor) return data;
 
     const clientProps = props as ClientDataTableProps<TData>;
     let filtered = data;
@@ -90,7 +118,15 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
 
     const startIndex = (clientCurrentPage - 1) * pageSize;
     return filtered.slice(startIndex, startIndex + pageSize);
-  }, [data, isServer, props, localSearchQuery, clientCurrentPage, pageSize]);
+  }, [
+    data,
+    isServer,
+    isCursor,
+    props,
+    localSearchQuery,
+    clientCurrentPage,
+    pageSize,
+  ]);
 
   const currentPage = isServer
     ? (props as ServerDataTableProps<TData>).pageIndex
@@ -125,18 +161,19 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
   };
 
   React.useEffect(() => {
-    if (!isServer) setClientCurrentPage(1);
-  }, [localSearchQuery, isServer]);
+    if (!isServer && !isCursor) setClientCurrentPage(1);
+  }, [localSearchQuery, isServer, isCursor]);
 
-  const showSearch = isServer
-    ? "onSearchChange" in props
-    : "searchKey" in props;
+  const showSearch =
+    isServer || isCursor
+      ? "onSearchChange" in props
+      : "searchKey" in props;
 
   const containerHeight = `calc(48px + (${pageSize} * 64px) + 2px)`;
+  const cursorProps = isCursor ? (props as CursorDataTableProps<TData>) : null;
 
   return (
     <div className="w-full space-y-4">
-      {/* TOOLBAR */}
       {showSearch && (
         <div className="flex items-center justify-end">
           <div className="relative w-full sm:w-80">
@@ -208,34 +245,62 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
 
       <div className="flex items-center justify-between px-1">
         <div className="text-sm text-muted-foreground font-medium">
-          {paginationText
-            ? paginationText(currentStart, currentEnd, totalEntries)
-            : `Showing ${currentStart} to ${currentEnd} of ${totalEntries} entries`}
+          {isCursor
+            ? (cursorProps?.rowCountLabel ??
+              `${processedData.length} on this page`)
+            : paginationText
+              ? paginationText(currentStart, currentEnd, totalEntries)
+              : `Showing ${currentStart} to ${currentEnd} of ${totalEntries} entries`}
         </div>
         <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-lg border-border/60 shadow-sm"
-            onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="text-sm font-medium w-12 text-center text-foreground tabular-nums">
-            {currentPage} / {totalPages}
-          </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-lg border-border/60 shadow-sm"
-            onClick={() =>
-              handlePageChange(Math.min(currentPage + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          {isCursor && cursorProps ? (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg border-border/60 shadow-sm"
+                onClick={cursorProps.onFirstPage}
+                disabled={cursorProps.isFirstPage}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg border-border/60 shadow-sm"
+                onClick={cursorProps.onNextPage}
+                disabled={!cursorProps.hasNextPage}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg border-border/60 shadow-sm"
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-sm font-medium w-12 text-center text-foreground tabular-nums">
+                {currentPage} / {totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-lg border-border/60 shadow-sm"
+                onClick={() =>
+                  handlePageChange(Math.min(currentPage + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
