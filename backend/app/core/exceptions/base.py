@@ -38,3 +38,15 @@ class ConflictError(NidusException):
 
     def __init__(self, message_key: str, **kwargs: Any) -> None:
         super().__init__(code="DATA_CONFLICT", message_key=message_key, status_code=409, **kwargs)
+
+
+class RateLimitError(NidusException):
+    def __init__(self, retry_after: int = 60, **kwargs: Any) -> None:
+        self.retry_after: int = retry_after
+        super().__init__(
+            code="RATE_LIMIT_EXCEEDED",
+            message_key="common.rate_limited",
+            status_code=429,
+            retry_after=retry_after,
+            **kwargs,
+        )

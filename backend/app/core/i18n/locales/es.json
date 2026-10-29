@@ -4,7 +4,8 @@
         "validation_error": "La validación de los datos falló.",
         "unauthorized": "No está autorizado para realizar esta acción.",
         "forbidden": "Acceso denegado.",
-        "not_found": "El recurso solicitado no fue encontrado."
+        "not_found": "El recurso solicitado no fue encontrado.",
+        "rate_limited": "Demasiadas solicitudes. Inténtelo de nuevo más tarde."
     },
     "success": {
         "onboarding_complete": "Onboarding completado exitosamente.",

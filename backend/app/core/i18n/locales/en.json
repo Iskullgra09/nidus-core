@@ -4,7 +4,8 @@
         "validation_error": "Input validation failed.",
         "unauthorized": "You are not authorized to perform this action.",
         "forbidden": "Access denied.",
-        "not_found": "The requested resource was not found."
+        "not_found": "The requested resource was not found.",
+        "rate_limited": "Too many requests. Please try again later."
     },
     "success": {
         "onboarding_complete": "Onboarding completed successfully.",

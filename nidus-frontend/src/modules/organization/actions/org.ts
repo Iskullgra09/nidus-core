@@ -7,6 +7,10 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
 import { redirectTo } from "@/core/i18n/routing";
 import { ActionResponse } from "@/core/types/api";
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+} from "@/modules/identity/lib/session-cookie";
 import { OrganizationUpdatePayload } from "../types";
 
 export async function updateOrganizationAction(
@@ -67,7 +71,7 @@ export async function deleteOrganizationAction(): Promise<ActionResponse> {
     });
 
     if (response.status === "success") {
-      cookieStore.delete("nidus_session");
+      cookieStore.set(SESSION_COOKIE_NAME, "", sessionCookieOptions(0));
       redirectTo("/login", await getLocale());
     }
 

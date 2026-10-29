@@ -6,21 +6,19 @@ import { redirectTo } from "@/core/i18n/routing";
 import { fetchClient } from "@/core/api/client";
 import { UserProfileResponse } from "../types/user";
 import { UserOrganizationSummary } from "../types/auth";
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+} from "../lib/session-cookie";
 
 export async function setSessionCookie(token: string) {
   const cookieStore = await cookies();
-  cookieStore.set("nidus_session", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
+  cookieStore.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
 }
 
 export async function getCurrentUser(): Promise<UserProfileResponse | null> {
   const cookieStore = await cookies();
-  const session = cookieStore.get("nidus_session")?.value;
+  const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   if (!session) return null;
 
@@ -32,12 +30,12 @@ export async function getCurrentUser(): Promise<UserProfileResponse | null> {
 }
 
 export async function hasSessionCookie(): Promise<boolean> {
-  return Boolean((await cookies()).get("nidus_session")?.value);
+  return Boolean((await cookies()).get(SESSION_COOKIE_NAME)?.value);
 }
 
 export async function getUserOrganizations(): Promise<UserOrganizationSummary[]> {
   const cookieStore = await cookies();
-  const session = cookieStore.get("nidus_session")?.value;
+  const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   if (!session) return [];
 
@@ -51,6 +49,6 @@ export async function getUserOrganizations(): Promise<UserOrganizationSummary[]>
 
 export async function logoutAction() {
   const cookieStore = await cookies();
-  cookieStore.delete("nidus_session");
+  cookieStore.set(SESSION_COOKIE_NAME, "", sessionCookieOptions(0));
   redirectTo("/login", await getLocale());
 }

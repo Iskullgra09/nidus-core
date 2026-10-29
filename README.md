@@ -59,7 +59,7 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 | 11 | Observability & Audit | Done |
 | 12 | Premium UX (Cmd+K, live dashboard, URL-driven members) | Done |
 | 13 | DevEx & Containers (API image + compose) | Done |
-| 14 | Security Hardening | Pending |
+| 14 | Security Hardening | Done |
 | 15 | Avatars & Media | Pending |
 | 16 | CI Frontend & Quality Gates | Pending |
 
@@ -134,15 +134,15 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 - [x] Demo seed (`backend/seed.py`) â€” multi-org users/roles/invites; optional `SEED_DEMO=true`.
 - [x] ADR 056 â€” API container delivered; FE stays on host.
 
+### Phase 14 â€” Security hardening
+
+- [x] In-memory rate limiting on auth, onboarding, and invitation abuse paths (`429` + `Retry-After`).
+- [x] Session cookie hardening â€” shared HttpOnly / SameSite=Lax / Secure flags; no CSRF tokens (same-origin Server Actions).
+- [x] Deploy secrets checklist (`.env.example` + Operational section); ADR 057.
+
 ---
 
 ## Upcoming Phases
-
-### Phase 14 â€” Security hardening
-
-- [ ] Rate limiting on auth and invitation endpoints.
-- [ ] Session/cookie hardening review (SameSite, CSRF strategy as needed).
-- [ ] Secrets and environment checklist for deployments.
 
 ### Phase 15 â€” Avatars & media
 
@@ -171,6 +171,20 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 ## Operational Command Center
 
 Use these commands from the project root. Ensure your `.env` is present at the root.
+
+### Deploy secrets checklist
+
+Before any shared or production deploy:
+
+- [ ] Copy `.env.example` → `.env` (never commit `.env`).
+- [ ] Set a long random `SECRET_KEY` (JWT signing).
+- [ ] Keep `ALGORITHM=HS256` unless you intentionally change the JWT stack.
+- [ ] Use strong distinct `APP_PASSWORD` and `ADMIN_PASSWORD`.
+- [ ] Set `FRONTEND_URL` to the real HTTPS origin (CORS + email links).
+- [ ] Configure real SMTP credentials (or an approved relay).
+- [ ] Leave `RATE_LIMIT_ENABLED=true` in shared environments.
+- [ ] Serve the frontend over HTTPS and keep session `Secure` (`NODE_ENV=production` or `COOKIE_SECURE=true`).
+- [ ] Confirm `SEED_DEMO=false` outside local demo boxes.
 
 ### Infrastructure (Docker)
 

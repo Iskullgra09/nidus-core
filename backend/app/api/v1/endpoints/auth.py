@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_jwt_payload, get_language
 from app.core.db import get_session
 from app.core.i18n.service import i18n
+from app.core.rate_limit import RateLimit
 from app.schemas.requests.auth import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -22,7 +23,12 @@ from app.services.email_service import EmailService
 router = APIRouter()
 
 
-@router.post("/login", response_model=GenericResponse[dict[str, Any]], status_code=status.HTTP_200_OK)
+@router.post(
+    "/login",
+    response_model=GenericResponse[dict[str, Any]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("auth.login", tier="strict"))],
+)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_session),
@@ -36,7 +42,12 @@ async def login(
     return GenericResponse(data=result, message=i18n.t("auth.login_success", lang=lang))
 
 
-@router.post("/select-org", response_model=GenericResponse[dict[str, str]], status_code=status.HTTP_200_OK)
+@router.post(
+    "/select-org",
+    response_model=GenericResponse[dict[str, str]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("auth.select_org", tier="moderate"))],
+)
 async def select_organization(
     data: SelectOrganizationRequest,
     session: AsyncSession = Depends(get_session),
@@ -62,7 +73,12 @@ async def switch_organization(
     return GenericResponse(data={"access_token": token, "token_type": "bearer"}, message=success_msg)
 
 
-@router.post("/forgot-password", response_model=GenericResponse[Any], status_code=status.HTTP_200_OK)
+@router.post(
+    "/forgot-password",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("auth.forgot_password", tier="strict"))],
+)
 async def forgot_password(
     data: ForgotPasswordRequest,
     background_tasks: BackgroundTasks,
@@ -79,7 +95,12 @@ async def forgot_password(
     return GenericResponse[Any](data=None, message=success_msg)
 
 
-@router.post("/reset-password", response_model=GenericResponse[Any], status_code=status.HTTP_200_OK)
+@router.post(
+    "/reset-password",
+    response_model=GenericResponse[Any],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("auth.reset_password", tier="strict"))],
+)
 async def reset_password(
     data: ResetPasswordRequest,
     session: AsyncSession = Depends(get_session),

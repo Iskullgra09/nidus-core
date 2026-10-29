@@ -1070,3 +1070,24 @@ ADR 049 deferred the FastAPI Dockerfile while compose already declared a broken 
 ### Consequences
 * **Positive:** Clones can run `docker compose up -d --build` for DB+API; migrations apply on container start.
 * **Negative:** API code changes require image rebuild (or host `uv` workflow); FE is still a separate process.
+
+---
+
+## ADR 057: Security Hardening — Rate Limits & Session Cookie (Phase 14)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+Auth, onboarding, and invitation endpoints had no request throttling. The session JWT lives in an HttpOnly cookie set by Next.js Server Actions; CSRF tokens were undecided. Shared/deploy environments needed an explicit secrets checklist.
+
+### Decision
+1. **In-memory rate limiting** (`app/core/rate_limit.py`) keyed by scope + client IP (from `RequestContext` / `X-Forwarded-For`). Strict tier (default 10/min) on login, forgot/reset password, onboarding, and invite accept; moderate tier (default 30/min) on select-org, invite create, and invite verify. Exceeding the window raises `RateLimitError` → HTTP `429` with `Retry-After`.
+2. **No Redis** in Phase 14. Limits are per API process; multi-replica deployments need a shared store later.
+3. **No CSRF tokens.** `nidus_session` is HttpOnly, `SameSite=Lax`, path `/`, 7-day max-age, and is only set/cleared by same-origin Next Server Actions / Route Handlers. That is sufficient for this FE↔API layout.
+4. **Cookie flags** are centralized in `nidus-frontend/src/modules/identity/lib/session-cookie.ts`. `Secure` is on when `NODE_ENV=production` or `COOKIE_SECURE=true`.
+5. **Secrets checklist** lives in `.env.example` comments and the README Operational section (`SECRET_KEY`, passwords, `FRONTEND_URL`, SMTP, rate limits, cookie Secure).
+
+### Consequences
+* **Positive:** Abuse paths are throttled without new infrastructure; cookie set/clear stays consistent; deployers have a concrete env checklist.
+* **Negative:** In-memory counters reset on process restart and do not coordinate across replicas; CSRF remains a documented non-requirement only while the cookie stays same-site / Server-Action gated.

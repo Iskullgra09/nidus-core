@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
 import { ActionResponse } from "@/core/types/api";
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+} from "../lib/session-cookie";
 import { ForgotPasswordFormData, ResetPasswordPayload } from "../types/auth";
 
 export async function forgotPasswordAction(
@@ -46,7 +50,7 @@ export async function resetPasswordAction(
 
     if (response.status === "success") {
       const cookieStore = await cookies();
-      cookieStore.delete("nidus_session");
+      cookieStore.set(SESSION_COOKIE_NAME, "", sessionCookieOptions(0));
       return { status: "success", message: tReset("successMessage") };
     }
 

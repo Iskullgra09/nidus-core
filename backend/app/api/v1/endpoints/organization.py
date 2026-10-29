@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import ScopeGuard, get_current_org_id, get_current_tenant_session, get_language
 from app.core.db import get_session
 from app.core.i18n.service import i18n
+from app.core.rate_limit import RateLimit
 from app.models.identity.scopes import NidusScope
 from app.schemas.requests.organization import OnboardingCreate, OrganizationUpdate
 from app.schemas.responses.base import GenericResponse
@@ -16,7 +17,12 @@ from app.services.organization_service import OrganizationService
 router = APIRouter()
 
 
-@router.post("/onboarding", response_model=GenericResponse[OnBoardingResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/onboarding",
+    response_model=GenericResponse[OnBoardingResponse],
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimit("org.onboarding", tier="strict"))],
+)
 async def onboard_tenant(data: OnboardingCreate, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
     """Creates a new organization, its first admin user, and assigns the correct roles."""
     org_id, user_id = await OrganizationService.create_onboarding(session, data)

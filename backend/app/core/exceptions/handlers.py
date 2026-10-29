@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.exceptions.base import NidusException
+from app.core.exceptions.base import NidusException, RateLimitError
 from app.core.i18n.request import get_request_language
 from app.core.i18n.service import i18n
 
@@ -19,9 +19,14 @@ async def nidus_exception_handler(request: Request, exc: NidusException) -> JSON
 
     translated_message: str = i18n.t(exc.message_key, lang=lang, **exc.params)
 
+    headers: Dict[str, str] = {}
+    if isinstance(exc, RateLimitError):
+        headers["Retry-After"] = str(exc.retry_after)
+
     return JSONResponse(
         status_code=exc.status_code,
         content={"status": "error", "code": exc.code, "message": translated_message, "data": exc.params if exc.params else None},
+        headers=headers,
     )
 
 

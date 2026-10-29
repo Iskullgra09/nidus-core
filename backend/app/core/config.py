@@ -34,6 +34,11 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: AnyHttpUrl
 
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_STRICT_MAX: int = 10
+    RATE_LIMIT_MODERATE_MAX: int = 30
+
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""

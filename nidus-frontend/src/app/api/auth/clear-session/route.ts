@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/core/i18n/routing";
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+} from "@/modules/identity/lib/session-cookie";
 
 export async function GET(request: NextRequest) {
   const localeParam = request.nextUrl.searchParams.get("locale");
@@ -12,13 +16,7 @@ export async function GET(request: NextRequest) {
     new URL(`/${locale}/login`, request.url),
   );
 
-  response.cookies.set("nidus_session", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  response.cookies.set(SESSION_COOKIE_NAME, "", sessionCookieOptions(0));
 
   return response;
 }

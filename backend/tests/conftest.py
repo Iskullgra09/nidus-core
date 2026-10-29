@@ -50,6 +50,14 @@ def override_db_setup(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(app.core.db, "async_session_maker", app_session_maker)
 
 
+@pytest.fixture(autouse=True)
+def disable_rate_limit_by_default(monkeypatch: MonkeyPatch) -> None:
+    from app.core.rate_limit import clear_rate_limit_store
+
+    clear_rate_limit_store()
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
+
+
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """

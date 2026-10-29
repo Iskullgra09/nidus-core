@@ -8,6 +8,7 @@ from app.api.deps import ScopeGuard, get_current_tenant_session, get_jwt_payload
 from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError
 from app.core.i18n.service import i18n
+from app.core.rate_limit import RateLimit
 from app.models.identity.scopes import NidusScope
 from app.schemas.filters.identity import InvitationFilter, MemberFilter
 from app.schemas.requests.identity import (
@@ -37,7 +38,10 @@ router = APIRouter()
     "/invitations",
     response_model=GenericResponse[InvitationResponse],
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(ScopeGuard(NidusScope.MEMBER_INVITE))],
+    dependencies=[
+        Depends(RateLimit("identity.invite", tier="moderate")),
+        Depends(ScopeGuard(NidusScope.MEMBER_INVITE)),
+    ],
 )
 async def invite_member(
     data: InvitationCreate,
@@ -66,13 +70,23 @@ async def invite_member(
     )
 
 
-@router.get("/invitations/verify/{token}", response_model=GenericResponse[dict[str, bool]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/invitations/verify/{token}",
+    response_model=GenericResponse[dict[str, bool]],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("identity.verify_invite", tier="moderate"))],
+)
 async def verify_invitation(token: str, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
     await InvitationService.get_valid_invitation(session, token)
     return GenericResponse(data={"valid": True}, message=i18n.t("success.valid_token", lang=lang))
 
 
-@router.post("/invitations/accept", response_model=GenericResponse[InvitationAcceptedResponse], status_code=status.HTTP_200_OK)
+@router.post(
+    "/invitations/accept",
+    response_model=GenericResponse[InvitationAcceptedResponse],
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(RateLimit("identity.accept_invite", tier="strict"))],
+)
 async def accept_invitation(
     data: InvitationAccept,
     session: AsyncSession = Depends(get_session),

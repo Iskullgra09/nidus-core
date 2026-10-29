@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
 import { ActionResponse } from "@/core/types/api";
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+} from "../lib/session-cookie";
 import { ChangePasswordPayload, UpdateProfilePayload } from "../types/user";
 
 export async function changePasswordAction(
@@ -28,7 +32,7 @@ export async function changePasswordAction(
     });
 
     if (response.status === "success") {
-      cookieStore.delete("nidus_session");
+      cookieStore.set(SESSION_COOKIE_NAME, "", sessionCookieOptions(0));
       return { status: "success", message: tSettings("passwordSuccess") };
     }
 
