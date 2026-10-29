@@ -12,6 +12,10 @@ from app.core.exceptions.handlers import (
     sqlalchemy_exception_handler,
     validation_exception_handler,
 )
+from app.core.logging import configure_logging
+from app.core.middleware import RequestContextMiddleware
+
+configure_logging()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,6 +23,8 @@ app = FastAPI(
     description="NIDUS Core Multitenant API",
 )
 
+# RequestContextMiddleware outermost so it wraps CORS + all handlers.
+app.add_middleware(RequestContextMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[str(settings.FRONTEND_URL), "http://localhost:3000"],

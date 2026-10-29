@@ -88,7 +88,14 @@ async def cleanup_and_seed() -> None:
     """
     async with admin_session_maker() as session:
         async with session.begin():
-            tables_to_truncate: List[str] = ["invitation", "member", "role", '"user"', "organization"]
+            tables_to_truncate: List[str] = [
+                "audit_log",
+                "invitation",
+                "member",
+                "role",
+                '"user"',
+                "organization",
+            ]
             for table in tables_to_truncate:
                 await session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
 

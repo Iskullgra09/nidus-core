@@ -10,10 +10,12 @@ from app.core.exceptions.base import ConflictError, EntityNotFoundError
 from app.core.rls import clear_rls_context
 from app.core.security import hash_password
 from app.models import Member, Organization, User
+from app.models.audit import AuditAction, AuditResourceType
 from app.models.identity.invitation import Invitation
 from app.models.identity.role import Role
 from app.models.identity.scopes import DEFAULT_ROLES_CONFIG, DefaultRole
 from app.schemas.requests.organization import OnboardingCreate, OrganizationUpdate
+from app.services.audit_service import AuditService
 
 
 class OrganizationService:
@@ -77,6 +79,15 @@ class OrganizationService:
         )
         session.add(new_member)
 
+        await AuditService.record(
+            session,
+            action=AuditAction.ORG_CREATE,
+            organization_id=new_org.id,
+            actor_user_id=user.id,
+            resource_type=AuditResourceType.ORGANIZATION,
+            resource_id=new_org.id,
+            details={"slug": new_org.slug, "name": new_org.name},
+        )
         await session.commit()
 
         return new_org.id, user.id
@@ -102,6 +113,14 @@ class OrganizationService:
             org.slug = data.slug
 
         try:
+            await AuditService.record(
+                session,
+                action=AuditAction.ORG_UPDATE,
+                organization_id=org.id,
+                resource_type=AuditResourceType.ORGANIZATION,
+                resource_id=org.id,
+                details={"name": org.name, "slug": org.slug},
+            )
             await session.commit()
             await session.refresh(org)
         except IntegrityError:
@@ -150,4 +169,11 @@ class OrganizationService:
             .values(deleted_at=delete_time)
         )
 
+        await AuditService.record(
+            session,
+            action=AuditAction.ORG_DELETE,
+            organization_id=org_id,
+            resource_type=AuditResourceType.ORGANIZATION,
+            resource_id=org_id,
+        )
         await session.commit()

@@ -20,6 +20,8 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from app.core.config import settings  # type: ignore
+from app.models.audit.audit_log import AuditLog  # type: ignore
+from app.models.identity.invitation import Invitation  # type: ignore
 from app.models.identity.member import Member  # type: ignore
 from app.models.identity.role import Role  # type: ignore
 from app.models.identity.user import User  # type: ignore

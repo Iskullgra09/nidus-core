@@ -9,10 +9,12 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions.base import EntityNotFoundError
 from app.core.pagination import paginate_with_cursor
 from app.models import Member, User
+from app.models.audit import AuditAction, AuditResourceType
 from app.models.identity.role import Role
 from app.schemas.filters.identity import MemberFilter
 from app.schemas.requests.pagination import CursorParams
 from app.schemas.responses.pagination import CursorPage, PageInfo
+from app.services.audit_service import AuditService
 
 
 class MemberService:
@@ -59,7 +61,20 @@ class MemberService:
         if not member:
             raise EntityNotFoundError(entity="member")
 
+        previous_role_id = member.role_id
         member.role_id = new_role_id
+        await AuditService.record(
+            session,
+            action=AuditAction.MEMBER_ROLE_UPDATE,
+            organization_id=member.organization_id,
+            resource_type=AuditResourceType.MEMBER,
+            resource_id=member.id,
+            details={
+                "user_id": str(member.user_id),
+                "previous_role_id": str(previous_role_id),
+                "new_role_id": str(new_role_id),
+            },
+        )
         await session.commit()
 
         fresh_stmt = (
@@ -80,4 +95,12 @@ class MemberService:
             raise EntityNotFoundError(entity="member")
 
         member.deleted_at = datetime.now(timezone.utc)
+        await AuditService.record(
+            session,
+            action=AuditAction.MEMBER_REMOVE,
+            organization_id=member.organization_id,
+            resource_type=AuditResourceType.MEMBER,
+            resource_id=member.id,
+            details={"user_id": str(member.user_id)},
+        )
         await session.commit()

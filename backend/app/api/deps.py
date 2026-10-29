@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.db import get_session
 from app.core.exceptions.base import AuthenticationError, NidusException
 from app.core.i18n.request import get_request_language
+from app.core.request_context import RequestContext
 from app.core.rls import set_rls_context
 from app.models.identity.member import Member
 from app.models.identity.scopes import NidusScope
@@ -25,7 +26,11 @@ async def get_jwt_payload(token: Annotated[str, Depends(oauth2_scheme)]) -> dict
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if not payload.get("sub") or not payload.get("org_id"):
             raise AuthenticationError(message_key="auth.invalid_token")
+        RequestContext.set_actor(UUID(str(payload["sub"])))
+        RequestContext.set_organization(UUID(str(payload["org_id"])))
         return payload
+    except AuthenticationError:
+        raise
     except Exception:
         raise AuthenticationError(message_key="auth.token_expired")
 

@@ -9,10 +9,12 @@ from app.core.exceptions.base import AuthenticationError, ConflictError, EntityN
 from app.core.rls import clear_rls_context
 from app.core.security import hash_password, verify_password
 from app.models import Member, User
+from app.models.audit import AuditAction, AuditResourceType
 from app.models.identity.invitation import Invitation
 from app.models.identity.role import Role
 from app.schemas.filters.identity import InvitationFilter
 from app.schemas.responses.identity import InvitationResponse
+from app.services.audit_service import AuditService
 
 
 class InvitationService:
@@ -55,6 +57,14 @@ class InvitationService:
         new_invite = Invitation(email=email, role_id=role_id, organization_id=org_id)
         session.add(new_invite)
         await session.flush()
+        await AuditService.record(
+            session,
+            action=AuditAction.INVITATION_CREATE,
+            organization_id=org_id,
+            resource_type=AuditResourceType.INVITATION,
+            resource_id=new_invite.id,
+            details={"email": email, "role_id": str(role_id)},
+        )
         await session.commit()
         return new_invite
 
@@ -93,6 +103,15 @@ class InvitationService:
         )
         invitation.is_accepted = True
 
+        await AuditService.record(
+            session,
+            action=AuditAction.INVITATION_ACCEPT,
+            organization_id=invitation.organization_id,
+            actor_user_id=user.id,
+            resource_type=AuditResourceType.INVITATION,
+            resource_id=invitation.id,
+            details={"email": invitation.email, "role_id": str(invitation.role_id)},
+        )
         await session.commit()
         return user.id, invitation.organization_id, invitation.role_id
 
@@ -151,4 +170,12 @@ class InvitationService:
             raise ConflictError(message_key="invitation.already_accepted")
 
         invitation.deleted_at = datetime.now(timezone.utc)
+        await AuditService.record(
+            session,
+            action=AuditAction.INVITATION_REVOKE,
+            organization_id=invitation.organization_id,
+            resource_type=AuditResourceType.INVITATION,
+            resource_id=invitation.id,
+            details={"email": invitation.email},
+        )
         await session.commit()

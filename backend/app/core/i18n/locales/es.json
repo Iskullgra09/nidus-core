@@ -28,7 +28,8 @@
         "invitations_retrieved": "Invitaciones obtenidas exitosamente.",
         "invitation_revoked": "Invitación revocada exitosamente.",
         "scopes_retrieved": "Permisos obtenidos exitosamente.",
-        "valid_token": "El token de invitación es válido."
+        "valid_token": "El token de invitación es válido.",
+        "audit_logs_retrieved": "Registros de auditoría obtenidos exitosamente."
     },
     "validation": {
         "invalid_slug_format": "El identificador (slug) solo debe contener letras minúsculas, números y guiones."

@@ -7,9 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions.base import ConflictError
 from app.models import Member
+from app.models.audit import AuditAction, AuditResourceType
 from app.models.identity.role import Role
 from app.schemas.requests.identity import RoleCreate, RoleUpdate
 from app.schemas.responses.identity import RoleResponse
+from app.services.audit_service import AuditService
 from app.services.identity.role_policy import (
     ensure_custom_role,
     to_role_response,
@@ -48,6 +50,14 @@ class RoleService:
         )
         session.add(role)
         await session.flush()
+        await AuditService.record(
+            session,
+            action=AuditAction.ROLE_CREATE,
+            organization_id=org_id,
+            resource_type=AuditResourceType.ROLE,
+            resource_id=role.id,
+            details={"name": role.name, "scopes": role.scopes},
+        )
         await session.commit()
         return to_role_response(role)
 
@@ -76,6 +86,14 @@ class RoleService:
             validate_scopes(data.scopes)
             role.scopes = data.scopes
 
+        await AuditService.record(
+            session,
+            action=AuditAction.ROLE_UPDATE,
+            organization_id=role.organization_id,
+            resource_type=AuditResourceType.ROLE,
+            resource_id=role.id,
+            details={"name": role.name, "scopes": role.scopes},
+        )
         await session.commit()
         return to_role_response(role)
 
@@ -95,4 +113,12 @@ class RoleService:
             raise ConflictError(message_key="role.in_use")
 
         role.deleted_at = datetime.now(timezone.utc)
+        await AuditService.record(
+            session,
+            action=AuditAction.ROLE_DELETE,
+            organization_id=role.organization_id,
+            resource_type=AuditResourceType.ROLE,
+            resource_id=role.id,
+            details={"name": role.name},
+        )
         await session.commit()

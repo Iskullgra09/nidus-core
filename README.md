@@ -98,7 +98,7 @@ See **ADR 053** in `docs/architecture.md` for the full decision.
 - [x] Frontend foundation: locale-safe routing, unified `grantsAccess`, `/organizations/me` + danger zone, module boundaries (`identity` / `access` / `organization`) · ADR 053.
 
 #### **Phase 11: Observability & Audit**
-- [ ] Structured logging · `audit_log` table.
+- [x] Structured JSON logging (`RequestContextMiddleware`) · append-only `audit_log` + RLS · `AuditService` · `GET /audit-logs` (`audit:read`) · ADR 054.
 
 #### **Phase 12: Premium UX** *(original Phase 7)*
 - [ ] Command Palette (Cmd+K) · modular sub-tabs · dashboard with real data · URL-driven server tables.
