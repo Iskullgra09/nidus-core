@@ -28,7 +28,8 @@
         "invitations_retrieved": "Invitations retrieved successfully.",
         "invitation_revoked": "Invitation revoked successfully.",
         "scopes_retrieved": "Permission scopes retrieved successfully.",
-        "valid_token": "Invitation token is valid."
+        "valid_token": "Invitation token is valid.",
+        "audit_logs_retrieved": "Audit logs retrieved successfully."
     },
     "validation": {
         "invalid_slug_format": "Slug must contain only lowercase letters, numbers, and hyphens."

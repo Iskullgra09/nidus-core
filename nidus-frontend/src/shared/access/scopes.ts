@@ -8,6 +8,7 @@ export enum NidusScope {
   MEMBER_INVITE = "identity:member:invite",
   ROLE_READ = "identity:role:read",
   ROLE_WRITE = "identity:role:write",
+  AUDIT_READ = "audit:read",
 }
 
 /** Assignable scopes mirrored from backend NidusScope (excluding SUPERADMIN). */

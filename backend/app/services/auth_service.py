@@ -17,7 +17,9 @@ from app.core.security import (
     verify_password,
 )
 from app.models import Member, User
+from app.models.audit import AuditAction, AuditResourceType
 from app.schemas.responses.auth import UserOrganizationSummary
+from app.services.audit_service import AuditService
 
 
 class AuthService:
@@ -93,7 +95,17 @@ class AuthService:
             raise NidusException(code="NO_ACTIVE_ORG", message_key="common.forbidden", status_code=403)
 
         if len(memberships) == 1:
-            token = AuthService._build_token_for_membership(user, memberships[0])
+            membership = memberships[0]
+            await AuditService.record(
+                session,
+                action=AuditAction.AUTH_LOGIN,
+                organization_id=membership.organization_id,
+                actor_user_id=user.id,
+                resource_type=AuditResourceType.SESSION,
+                details={"mode": "single_org"},
+                commit=True,
+            )
+            token = AuthService._build_token_for_membership(user, membership)
             return {"access_token": token, "token_type": "bearer"}
 
         return {
@@ -127,6 +139,15 @@ class AuthService:
         if not user:
             raise EntityNotFoundError(entity="user")
 
+        await AuditService.record(
+            session,
+            action=AuditAction.AUTH_SELECT_ORG,
+            organization_id=membership.organization_id,
+            actor_user_id=user.id,
+            resource_type=AuditResourceType.ORGANIZATION,
+            resource_id=membership.organization_id,
+            commit=True,
+        )
         return AuthService._build_token_for_membership(user, membership)
 
     @staticmethod
@@ -142,6 +163,15 @@ class AuthService:
         if not user:
             raise EntityNotFoundError(entity="user")
 
+        await AuditService.record(
+            session,
+            action=AuditAction.AUTH_SWITCH_ORG,
+            organization_id=membership.organization_id,
+            actor_user_id=user.id,
+            resource_type=AuditResourceType.ORGANIZATION,
+            resource_id=membership.organization_id,
+            commit=True,
+        )
         return AuthService._build_token_for_membership(user, membership)
 
     @staticmethod

@@ -1007,3 +1007,24 @@ Nidus Core is not a product that accumulates vertical domains (inventory, payrol
 ### Consequences
 * **Positive:** Clear place for new platform code; clones inherit enforceable boundaries; IAM is a first-class module.
 * **Negative:** Slightly more import paths; contributors must learn the layer map (documented in README + this ADR).
+---
+
+## ADR 054: Observability & Append-Only Audit Log
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+Nidus Core needs platform-grade traceability for clones (who did what, in which tenant) and operable structured logs. Domain tables use soft-delete; forensic IAM/auth events must not be mutable by the app role.
+
+### Decision
+1. **Structured logging:** Stdlib JSON logs via `RequestContextMiddleware` + `JsonFormatter`. Each request gets `X-Request-ID`, and log lines include `request_id`, `method`, `path`, `status_code`, `latency_ms`, plus actor/org when JWT context is set. No passwords/tokens in logs or audit `metadata`.
+2. **`audit_log` table (append-only):** `UUIDMixin` + `TenantMixin` + `created_at` only (no soft-delete, no `updated_at`). App role grants are **SELECT + INSERT only** (no UPDATE/DELETE). RLS isolates by `organization_id` (empty setting bypass for auth/onboarding writers).
+3. **`AuditService.record`:** Single write API used from domain services (same transaction as the mutation). Auth login/select/switch may `commit=True` when no other mutation exists.
+4. **Events in Core:** `auth.login` (single-org only), `auth.select_org`, `auth.switch_org`, `organization.create|update|delete`, invitation create/accept/revoke, role CRUD, member role change/remove. Multi-org login picker is audited at `select_org`, not at password validation. Failed login and password reset/change stay in structured logs only (no durable audit row without a clear tenant).
+5. **Scope `audit:read`:** New `NidusScope.AUDIT_READ`. Granted to default **Admin** (+ Owner via `*`). Not implied by `org:read` — audit trails are more sensitive than org metadata. Viewer/Member do not get it by default.
+6. **API:** `GET /api/v1/audit-logs` with cursor pagination + filters (`action`, `actor_user_id`, `resource_type`), guarded by `ScopeGuard(AUDIT_READ)`. UI deferred to a later phase.
+
+### Consequences
+* **Positive:** Forensic trail survives soft-deletes; clones inherit a clear audit module; RLS + grant hardening reduces tampering.
+* **Negative:** Existing Admin roles created before this ADR do not auto-receive `audit:read` (Owner still can via `*`); password security events are log-only until a dedicated non-tenant store exists.

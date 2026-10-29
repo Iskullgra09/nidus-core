@@ -21,6 +21,8 @@ class NidusScope(StrEnum):
     ROLE_READ = "identity:role:read"
     ROLE_WRITE = "identity:role:write"
 
+    AUDIT_READ = "audit:read"
+
     @classmethod
     def get_implied_scopes(cls, scope: str) -> Set[str]:
         """Calculates implicit permissions granted by holding a scope (write → read, invite → read)."""
@@ -89,6 +91,7 @@ DEFAULT_ROLES_CONFIG: Dict[DefaultRole, Dict[str, Any]] = {
             NidusScope.MEMBER_INVITE,
             NidusScope.ROLE_READ,
             NidusScope.ROLE_WRITE,
+            NidusScope.AUDIT_READ,
         ],
     },
     DefaultRole.MEMBER: {

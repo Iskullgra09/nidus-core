@@ -1,3 +1,4 @@
+from .audit.audit_log import AuditLog as AuditLog
 from .identity.invitation import Invitation as Invitation
 from .identity.member import Member as Member
 from .identity.role import Role as Role
