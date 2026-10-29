@@ -980,3 +980,30 @@ After Phase 10 IAM endpoints landed, a backend review surfaced authorization inc
 ### Consequences
 * **Positive:** Consistent API contract, safer RLS injection, clearer IAM boundaries, faster authorization on the JWT fast path.
 * **Negative:** Login response shape change requires clients/tests to read `response.data`. Legacy tokens without embedded scopes incur a DB lookup per guarded request until re-login.
+
+---
+
+## ADR 053: Frontend Foundation Module Boundaries (Clone-Ready Core)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+Nidus Core is not a product that accumulates vertical domains (inventory, payroll, office). It is the **reusable foundation** for product forks (e.g. Nidus Inventario, Nidus Transacciones, Nidus Office). The frontend had blurred `identity` vs `organization` boundaries (roles/invites living under identity while org settings consumed them), a monolithic `auth.ts` action file, and no lint enforcement — risky when cloning the repo.
+
+### Decision
+1. **Layer map (frontend):**
+   - `core/` — API client, i18n routing, theme, generic types (no feature imports).
+   - `shared/` — design system + platform primitives (`shared/access` for `NidusScope`, `grantsAccess`, `hasScope`; `shared/validation` for Zod translator type).
+   - `modules/identity/` — auth session, login/select-org/switch-org, onboarding, password flows, user profile/preferences, settings shell nav.
+   - `modules/access/` — IAM feature: roles CRUD UI/actions, invitations, `CanAccess`.
+   - `modules/organization/` — tenant settings, members table, org switcher, danger zone (`DELETE /organizations/me`).
+   - `modules/shell/` — authenticated chrome that composes identity + organization (e.g. `TopBar`). Not a business domain.
+2. **Auth action split:** `identity/actions/{session,login,onboarding,password}.ts` with `auth.ts` as a barrel re-export for compatibility.
+3. **Authorization single source:** Edge `proxy.ts` and UI `hasScope` both use `shared/access` helpers mirroring backend `NidusScope.grants_access()`.
+4. **ESLint boundaries:** `no-restricted-imports` blocks `core → modules`, `shared → modules`, and `organization → identity/components` (org must use `modules/access` for IAM UI).
+5. **Product forks:** New business domains (inventory, transactions, etc.) belong in **downstream repos**, not in Nidus Core. Core only grows platform capabilities (auth, IAM, tenancy, shell, observability).
+
+### Consequences
+* **Positive:** Clear place for new platform code; clones inherit enforceable boundaries; IAM is a first-class module.
+* **Negative:** Slightly more import paths; contributors must learn the layer map (documented in README + this ADR).

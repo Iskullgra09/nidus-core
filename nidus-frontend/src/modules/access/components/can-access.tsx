@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { useAuth } from "@/modules/identity/contexts/auth-context";
-import { hasScope } from "@/shared/lib/permissions";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { hasScope } from "@/shared/access/permissions";
+import { NidusScope } from "@/shared/access/scopes";
 
 interface CanAccessProps {
   scope: NidusScope | string;

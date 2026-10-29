@@ -5,7 +5,7 @@ import {
   getCurrentUser,
   getUserOrganizations,
 } from "@/modules/identity/actions/auth";
-import { TopBar } from "@/shared/components/layout/top-bar";
+import { TopBar } from "@/modules/shell/components/top-bar";
 import { AuthProvider } from "@/modules/identity/contexts/auth-context";
 import { UserPreferencesSync } from "@/modules/identity/components/user-preferences-sync";
 

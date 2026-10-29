@@ -1,7 +1,9 @@
-import { UserProfileResponse } from "@/modules/identity/types/user";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { NidusScope } from "@/shared/access/scopes";
 
-type UserWithScopes = Pick<UserProfileResponse, "scopes" | "is_superuser">;
+type UserWithScopes = {
+  scopes: string[];
+  is_superuser: boolean;
+};
 
 /**
  * Mirrors backend NidusScope.get_implied_scopes().

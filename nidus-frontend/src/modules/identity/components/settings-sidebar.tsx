@@ -5,8 +5,8 @@ import { Link, usePathname } from "@/core/i18n/routing";
 import { useTranslations } from "next-intl";
 import { cn } from "@/shared/lib/utils";
 import { buttonVariants } from "@/shared/ui/button";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 
 type SidebarNavProps = React.HTMLAttributes<HTMLElement>;
 

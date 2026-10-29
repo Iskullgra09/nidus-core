@@ -8,11 +8,11 @@ import { MailX } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { DataTable, ColumnDef } from "@/shared/components/layout/data-table";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 
-import { InvitationResponse } from "@/modules/identity/types/invitation";
-import { revokeInvitationAction } from "@/modules/identity/actions/invitations";
+import { InvitationResponse } from "@/modules/access/types/invitation";
+import { revokeInvitationAction } from "@/modules/access/actions/invitations";
 
 interface PendingInvitationsTableProps {
   invitations: InvitationResponse[];

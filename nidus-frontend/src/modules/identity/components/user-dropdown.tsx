@@ -26,8 +26,8 @@ import {
 import { UserProfileResponse } from "../types/user";
 import { logoutAction } from "../actions/auth";
 import { updateProfileAction } from "../actions/user";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "../types/scopes";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 
 interface UserDropdownProps {
   user: UserProfileResponse;

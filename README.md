@@ -20,6 +20,21 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 | **Security** | Dual-Role Database Strategy (Migration Admin vs. App User) |
 | **Reliability** | Global Soft-Delete & Timezone-Aware Temporal Mixins |
 
+### What belongs in Nidus Core (vs product forks)
+
+Nidus Core is the **clone-ready platform**. Product domains (inventory, transactions, office/ops) live in **downstream repos**, not here.
+
+| Layer (frontend) | Responsibility |
+| :--- | :--- |
+| `core/` | API client, i18n routing, theme — no feature imports |
+| `shared/access` | `NidusScope`, `grantsAccess` / `hasScope` (mirrors backend) |
+| `modules/identity` | Auth session, login/org switch, profile, password |
+| `modules/access` | Roles, invitations, `CanAccess` |
+| `modules/organization` | Tenant settings, members, org switcher, danger zone |
+| `modules/shell` | Authenticated chrome (`TopBar`) composing identity + organization |
+
+See **ADR 053** in `docs/architecture.md` for the full decision.
+
 ---
 
 ## Project Roadmap (Updated Q2 2026)
@@ -67,9 +82,9 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 - [x] **CORS:** Explicit middleware for frontend origin + localhost.
 - [x] **Health Check:** DB connectivity probe with environment-aware status.
 - [x] **Test DB Isolation:** pytest uses `nidus_core_test` exclusively (never `nidus_core`).
+- [x] **ADR 049:** Monorepo container strategy (DB in Docker + `uv`/`pnpm` on host; Dockerfile API still optional).
 - [ ] **Dockerfile** for FastAPI backend (optional while using `uv` locally).
-- [ ] **Fix docker-compose.yml** API service volumes/context.
-- [ ] ADR 049: Monorepo Container Strategy.
+- [ ] **Fix docker-compose.yml** API service volumes/context (blocked on Dockerfile).
 
 #### **Phase 9: Multi-Organization Sessions** *(critical)*
 - [x] `GET /users/me/organizations` · `POST /auth/switch-org` · `POST /auth/select-org`.
@@ -80,6 +95,7 @@ Nidus is an enterprise-grade monorepo designed for massive scale. It implements 
 #### **Phase 10: IAM Completion**
 - [x] Custom roles CRUD · invitations list/revoke · sync `NidusScope` frontend ↔ backend · roles UI.
 - [x] Backend hardening: IAM service split · `GenericResponse` on all endpoints · JWT scope fast path · org path guard · ADR 052.
+- [x] Frontend foundation: locale-safe routing, unified `grantsAccess`, `/organizations/me` + danger zone, module boundaries (`identity` / `access` / `organization`) · ADR 053.
 
 #### **Phase 11: Observability & Audit**
 - [ ] Structured logging · `audit_log` table.

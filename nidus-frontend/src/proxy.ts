@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "@/core/i18n/routing";
-import { NidusScope } from "@/modules/identity/types/scopes";
-import { grantsAccess } from "@/shared/lib/permissions";
+import { NidusScope } from "@/shared/access/scopes";
+import { grantsAccess } from "@/shared/access/permissions";
 import { decodeJwt } from "jose";
 
 const intlMiddleware = createIntlMiddleware(routing);

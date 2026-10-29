@@ -3,8 +3,8 @@ import { getTranslations } from "next-intl/server";
 import {
   getAvailableRoles,
   getAssignableScopes,
-} from "@/modules/identity/actions/roles";
-import { RolesTable } from "@/modules/identity/components/roles-table";
+} from "@/modules/access/actions/roles";
+import { RolesTable } from "@/modules/access/components/roles-table";
 
 export default async function RolesPage() {
   const t = await getTranslations("SettingsRoles");

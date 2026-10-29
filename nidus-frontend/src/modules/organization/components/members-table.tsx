@@ -21,9 +21,9 @@ import { Badge } from "@/shared/ui/badge";
 
 import { MemberResponse } from "../types/members";
 import { updateMemberRoleAction, removeMemberAction } from "../actions/members";
-import { RoleResponse } from "@/modules/identity/types/roles";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { RoleResponse } from "@/modules/access/types/roles";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 import { DataTable, ColumnDef } from "@/shared/components/layout/data-table";
 
 interface MembersTableProps {

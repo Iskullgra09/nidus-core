@@ -5,8 +5,8 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Link } from "@/core/i18n/routing";
 import { Button } from "@/shared/ui/button";
 import { AuthCard } from "@/shared/components/layout/auth-card";
-import { AcceptInviteForm } from "@/modules/identity/components/accept-invite-form";
-import { verifyInvitationToken } from "@/modules/identity/actions/invitations";
+import { AcceptInviteForm } from "@/modules/access/components/accept-invite-form";
+import { verifyInvitationToken } from "@/modules/access/actions/invitations";
 
 interface InvitePageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

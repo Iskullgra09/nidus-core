@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { DataTable, ColumnDef } from "@/shared/components/layout/data-table";
-import { CanAccess } from "@/shared/components/auth/can-access";
-import { NidusScope } from "@/modules/identity/types/scopes";
+import { CanAccess } from "@/modules/access/components/can-access";
+import { NidusScope } from "@/shared/access/scopes";
 
 import { RoleResponse } from "../types/roles";
 import { ScopeResponse } from "../types/scopes-catalog";
