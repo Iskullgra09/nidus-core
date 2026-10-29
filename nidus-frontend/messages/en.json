@@ -131,7 +131,17 @@
     "saveChanges": "Save Changes",
     "savingChanges": "Saving...",
     "noChangesDetected": "No changes to save.",
-    "successMessage": "Organization updated successfully."
+    "successMessage": "Organization updated successfully.",
+    "dangerZoneTitle": "Danger zone",
+    "dangerZoneDescription": "Permanently soft-delete this organization and revoke access for all members.",
+    "deleteButton": "Delete organization",
+    "deleteDialogTitle": "Delete organization?",
+    "deleteDialogDescription": "This will soft-delete {name}. Members will lose access immediately.",
+    "deleteConfirmHint": "Type the slug \"{slug}\" to confirm.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete permanently",
+    "deleting": "Deleting...",
+    "deleteError": "Could not delete the organization."
   },
   "SettingsMembers": {
     "title": "Members",

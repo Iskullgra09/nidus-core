@@ -131,7 +131,17 @@
     "saveChanges": "Guardar Cambios",
     "savingChanges": "Guardando...",
     "noChangesDetected": "No hay cambios para guardar.",
-    "successMessage": "Organización actualizada exitosamente."
+    "successMessage": "Organización actualizada exitosamente.",
+    "dangerZoneTitle": "Zona de peligro",
+    "dangerZoneDescription": "Elimina (soft-delete) esta organización y revoca el acceso de todos los miembros.",
+    "deleteButton": "Eliminar organización",
+    "deleteDialogTitle": "¿Eliminar organización?",
+    "deleteDialogDescription": "Esto hará soft-delete de {name}. Los miembros perderán el acceso de inmediato.",
+    "deleteConfirmHint": "Escribe el slug \"{slug}\" para confirmar.",
+    "deleteCancel": "Cancelar",
+    "deleteConfirm": "Eliminar definitivamente",
+    "deleting": "Eliminando...",
+    "deleteError": "No se pudo eliminar la organización."
   },
   "SettingsMembers": {
     "title": "Miembros",
