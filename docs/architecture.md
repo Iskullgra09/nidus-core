@@ -1112,3 +1112,23 @@ User and Organization already had nullable `avatar_url` columns, but no upload p
 ### Consequences
 * **Positive:** Zero extra infra for clones; avatars work in Docker and host API.
 * **Negative:** Not multi-node safe without shared volume/object store; replace `MEDIA_ROOT` strategy when deploying horizontally.
+
+---
+
+## ADR 059: Frontend CI Gates & Audit Settings UI (Phase 16)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+PRs only ran backend pytest. Frontend regressions (lint/types) could merge unnoticed. Audit API existed and powered the dashboard widget, but settings lacked a dedicated audit view.
+
+### Decision
+1. **CI jobs:** Rename/split `nidus-core-ci.yml` into parallel `backend` (pytest + Postgres) and `frontend` (`pnpm lint` + `pnpm typecheck`) on PRs to `main`.
+2. **Scripts:** `nidus-frontend` exposes `typecheck` (`tsc --noEmit`) and runs eslint on `.`.
+3. **Audit UI:** Settings → Organization → Audit (`/settings/organization/audit`), gated by `audit:read`, listing recent logs via existing `getRecentAuditLogs`; Cmd+K entry included.
+4. **Docs:** README mojibake from mis-encoded dashes cleaned; Phase 16 marked Done.
+
+### Consequences
+* **Positive:** FE quality gates on every PR; auditors get a settings surface without new APIs.
+* **Negative:** No FE unit/e2e suite yet - typecheck/lint only until tests exist.

@@ -2,10 +2,10 @@ name: Nidus Core CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  test:
+  backend:
     runs-on: ubuntu-latest
     env:
       POSTGRES_DB: "nidus_core_test"
@@ -68,3 +68,29 @@ jobs:
       - name: Run Tests
         run: uv run pytest -v
         working-directory: ./backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./nidus-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: nidus-frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck

@@ -63,6 +63,7 @@
     "organization": "Organización",
     "members": "Miembros",
     "roles": "Roles",
+    "audit": "Registro de auditoría",
     "logout": "Cerrar sesión"
   },
   "Validation": {
@@ -125,7 +126,14 @@
     "navSecurity": "Seguridad",
     "navOrganization": "Organización",
     "navMembers": "Miembros del Equipo",
-    "navRoles": "Roles y Permisos"
+    "navRoles": "Roles y Permisos",
+    "navAudit": "Auditoría"
+  },
+  "SettingsAudit": {
+    "title": "Registro de auditoría",
+    "description": "Eventos recientes de seguridad y administración de esta organización.",
+    "empty": "Aún no hay eventos de auditoría.",
+    "noResource": "Sin recurso"
   },
   "SettingsProfile": {
     "title": "Perfil General",

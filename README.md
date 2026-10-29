@@ -28,14 +28,14 @@ Nidus Core is the **clone-ready platform**. Product domains (inventory, transact
 
 | Layer (frontend) | Responsibility |
 | :--- | :--- |
-| `core/` | API client, i18n routing, theme â€” no feature imports |
+| `core/` | API client, i18n routing, theme - no feature imports |
 | `shared/access` | `NidusScope`, `grantsAccess` / `hasScope` (mirrors backend) |
 | `modules/identity` | Auth session, login/org switch, profile, password |
 | `modules/access` | Roles, invitations, `CanAccess` |
 | `modules/organization` | Tenant settings, members, org switcher, danger zone |
 | `modules/shell` | Authenticated chrome (`TopBar`, Command Palette) |
 
-Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent Core completion).
+Architecture decisions: `docs/architecture.md` (ADRs through 059 for Core completion).
 
 ---
 
@@ -52,7 +52,7 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 | 4 | Frontend Foundation & Auth Pipeline (Next.js) | Done |
 | 5 | Security & Access Loop (password reset, profile, preferences) | Done |
 | 6 | Tenant Collaboration (org settings, invites, members UI) | Done |
-| 7 | *(renumbered â€” see Phase 12)* | Moved |
+| 7 | *(renumbered - see Phase 12)* | Moved |
 | 8 | Infrastructure & DevOps (CORS, health, test DB isolation) | Done |
 | 9 | Multi-Organization Sessions | Done |
 | 10 | IAM Completion & Frontend Module Boundaries | Done |
@@ -61,13 +61,13 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 | 13 | DevEx & Containers (API image + compose) | Done |
 | 14 | Security Hardening | Done |
 | 15 | Avatars & Media | Done |
-| 16 | CI Frontend & Quality Gates | Pending |
+| 16 | CI Frontend & Quality Gates | Done |
 
 ---
 
 ## Completed Phases (detail)
 
-### Phases 1â€“3.7 â€” Backend foundation
+### Phases 1-3.7 - Backend foundation
 
 - RLS policies, dual DB roles (`nidus_admin` / `nidus_app_user`), baseline Alembic migration.
 - JWT auth, BCrypt, atomic tenant onboarding.
@@ -76,86 +76,89 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 - Async email (`aiosmtplib`), invitation lifecycle, password recovery tokens.
 - Cursor/keyset pagination, cascading soft-deletes.
 
-### Phase 4 â€” Frontend foundation & auth
+### Phase 4 - Frontend foundation & auth
 
 - Edge proxy JWT session validation (`src/proxy.ts`).
 - Design system (Shadcn + Tailwind v4), Zod + React Hook Form.
 - Login/logout Server Actions with HttpOnly cookies.
 - `next-intl`, locale segments, tenant onboarding UI, Sonner toasts.
 
-### Phase 5 â€” Security & access loop
+### Phase 5 - Security & access loop
 
 - Forgot / reset password flows.
 - Profile settings; theme and language preference persistence.
 
-### Phase 6 â€” Tenant collaboration
+### Phase 6 - Tenant collaboration
 
 - Organization settings (name/slug).
 - Invitation dispatch, verify, and accept landing.
 - Members data tables with RBAC-aware actions.
 
-### Phase 8 â€” Infrastructure & DevOps
+### Phase 8 - Infrastructure & DevOps
 
 - [x] CORS for frontend origin + localhost.
 - [x] Health check with DB connectivity probe.
 - [x] pytest isolated on `nidus_core_test` (never `nidus_core`).
 - [x] ADR 049: DB in Docker; primary DX keeps API/FE on host via `uv` / `pnpm`.
 
-### Phase 9 â€” Multi-organization sessions
+### Phase 9 - Multi-organization sessions
 
 - [x] `GET /users/me/organizations`, `POST /auth/switch-org`, `POST /auth/select-org`.
 - [x] Org picker on login; TopBar org switcher.
 - [x] ADR 050.
 
-### Phase 10 â€” IAM completion & module boundaries
+### Phase 10 - IAM completion & module boundaries
 
 - [x] Custom roles CRUD; invitations list/revoke; `NidusScope` FE/BE sync; roles UI.
 - [x] Backend: IAM service split, `GenericResponse` everywhere, JWT scope fast path, org path guard (ADR 052).
 - [x] Frontend: locale-safe routing, unified `grantsAccess`, `/organizations/me` + danger zone, modules `identity` / `access` / `organization` / `shell` (ADR 053).
 
-### Phase 11 â€” Observability & audit
+### Phase 11 - Observability & audit
 
 - [x] Structured JSON logging (`RequestContextMiddleware`, `X-Request-ID`).
 - [x] Append-only `audit_log` + RLS; `AuditService`; event wiring for auth/IAM/org.
 - [x] `GET /api/v1/audit-logs` gated by `audit:read` (ADR 054).
 
-### Phase 12 â€” Premium UX
+### Phase 12 - Premium UX
 
 - [x] Command Palette (Cmd/Ctrl+K) in shell.
 - [x] Dashboard with real Core data (members, orgs, health, recent audit when scoped).
 - [x] Members URL tabs (`?tab=`) and cursor/search table (`?q=`, `?cursor=`).
 - [x] ADR 055.
 
-### Phase 13 â€” DevEx & containers
+### Phase 13 - DevEx & containers
 
 - [x] Root `Dockerfile` for FastAPI (uv multi-stage, non-root user).
 - [x] `docker-compose.yml` API service fixed (build context, no broken bind mounts).
 - [x] Entrypoint waits for Postgres, runs `alembic upgrade head`, then starts uvicorn.
-- [x] Demo seed (`backend/seed.py`) â€” multi-org users/roles/invites; optional `SEED_DEMO=true`.
-- [x] ADR 056 â€” API container delivered; FE stays on host.
+- [x] Demo seed (`backend/seed.py`) - multi-org users/roles/invites; optional `SEED_DEMO=true`.
+- [x] ADR 056 - API container delivered; FE stays on host.
 
-### Phase 14 â€” Security hardening
+### Phase 14 - Security hardening
 
 - [x] In-memory rate limiting on auth, onboarding, and invitation abuse paths (`429` + `Retry-After`).
-- [x] Session cookie hardening â€” shared HttpOnly / SameSite=Lax / Secure flags; no CSRF tokens (same-origin Server Actions).
+- [x] Session cookie hardening - shared HttpOnly / SameSite=Lax / Secure flags; no CSRF tokens (same-origin Server Actions).
 - [x] Deploy secrets checklist (`.env.example` + Operational section); ADR 057.
 
 ---
 
-### Phase 15 â€” Avatars & media
+### Phase 15 - Avatars & media
 
 - [x] User and organization avatar upload/storage (local `media/`, compose volume).
 - [x] Safe content-type limits (JPEG/PNG/WebP, 2MB) and `/media` URL serving; ADR 058.
+
+### Phase 16 - CI frontend & quality gates
+
+- [x] Frontend lint + typecheck job in GitHub Actions (`pnpm`).
+- [x] Backend pytest job kept on PRs to `main`.
+- [x] Audit log settings page (`audit:read`) + Cmd+K entry; ADR 059.
+- [x] README encoding cleanup (broken dash characters).
 
 ---
 
 ## Upcoming Phases
 
-### Phase 16 â€” CI frontend & quality gates
-
-- [ ] Frontend lint/typecheck (and tests when present) in GitHub Actions.
-- [ ] Keep backend pytest on PR to `main`.
-- [ ] Optional audit UI in settings (API already exists).
+*(Core roadmap complete through Phase 16. Product forks add domain features.)*
 
 ---
 
@@ -164,7 +167,7 @@ Architecture decisions: `docs/architecture.md` (ADRs 049â€“055 for recent C
 | Database | Purpose | App user | Admin user |
 | :--- | :--- | :--- | :--- |
 | **`nidus_core`** | Development & manual usage (login, invites, Mailtrap) | `nidus_app_user` (RLS enforced) | `nidus_admin` (migrations only) |
-| **`nidus_core_test`** | pytest & CI only â€” truncated before each test | `nidus_app_user` (RLS enforced) | `nidus_admin` (truncate/seed) |
+| **`nidus_core_test`** | pytest & CI only - truncated before each test | `nidus_app_user` (RLS enforced) | `nidus_admin` (truncate/seed) |
 
 **Never run pytest against `nidus_core`.** The test suite uses `TEST_APP_DATABASE_URL` and `TEST_DATABASE_URL` automatically.
 
@@ -212,16 +215,16 @@ Password for **all** demo users: `password123`
 
 | Email | Access |
 | :--- | :--- |
-| `owner@acme.dev` | Owner â€” Acme Corp |
-| `admin@acme.dev` | Admin (+ `audit:read`) â€” Acme |
-| `member@acme.dev` | Member â€” Acme |
-| `viewer@acme.dev` | Viewer â€” Acme |
+| `owner@acme.dev` | Owner - Acme Corp |
+| `admin@acme.dev` | Admin (+ `audit:read`) - Acme |
+| `member@acme.dev` | Member - Acme |
+| `viewer@acme.dev` | Viewer - Acme |
 | `multi@nidus.dev` | Acme Owner + Nidus Labs Member (org picker) |
-| `owner@nidus.dev` | Owner â€” Nidus Labs |
-| `admin@nidus.dev` | Admin â€” Nidus Labs |
-| `member@nidus.dev` | Member â€” Nidus Labs |
-| `owner@beta.dev` | Owner â€” Beta Partners |
-| `viewer@beta.dev` | Viewer â€” Beta Partners |
+| `owner@nidus.dev` | Owner - Nidus Labs |
+| `admin@nidus.dev` | Admin - Nidus Labs |
+| `member@nidus.dev` | Member - Nidus Labs |
+| `owner@beta.dev` | Owner - Beta Partners |
+| `viewer@beta.dev` | Viewer - Beta Partners |
 
 Pending invites: `invitee@acme.dev`, `contractor@nidus.dev`, `partner@beta.dev`.
 
@@ -261,4 +264,4 @@ Or set `SEED_DEMO=true` in `.env` so the API container seeds automatically on st
 
 ---
 
-*Developed by Isaac Granados Quesada â€” Principal Engineer & Computer Architect.*
+*Developed by Isaac Granados Quesada - Principal Engineer & Computer Architect.*

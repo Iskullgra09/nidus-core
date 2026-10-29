@@ -11,6 +11,7 @@ import {
   UserRound,
   KeyRound,
   Search,
+  ScrollText,
 } from "lucide-react";
 
 import { useRouter } from "@/core/i18n/routing";
@@ -63,6 +64,7 @@ export function CommandPalette({ variant = "bar" }: CommandPaletteProps) {
 
   const canManageMembers = hasScope(user, NidusScope.MEMBER_READ);
   const canManageRoles = hasScope(user, NidusScope.ROLE_READ);
+  const canReadAudit = hasScope(user, NidusScope.AUDIT_READ);
 
   return (
     <>
@@ -150,6 +152,15 @@ export function CommandPalette({ variant = "bar" }: CommandPaletteProps) {
               >
                 <Shield />
                 {t("roles")}
+              </CommandItem>
+            )}
+            {canReadAudit && (
+              <CommandItem
+                value="audit auditoria logs activity /settings/organization/audit"
+                onSelect={() => run("/settings/organization/audit")}
+              >
+                <ScrollText />
+                {t("audit")}
               </CommandItem>
             )}
           </CommandGroup>

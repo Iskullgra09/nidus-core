@@ -63,6 +63,7 @@
     "organization": "Organization",
     "members": "Members",
     "roles": "Roles",
+    "audit": "Audit log",
     "logout": "Log out"
   },
   "Validation": {
@@ -125,7 +126,14 @@
     "navSecurity": "Security",
     "navOrganization": "Organization",
     "navMembers": "Team Members",
-    "navRoles": "Roles & Permissions"
+    "navRoles": "Roles & Permissions",
+    "navAudit": "Audit log"
+  },
+  "SettingsAudit": {
+    "title": "Audit log",
+    "description": "Recent security and administration events for this organization.",
+    "empty": "No audit events yet.",
+    "noResource": "No resource"
   },
   "SettingsProfile": {
     "title": "General Profile",
