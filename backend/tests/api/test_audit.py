@@ -57,7 +57,6 @@ async def test_audit_requires_scope(
     email = f"member-{uid}@nidus.com"
     password = "TestPassword123!"
 
-    # Owner org via onboarding
     onboard = await async_client.post(
         "/api/v1/organizations/onboarding",
         json={
@@ -103,7 +102,6 @@ async def test_audit_requires_scope(
     )
     assert accept.status_code == 200
 
-    # Multi-org? New user may only have this org. Login may return token or picker.
     member_login = await async_client.post("/api/v1/auth/login", data={"username": email, "password": password})
     assert member_login.status_code == 200
     member_body = member_login.json()["data"]

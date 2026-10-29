@@ -1,4 +1,3 @@
-/** Public surface for IAM feature module (roles, invitations). */
 export { NidusScope, ASSIGNABLE_SCOPES, grantsAccess, hasScope } from "@/shared/access";
 export { CanAccess } from "./components/can-access";
 export type { RolePayload, RoleResponse } from "./types/roles";

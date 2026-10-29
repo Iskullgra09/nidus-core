@@ -45,7 +45,6 @@ interface ServerDataTableProps<TData> extends BaseDataTableProps<TData> {
   onSearchChange?: (query: string) => void;
 }
 
-/** Cursor / keyset pagination driven by URL or parent state (Phase 12). */
 interface CursorDataTableProps<TData> extends BaseDataTableProps<TData> {
   mode: "cursor";
   hasNextPage: boolean;

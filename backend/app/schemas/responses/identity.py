@@ -26,16 +26,12 @@ class MemberResponse(BaseModel):
 
 
 class InvitationAcceptedResponse(BaseModel):
-    """Returned when a user successfully consumes an invitation token."""
-
     user_id: UUID
     organization_id: UUID
     role_id: UUID
 
 
 class RoleResponse(BaseModel):
-    """Schema for returning role details to the frontend."""
-
     id: UUID
     name: str
     description: str | None = None

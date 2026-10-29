@@ -19,8 +19,6 @@ class MemberFilter(BaseModel):
 
 
 class InvitationFilter(BaseModel):
-    """Filter for listing organization invitations."""
-
     is_accepted: Optional[bool] = Field(False, alias="accepted")
     email__contains: Optional[str] = None
 

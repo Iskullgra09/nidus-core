@@ -68,7 +68,6 @@ async def invite_member(
 
 @router.get("/invitations/verify/{token}", response_model=GenericResponse[dict[str, bool]], status_code=status.HTTP_200_OK)
 async def verify_invitation(token: str, session: AsyncSession = Depends(get_session), lang: str = Depends(get_language)):
-    """Public Endpoint: Verifies if a token is valid before showing the accept form."""
     await InvitationService.get_valid_invitation(session, token)
     return GenericResponse(data={"valid": True}, message=i18n.t("success.valid_token", lang=lang))
 

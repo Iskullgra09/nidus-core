@@ -9,9 +9,6 @@ import { redirectTo } from "@/core/i18n/routing";
 import { ActionResponse } from "@/core/types/api";
 import { OrganizationUpdatePayload } from "../types";
 
-/**
- * Updates the current organization settings.
- */
 export async function updateOrganizationAction(
   payload: OrganizationUpdatePayload,
 ): Promise<ActionResponse> {
