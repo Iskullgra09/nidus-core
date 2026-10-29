@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.responses.organization import OrganizationResponse
 
@@ -15,7 +15,7 @@ class UserProfileResponse(BaseModel):
     """Complete profile of the authenticated user within the current tenant context."""
 
     id: UUID
-    email: EmailStr
+    email: str
     full_name: Optional[str] = None
     preferences: UserPreferencesSchema = UserPreferencesSchema()
     is_superuser: bool

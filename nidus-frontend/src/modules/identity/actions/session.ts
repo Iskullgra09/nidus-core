@@ -31,6 +31,10 @@ export async function getCurrentUser(): Promise<UserProfileResponse | null> {
   return response.status === "success" && response.data ? response.data : null;
 }
 
+export async function hasSessionCookie(): Promise<boolean> {
+  return Boolean((await cookies()).get("nidus_session")?.value);
+}
+
 export async function getUserOrganizations(): Promise<UserOrganizationSummary[]> {
   const cookieStore = await cookies();
   const session = cookieStore.get("nidus_session")?.value;

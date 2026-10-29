@@ -16,7 +16,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/db-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${ADMIN_USER} -d ${POSTGRES_DB}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${ADMIN_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,19 +26,30 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: nidus-fastapi
-    command: fastapi dev app/main.py --host 0.0.0.0 --port 8000
-    volumes:
-      - ./app:/workspace/app
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      - POSTGRES_SERVER=db
-      - POSTGRES_PORT=5432
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      SEED_DEMO: ${SEED_DEMO:-false}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   postgres_data:

@@ -910,12 +910,12 @@ Integration tests truncate and seed data before every test case. When `conftest.
 
 ### Decision
 1. **Default Dev Flow:** `docker compose up -d db` + `uv run fastapi dev` remains the primary workflow.
-2. **Future Dockerfile:** A root-level Dockerfile will target `backend/` with `uv` for production-parity API containers.
-3. **Compose Profiles:** Planned separation of `db`, `api`, and `full` profiles once the Dockerfile lands.
+2. **API Dockerfile (delivered in ADR 056 / Phase 13):** Root Dockerfile targets the monorepo with `uv` for production-parity API containers.
+3. **Frontend:** Remains on the host via `pnpm` (FE Docker image deferred).
 
 ### Consequences
-* **Positive:** Pragmatic DX for solo development; DB isolation preserved.
-* **Negative:** Full containerized stack not yet one command away (Phase 8 remaining item).
+* **Positive:** Pragmatic DX for solo development; DB isolation preserved; optional DB+API compose path for clones.
+* **Negative:** Day-to-day API iteration on the host is still faster than rebuild-the-image cycles.
 
 ---
 
@@ -1049,3 +1049,24 @@ Phase 12 upgrades Core from foundation chrome to a usable operator UX without in
 ### Consequences
 * **Positive:** Clones inherit Cmd+K, URL-driven list patterns, and a non-fake dashboard.
 * **Negative:** Cursor `Previous` only resets to the first page (no full backward stack); member count on the dashboard is first-page sized (limit 100) unless a count endpoint is added later.
+
+---
+
+## ADR 056: API Container Delivery (Phase 13)
+
+**Date:** 2026-10-28
+**Status:** Accepted
+
+### Context
+ADR 049 deferred the FastAPI Dockerfile while compose already declared a broken `api` service (missing root Dockerfile, invalid `./app` volume). Clones could run Postgres in Docker but not a one-command API container.
+
+### Decision
+1. **Root Dockerfile** builds the API with `uv` (multi-stage, frozen lockfile, non-root user). Build context is the monorepo root so `database/migrations` is available to Alembic.
+2. **Compose `api` service** builds that image, injects `.env`, forces `POSTGRES_SERVER=db`, exposes `8000`, and health-checks `GET /api/v1/health/`.
+3. **Entrypoint** waits for Postgres TCP, runs `alembic upgrade head`, then execs uvicorn (no source bind-mount; image is the source of truth).
+4. **Frontend remains on the host** (`pnpm`). Full-stack FE containers are out of scope for Phase 13.
+5. **Primary DX unchanged:** `docker compose up -d db` + `uv run fastapi dev` remains valid for day-to-day API work on the host.
+
+### Consequences
+* **Positive:** Clones can run `docker compose up -d --build` for DB+API; migrations apply on container start.
+* **Negative:** API code changes require image rebuild (or host `uv` workflow); FE is still a separate process.

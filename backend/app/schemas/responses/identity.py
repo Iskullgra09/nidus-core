@@ -2,12 +2,12 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 
 
 class InvitationResponse(BaseModel):
     id: UUID
-    email: EmailStr
+    email: str
     role_id: UUID
     role_name: str | None = None
     expires_at: datetime
@@ -18,7 +18,7 @@ class MemberResponse(BaseModel):
     id: UUID
     user_id: UUID
     full_name: Optional[str] = None
-    email: EmailStr
+    email: str
     role_name: str
     joined_at: datetime
 

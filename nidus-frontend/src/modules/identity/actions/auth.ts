@@ -6,6 +6,7 @@ export {
   setSessionCookie,
   getCurrentUser,
   getUserOrganizations,
+  hasSessionCookie,
   logoutAction,
 } from "./session";
 
