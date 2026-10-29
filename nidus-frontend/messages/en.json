@@ -89,6 +89,8 @@
   "SettingsLayout": {
     "title": "Settings",
     "description": "Manage your account, preferences, and workspace.",
+    "sectionPersonal": "Personal",
+    "sectionWorkspace": "Workspace",
     "navProfile": "General Profile",
     "navSecurity": "Security",
     "navOrganization": "Organization",

@@ -10,11 +10,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { updateProfileAction } from "@/modules/identity/actions/user";
 
 type AppLocale = "es" | "en";
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  /** Optional persistence hook (e.g. profile update). Injected by shell — keeps core free of module imports. */
+  onLocaleChange?: (locale: AppLocale) => void | Promise<unknown>;
+}
+
+export function LanguageSwitcher({ onLocaleChange }: LanguageSwitcherProps) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -23,10 +27,7 @@ export function LanguageSwitcher() {
     if (newLocale === locale) return;
 
     router.replace(pathname, { locale: newLocale });
-
-    void updateProfileAction({
-      preferences: { language: newLocale },
-    });
+    void onLocaleChange?.(newLocale);
   }
 
   return (

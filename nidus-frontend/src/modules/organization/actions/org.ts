@@ -4,15 +4,15 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
+import { ActionResponse } from "@/core/types/api";
 import { OrganizationUpdatePayload } from "../types";
-import { AuthActionResponse } from "@/modules/identity/types/auth";
 
 /**
  * Updates the current organization settings.
  */
 export async function updateOrganizationAction(
   payload: OrganizationUpdatePayload,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
   const tOrg = await getTranslations("SettingsOrg");
 

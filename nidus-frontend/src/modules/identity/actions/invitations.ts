@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
+import { ActionResponse } from "@/core/types/api";
 import { InvitationPayload, InvitationResponse } from "../types/invitation";
-import { AuthActionResponse } from "../types/auth";
 
 export async function getPendingInvitations(): Promise<InvitationResponse[]> {
   try {
@@ -29,7 +29,7 @@ export async function getPendingInvitations(): Promise<InvitationResponse[]> {
 
 export async function revokeInvitationAction(
   invitationId: string,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {
@@ -64,7 +64,7 @@ export async function revokeInvitationAction(
 
 export async function inviteMemberAction(
   payload: InvitationPayload,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {

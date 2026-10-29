@@ -12,6 +12,12 @@ export interface GenericResponse<T> {
   errors?: ApiError[];
 }
 
+/** Standard mutation result for server actions (auth, org, IAM). */
+export interface ActionResponse {
+  status: ApiStatus;
+  message: string | null;
+}
+
 export interface PageInfo {
   has_next_page: boolean;
   end_cursor: string | null;

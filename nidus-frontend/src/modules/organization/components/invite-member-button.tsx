@@ -9,7 +9,7 @@ import { CanAccess } from "@/shared/components/auth/can-access";
 import { NidusScope } from "@/modules/identity/types/scopes";
 import { RoleResponse } from "@/modules/identity/types/roles";
 
-import { InviteMemberModal } from "../../identity/components/invite-member-modal";
+import { InviteMemberModal } from "@/modules/identity/components/invite-member-modal";
 
 interface InviteMemberButtonProps {
   roles: RoleResponse[];

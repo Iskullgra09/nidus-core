@@ -1,10 +1,8 @@
 import * as React from "react";
 import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/modules/identity/actions/auth";
-import {
-  getOrganizationMembers,
-  getAvailableRoles,
-} from "@/modules/organization/actions/members";
+import { getOrganizationMembers } from "@/modules/organization/actions/members";
+import { getAvailableRoles } from "@/modules/identity/actions/roles";
 import { getPendingInvitations } from "@/modules/identity/actions/invitations";
 import { MembersTable } from "@/modules/organization/components/members-table";
 import { PendingInvitationsTable } from "@/modules/organization/components/pending-invitations-table";

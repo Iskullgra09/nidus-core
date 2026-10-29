@@ -4,12 +4,12 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
+import { ActionResponse } from "@/core/types/api";
 import { ChangePasswordPayload, UpdateProfilePayload } from "../types/user";
-import { AuthActionResponse } from "../types/auth";
 
 export async function changePasswordAction(
   payload: ChangePasswordPayload,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
   const tSettings = await getTranslations("Settings");
 
@@ -42,9 +42,15 @@ export async function changePasswordAction(
   }
 }
 
+export async function persistLanguageAction(
+  language: "es" | "en",
+): Promise<ActionResponse> {
+  return updateProfileAction({ preferences: { language } });
+}
+
 export async function updateProfileAction(
   payload: UpdateProfilePayload,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {

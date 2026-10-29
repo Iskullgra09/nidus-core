@@ -2,6 +2,7 @@ import * as React from "react";
 import { LanguageSwitcher } from "@/core/i18n/components/language-switcher";
 import { UserDropdown } from "@/modules/identity/components/user-dropdown";
 import { OrgSwitcher } from "@/modules/organization/components/org-switcher";
+import { persistLanguageAction } from "@/modules/identity/actions/user";
 import { UserOrganizationSummary } from "@/modules/identity/types/auth";
 import { MainNav } from "./main-nav";
 import { UserProfileResponse } from "@/modules/identity/types/user";
@@ -35,7 +36,7 @@ export function TopBar({ user, organizations }: TopBarProps) {
       <MainNav className="hidden md:flex" />
       <div className="flex-1" />
       <div className="flex items-center gap-4">
-        <LanguageSwitcher />
+        <LanguageSwitcher onLocaleChange={persistLanguageAction} />
         <UserDropdown user={user} />
       </div>
     </header>

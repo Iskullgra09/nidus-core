@@ -4,11 +4,27 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
-import { AuthActionResponse } from "../types/auth";
+import { ActionResponse } from "@/core/types/api";
 import { RolePayload, RoleResponse } from "../types/roles";
 import { ScopeResponse } from "../types/scopes-catalog";
 
 const ROLES_PATH = "/settings/organization/roles";
+
+export async function getAvailableRoles(): Promise<RoleResponse[]> {
+  try {
+    const session = (await cookies()).get("nidus_session")?.value;
+    if (!session) return [];
+
+    const response = await fetchClient<RoleResponse[]>("/identity/roles", {
+      headers: { Authorization: `Bearer ${session}` },
+    });
+
+    return response.status === "success" && response.data ? response.data : [];
+  } catch (error) {
+    console.error("Fetch Roles Error:", error);
+    return [];
+  }
+}
 
 export async function getAssignableScopes(): Promise<ScopeResponse[]> {
   try {
@@ -28,7 +44,7 @@ export async function getAssignableScopes(): Promise<ScopeResponse[]> {
 
 export async function createRoleAction(
   payload: RolePayload,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {
@@ -62,7 +78,7 @@ export async function createRoleAction(
 export async function updateRoleAction(
   roleId: string,
   payload: Partial<RolePayload>,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {
@@ -98,7 +114,7 @@ export async function updateRoleAction(
 
 export async function deleteRoleAction(
   roleId: string,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {

@@ -27,25 +27,6 @@ export interface UpdateProfileFormData {
   theme: "light" | "dark" | "system";
 }
 
-export interface MemberResponse {
-  id: string;
-  email: string;
-  role_name: string;
-  joined_at: string;
-}
-
-/**
- * Mirroring the Pydantic MemberFilter exactly.
- * Use 'role' as the alias for 'role_name' as defined in the backend.
- */
-export interface MemberFilter {
-  role?: string;
-  email__contains?: string;
-  is_active?: boolean;
-  limit?: number;
-  cursor?: string;
-}
-
 export interface ChangePasswordFormData {
   currentPassword: string;
   newPassword: string;

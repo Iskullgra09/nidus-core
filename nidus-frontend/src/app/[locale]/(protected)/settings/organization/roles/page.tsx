@@ -1,7 +1,9 @@
 import * as React from "react";
 import { getTranslations } from "next-intl/server";
-import { getAvailableRoles } from "@/modules/organization/actions/members";
-import { getAssignableScopes } from "@/modules/identity/actions/roles";
+import {
+  getAvailableRoles,
+  getAssignableScopes,
+} from "@/modules/identity/actions/roles";
 import { RolesTable } from "@/modules/identity/components/roles-table";
 
 export default async function RolesPage() {

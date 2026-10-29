@@ -1,4 +1,4 @@
-import { ApiStatus } from "@/core/types/api";
+import { ActionResponse } from "@/core/types/api";
 
 export interface LoginRequest {
   email: string;
@@ -25,10 +25,8 @@ export interface LoginOrgSelectionPayload {
   organizations: UserOrganizationSummary[];
 }
 
-export interface AuthActionResponse {
-  status: ApiStatus;
-  message: string | null;
-}
+/** @deprecated Prefer ActionResponse from @/core/types/api */
+export type AuthActionResponse = ActionResponse;
 
 export interface OrgSelectionActionResponse {
   status: "org_selection";
@@ -36,7 +34,7 @@ export interface OrgSelectionActionResponse {
   preAuthToken: string;
 }
 
-export type LoginActionResult = AuthActionResponse | OrgSelectionActionResponse;
+export type LoginActionResult = ActionResponse | OrgSelectionActionResponse;
 
 export interface RegisterFormData {
   organization_name: string;

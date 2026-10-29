@@ -5,9 +5,7 @@ import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { fetchClient } from "@/core/api/client";
 import { MemberResponse } from "@/modules/organization/types/members";
-import { RoleResponse } from "@/modules/identity/types/roles";
-import { CursorPage } from "@/core/types/api";
-import { AuthActionResponse } from "@/modules/identity/types/auth";
+import { ActionResponse, CursorPage } from "@/core/types/api";
 
 /**
  * Fetch members - Matches: GET /members
@@ -40,7 +38,7 @@ export async function getOrganizationMembers(): Promise<MemberResponse[]> {
 export async function updateMemberRoleAction(
   memberId: string,
   roleId: string,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
 
   try {
@@ -70,7 +68,7 @@ export async function updateMemberRoleAction(
  */
 export async function removeMemberAction(
   memberId: string,
-): Promise<AuthActionResponse> {
+): Promise<ActionResponse> {
   const tCommon = await getTranslations("Common");
   try {
     const session = (await cookies()).get("nidus_session")?.value;
@@ -90,21 +88,5 @@ export async function removeMemberAction(
   } catch (error) {
     console.error("Remove Members Error:", error);
     return { status: "error", message: tCommon("connectionError") };
-  }
-}
-
-export async function getAvailableRoles(): Promise<RoleResponse[]> {
-  try {
-    const session = (await cookies()).get("nidus_session")?.value;
-    if (!session) return [];
-
-    const response = await fetchClient<RoleResponse[]>("/identity/roles", {
-      headers: { Authorization: `Bearer ${session}` },
-    });
-
-    return response.status === "success" && response.data ? response.data : [];
-  } catch (error) {
-    console.error("Fetch Roles Error:", error);
-    return [];
   }
 }

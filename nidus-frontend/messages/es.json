@@ -89,6 +89,8 @@
   "SettingsLayout": {
     "title": "Configuración",
     "description": "Administra tu cuenta, preferencias y entorno de trabajo.",
+    "sectionPersonal": "Personal",
+    "sectionWorkspace": "Espacio de trabajo",
     "navProfile": "Perfil General",
     "navSecurity": "Seguridad",
     "navOrganization": "Organización",

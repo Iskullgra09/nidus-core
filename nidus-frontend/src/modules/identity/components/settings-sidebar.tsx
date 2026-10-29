@@ -51,7 +51,7 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
     <nav className={cn("flex flex-col space-y-8", className)} {...props}>
       <div className="flex flex-col space-y-2">
         <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-          Personal
+          {t("sectionPersonal")}
         </h4>
         <div className="flex flex-col space-y-1">
           <SidebarNavItem
@@ -67,7 +67,7 @@ export function SettingsSidebar({ className, ...props }: SidebarNavProps) {
 
       <div className="flex flex-col space-y-2">
         <h4 className="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-          Workspace
+          {t("sectionWorkspace")}
         </h4>
         <div className="flex flex-col space-y-1">
           <CanAccess scope={NidusScope.ORG_UPDATE}>
